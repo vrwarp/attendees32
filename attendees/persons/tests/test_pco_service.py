@@ -4,11 +4,13 @@ import importlib.util
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
+
 # --- MOCKING SETUP BEGIN ---
 
 def create_mock_module(name):
     m = types.ModuleType(name)
     return m
+
 
 # 1. Mock Django
 mock_django = create_mock_module('django')
@@ -58,6 +60,7 @@ except Exception as e:
     print(f"Failed to load pco_service_module: {e}")
     PCOService = None
 
+
 class PCOServiceTest(TestCase):
     def setUp(self):
         if PCOService is None:
@@ -86,10 +89,13 @@ class PCOServiceTest(TestCase):
             mock_resp = MagicMock()
             mock_resp.status_code = 200
             if "tabs" in url:
-                if method == "GET": mock_resp.json.return_value = {'data': []}
-                elif method == "POST": mock_resp.json.return_value = {'data': {'id': 'tab_1'}}
+                if method == "GET":
+                    mock_resp.json.return_value = {'data': []}
+                elif method == "POST":
+                    mock_resp.json.return_value = {'data': {'id': 'tab_1'}}
             elif "field_definitions" in url:
-                if method == "GET": mock_resp.json.return_value = {'data': []}
+                if method == "GET":
+                    mock_resp.json.return_value = {'data': []}
                 elif method == "POST":
                     name = kwargs.get('json', {}).get('data', {}).get('attributes', {}).get('name')
                     mock_resp.json.return_value = {'data': {'id': f'field_{name}'}}
