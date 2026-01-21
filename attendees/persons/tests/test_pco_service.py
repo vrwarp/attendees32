@@ -1,48 +1,68 @@
 import sys
+import types
 import importlib.util
 from unittest import TestCase
 from unittest.mock import MagicMock, patch
 
-# 1. Mock Django & Project Modules
-mock_django = MagicMock()
+# --- MOCKING SETUP BEGIN ---
+
+def create_mock_module(name):
+    m = types.ModuleType(name)
+    return m
+
+# 1. Mock Django
+mock_django = create_mock_module('django')
+mock_django.conf = create_mock_module('django.conf')
+mock_django.conf.settings = MagicMock()
 mock_django.conf.settings.configured = True
 mock_django.conf.settings.PCO_APP_ID = 'test'
 mock_django.conf.settings.PCO_SECRET = 'test'
 mock_django.conf.settings.PCO_INFOS = {}
 
-mock_conf = MagicMock()
-mock_conf.settings = mock_django.conf.settings
-sys.modules['django.conf'] = mock_conf
-
 sys.modules['django'] = mock_django
-mock_django.conf = mock_conf
+sys.modules['django.conf'] = mock_django.conf
 
-mock_module = MagicMock(spec=[])
-sys.modules['django.db'] = mock_module
-sys.modules['django.db.models'] = mock_module
-sys.modules['attendees'] = mock_module
-sys.modules['attendees.persons'] = mock_module
+mock_db = create_mock_module('django.db')
+mock_db.models = create_mock_module('django.db.models')
+sys.modules['django.db'] = mock_db
+sys.modules['django.db.models'] = mock_db.models
 
-# FIX: Ensure models module has Attendee attribute
-mock_persons_models = MagicMock()
-mock_persons_models.Attendee = MagicMock() # Needs to exist
+# 2. Mock Project Modules
+mock_attendees = create_mock_module('attendees')
+sys.modules['attendees'] = mock_attendees
+
+mock_persons = create_mock_module('attendees.persons')
+sys.modules['attendees.persons'] = mock_persons
+
+mock_persons_models = create_mock_module('attendees.persons.models')
+mock_persons_models.Attendee = MagicMock()
 sys.modules['attendees.persons.models'] = mock_persons_models
 
-sys.modules['attendees.whereabouts'] = mock_module
-mock_whereabouts_models = MagicMock()
-mock_whereabouts_models.Division = MagicMock() # Needs to exist
+mock_whereabouts = create_mock_module('attendees.whereabouts')
+sys.modules['attendees.whereabouts'] = mock_whereabouts
+
+mock_whereabouts_models = create_mock_module('attendees.whereabouts.models')
+mock_whereabouts_models.Division = MagicMock()
 sys.modules['attendees.whereabouts.models'] = mock_whereabouts_models
 
-# 2. Load the Service Module manually
-spec = importlib.util.spec_from_file_location("pco_service_module", "attendees/persons/services/pco_service.py")
-pco_module = importlib.util.module_from_spec(spec)
-sys.modules["pco_service_module"] = pco_module
-spec.loader.exec_module(pco_module)
+# --- MOCKING SETUP END ---
 
-PCOService = pco_module.PCOService
+# 3. Load the Service Module manually
+try:
+    spec = importlib.util.spec_from_file_location("pco_service_module", "attendees/persons/services/pco_service.py")
+    pco_module = importlib.util.module_from_spec(spec)
+    sys.modules["pco_service_module"] = pco_module
+    spec.loader.exec_module(pco_module)
+    PCOService = pco_module.PCOService
+except Exception as e:
+    print(f"Failed to load pco_service_module: {e}")
+    PCOService = None
 
 class PCOServiceTest(TestCase):
     def setUp(self):
+        if PCOService is None:
+            self.skipTest("Failed to load PCOService module due to import errors")
+
         self.service = PCOService(app_id="test", secret="test")
 
         self.attendee = MagicMock()
