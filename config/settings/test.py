@@ -28,3 +28,4 @@ EMAIL_BACKEND = "django.core.mail.backends.locmem.EmailBackend"
 
 # Your stuff...
 # ------------------------------------------------------------------------------
+ALLOWED_HOSTS = ["testserver", "localhost", "127.0.0.1"]
