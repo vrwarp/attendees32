@@ -6,6 +6,7 @@ from django.contrib.auth.models import Group
 from django.utils import timezone
 from rest_framework.test import APIClient
 from rest_framework import status
+from allauth.account.models import EmailAddress
 
 from attendees.occasions.models import Meet, Assembly, Character, Gathering, Attendance
 from attendees.persons.models import Category, Attendee, Attending, AttendingMeet
@@ -44,6 +45,14 @@ class TestIntegration:
         self.user.organization = self.organization
         self.user.groups.add(self.group)
         self.user.save()
+
+        # Verify Email for Allauth
+        EmailAddress.objects.create(
+            user=self.user,
+            email="testadmin@example.com",
+            verified=True,
+            primary=True
+        )
 
         # Setup Attendee for the User
         self.user_attendee = Attendee.objects.create(
