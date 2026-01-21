@@ -41,6 +41,8 @@ WORKDIR ${APP_HOME}
 RUN apt-get update && apt-get install --no-install-recommends -y \
   # psycopg2 dependencies
   libpq-dev \
+  # Pillow dependencies (runtime)
+  libjpeg-dev zlib1g-dev \
   # Translations dependencies
   gettext curl vim wget python3-dateutil git less gdal-bin libpango-1.0-0 libpangoft2-1.0-0 \
   # cleaning up unused files
