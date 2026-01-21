@@ -31,5 +31,16 @@ jobs:
     - name: Build Stack
       run: docker compose -f local.yml build django postgres
 
+    - name: Run Stack
+      run: docker compose -f local.yml up -d
+
+    - name: Check Containers
+      run: docker compose -f local.yml ps
+
     - name: Run Tests
-      run: docker compose -f local.yml run --rm django pytest
+      # Using exec -T to disable pseudo-tty allocation which can cause issues in CI
+      run: docker compose -f local.yml exec -T django pytest
+
+    - name: Dump Docker Logs on Failure
+      if: failure()
+      run: docker compose -f local.yml logs
