@@ -2,6 +2,7 @@ from django.core.management.base import BaseCommand
 from attendees.persons.models import Attendee
 from attendees.persons.services.pco_service import PCOService
 
+
 class Command(BaseCommand):
     help = 'Sync attendees to Planning Center Online'
 

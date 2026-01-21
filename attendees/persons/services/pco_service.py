@@ -2,9 +2,9 @@ import requests
 import logging
 from django.conf import settings
 from attendees.persons.models import Attendee
-from attendees.whereabouts.models import Division
 
 logger = logging.getLogger(__name__)
+
 
 class PCOService:
     BASE_URL = "https://api.planningcenteronline.com/people/v2"
@@ -17,8 +17,8 @@ class PCOService:
             logger.warning("PCO credentials not found in settings (PCO_APP_ID, PCO_SECRET).")
 
         self.auth = (self.app_id, self.secret)
-        self.field_definitions = {} # Cache for field definitions: {'Name': id}
-        self.campuses = {} # Cache for campuses: {'Name': id}
+        self.field_definitions = {}  # Cache for field definitions: {'Name': id}
+        self.campuses = {}  # Cache for campuses: {'Name': id}
 
     def _request(self, method, endpoint, params=None, json=None):
         url = f"{self.BASE_URL}/{endpoint.lstrip('/')}"
@@ -106,7 +106,7 @@ class PCOService:
 
         romanized = attendee.infos.get('names', {}).get('romanization')
         if romanized:
-             self._update_field_data(pco_id, self.field_definitions['Romanized Name'], romanized)
+            self._update_field_data(pco_id, self.field_definitions['Romanized Name'], romanized)
 
     def _find_person_id(self, attendee):
         email = attendee.infos.get('contacts', {}).get('email1')
@@ -133,7 +133,7 @@ class PCOService:
             attributes['nickname'] = attendee.infos['fixed']['nick_name']
 
         if attendee.actual_birthday:
-             attributes['birthdate'] = attendee.actual_birthday.isoformat()
+            attributes['birthdate'] = attendee.actual_birthday.isoformat()
 
         if attendee.gender:
             if attendee.gender == 'MALE':
@@ -165,10 +165,10 @@ class PCOService:
             "last_name": attendee.last_name,
         }
         if attendee.infos.get('fixed', {}).get('nick_name'):
-             attributes['nickname'] = attendee.infos['fixed']['nick_name']
+            attributes['nickname'] = attendee.infos['fixed']['nick_name']
 
         if attendee.actual_birthday:
-             attributes['birthdate'] = attendee.actual_birthday.isoformat()
+            attributes['birthdate'] = attendee.actual_birthday.isoformat()
 
         if attendee.gender:
             if attendee.gender == 'MALE':
@@ -186,7 +186,7 @@ class PCOService:
 
         campus_id = self._get_campus_id(attendee.division)
         if campus_id:
-             payload['data']['relationships'] = {
+            payload['data']['relationships'] = {
                 "primary_campus": {
                     "data": {"type": "Campus", "id": campus_id}
                 }
@@ -228,7 +228,7 @@ class PCOService:
 
     def _get_campus_id(self, division):
         if not self.campuses:
-             self._load_campuses()
+            self._load_campuses()
 
         if division.infos and 'pco_campus_id' in division.infos:
             return str(division.infos['pco_campus_id'])
@@ -236,7 +236,11 @@ class PCOService:
         return self.campuses.get(division.display_name)
 
     def _update_field_data(self, person_id, field_def_id, value):
-        response = self._request("GET", f"people/{person_id}/field_data", params={"where[field_definition_id]": field_def_id})
+        response = self._request(
+            "GET",
+            f"people/{person_id}/field_data",
+            params={"where[field_definition_id]": field_def_id}
+        )
 
         if response['data']:
             datum_id = response['data'][0]['id']
