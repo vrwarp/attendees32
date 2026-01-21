@@ -11,6 +11,7 @@ from attendees.occasions.models import Meet, Assembly, Character, Gathering, Att
 from attendees.persons.models import Category, Attendee, Attending, AttendingMeet
 from attendees.whereabouts.models import Division, Organization
 
+
 @pytest.mark.django_db
 class TestIntegration:
     def setup_method(self):
@@ -18,7 +19,9 @@ class TestIntegration:
         self.user_model = get_user_model()
 
         # Setup Organization and Hierarchy
-        self.organization = Organization.objects.create(display_name="Test Org", slug="test-org")
+        self.organization = Organization.objects.create(
+            display_name="Test Org", slug="test-org"
+        )
         self.group = Group.objects.create(name="Test Group")
         self.organization.infos = {"groups_see_all_meets_attendees": ["Test Group"]}
         self.organization.save()
@@ -26,7 +29,7 @@ class TestIntegration:
         self.division = Division.objects.create(
             display_name="Test Division",
             slug="test-division",
-            organization=self.organization
+            organization=self.organization,
         )
         self.assembly = Assembly.objects.create(
             display_name="Test Assembly",
@@ -36,9 +39,7 @@ class TestIntegration:
 
         # Setup User
         self.user = self.user_model.objects.create_user(
-            username="testadmin",
-            email="testadmin@example.com",
-            password="password123"
+            username="testadmin", email="testadmin@example.com", password="password123"
         )
         self.user.organization = self.organization
         self.user.groups.add(self.group)
@@ -46,9 +47,7 @@ class TestIntegration:
 
         # Setup Attendee for the User
         self.user_attendee = Attendee.objects.create(
-            first_name="Admin",
-            last_name="User",
-            user=self.user
+            first_name="Admin", last_name="User", user=self.user
         )
 
         # Setup Meet
@@ -87,13 +86,14 @@ class TestIntegration:
         # URL pattern: api/user_assembly_meets
         # Note: We use hardcoded path because basenames in router are duplicated (e.g. 'meet'), making reverse() ambiguous.
         response = self.client.get("/occasions/api/user_assembly_meets/")
-        assert response.status_code == status.HTTP_200_OK, f"Response: {response.content}"
+        assert (
+            response.status_code == status.HTTP_200_OK
+        ), f"Response: {response.content}"
 
         # 3. Create an Attendance (Simulate joining)
         # We need an Attending record first
         attending = Attending.objects.create(
-            attendee=self.user_attendee,
-            category="normal"
+            attendee=self.user_attendee, category="normal"
         )
         AttendingMeet.objects.create(
             attending=attending,
@@ -119,8 +119,12 @@ class TestIntegration:
             "finish": (timezone.now() + timedelta(hours=2)).isoformat(),
         }
 
-        response = self.client.get("/occasions/api/coworker_organization_attendances/", params)
+        response = self.client.get(
+            "/occasions/api/coworker_organization_attendances/", params
+        )
 
-        assert response.status_code == status.HTTP_200_OK, f"Coworker API failed with {response.status_code}: {response.content}"
+        assert response.status_code == status.HTTP_200_OK, (
+            f"Coworker API failed with {response.status_code}: {response.content}"
+        )
         assert len(response.data) > 0, "No attendance found"
-        assert response.data[0]['id'] == attendance.id
+        assert response.data[0]["id"] == attendance.id

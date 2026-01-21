@@ -12,7 +12,10 @@ RUN apt-get update && apt-get install --no-install-recommends -y \
   # dependencies for building Python packages
   build-essential \
   # psycopg2 dependencies
-  libpq-dev curl vim wget python3-dateutil git less gdal-bin libpango-1.0-0 libpangoft2-1.0-0
+  libpq-dev \
+  # Pillow dependencies
+  libjpeg-dev zlib1g-dev \
+  curl vim wget python3-dateutil git less gdal-bin libpango-1.0-0 libpangoft2-1.0-0
 
 # Requirements are installed here to ensure they will be cached.
 COPY ./requirements .

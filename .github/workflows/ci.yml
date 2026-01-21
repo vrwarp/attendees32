@@ -15,9 +15,18 @@ jobs:
 
     - name: Create missing env files
       run: |
+        # Ensure directory exists
+        mkdir -p .envs/.local
+
+        # Create ignored env files to satisfy docker-compose
         touch .envs/.local/.mailgun.env
         echo "MAILGUN_API_KEY=fake" >> .envs/.local/.mailgun.env
         echo "MAILGUN_DOMAIN=fake" >> .envs/.local/.mailgun.env
+
+        # Note: .envs/.local/.django and .envs/.local/.postgres are tracked in git
+        # but if they were missing, we would need to create them here.
+        # Just in case, checking if they exist:
+        ls -la .envs/.local/
 
     - name: Build Stack
       run: docker compose -f local.yml build django postgres

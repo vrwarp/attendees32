@@ -1,5 +1,5 @@
 import pytest
-from datetime import datetime, timedelta, timezone
+from datetime import timedelta, timezone
 from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Group
 from attendees.occasions.models import Meet, Assembly, Character, Gathering, Attendance
@@ -8,13 +8,23 @@ from attendees.whereabouts.models import Division, Organization
 from attendees.occasions.services import AttendanceService
 from django.utils import timezone as django_timezone
 
+
 @pytest.mark.django_db
 class TestAttendanceService:
     def setup_method(self):
         self.group = Group.objects.create(name="Test Group")
-        self.organization = Organization.objects.create(display_name="Test Organization", slug="test-org")
-        self.division = Division.objects.create(display_name="Test Division", slug="test-division", organization=self.organization, audience_auth_group=self.group)
-        self.category = Category.objects.create(display_name="Test Category", type="test", display_order=1)
+        self.organization = Organization.objects.create(
+            display_name="Test Organization", slug="test-org"
+        )
+        self.division = Division.objects.create(
+            display_name="Test Division",
+            slug="test-division",
+            organization=self.organization,
+            audience_auth_group=self.group,
+        )
+        self.category = Category.objects.create(
+            display_name="Test Category", type="test", display_order=1
+        )
         self.assembly = Assembly.objects.create(
             display_name="Test Assembly",
             slug="test-assembly",
@@ -42,7 +52,11 @@ class TestAttendanceService:
             finish=self.finish,
             display_name="Test Meet",
             slug="test-meet",
-            infos={"info": "Test info", "url": "https://example.com", "attendance": {"key": "value"}},
+            infos={
+                "info": "Test info",
+                "url": "https://example.com",
+                "attendance": {"key": "value"},
+            },
             site_type=self.site_type,
             site_id=self.site_id,
         )
@@ -104,8 +118,12 @@ class TestAttendanceService:
 
         # Call batch_create
         # Dates should cover the gathering time
-        begin_str = (self.start - timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-        end_str = (self.finish + timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+        begin_str = (self.start - timedelta(minutes=1)).strftime(
+            "%Y-%m-%dT%H:%M:%S.%f%z"
+        )
+        end_str = (self.finish + timedelta(minutes=1)).strftime(
+            "%Y-%m-%dT%H:%M:%S.%f%z"
+        )
 
         results = AttendanceService.batch_create(
             begin=begin_str,
@@ -126,8 +144,12 @@ class TestAttendanceService:
 
     def test_batch_create_no_overlap(self):
         # Call batch_create with non-overlapping time
-        begin_str = (self.finish + timedelta(minutes=10)).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-        end_str = (self.finish + timedelta(minutes=60)).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+        begin_str = (self.finish + timedelta(minutes=10)).strftime(
+            "%Y-%m-%dT%H:%M:%S.%f%z"
+        )
+        end_str = (self.finish + timedelta(minutes=60)).strftime(
+            "%Y-%m-%dT%H:%M:%S.%f%z"
+        )
 
         results = AttendanceService.batch_create(
             begin=begin_str,
@@ -152,8 +174,12 @@ class TestAttendanceService:
         )
         assert Attendance.objects.count() == 1
 
-        begin_str = (self.start - timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
-        end_str = (self.finish + timedelta(minutes=1)).strftime("%Y-%m-%dT%H:%M:%S.%f%z")
+        begin_str = (self.start - timedelta(minutes=1)).strftime(
+            "%Y-%m-%dT%H:%M:%S.%f%z"
+        )
+        end_str = (self.finish + timedelta(minutes=1)).strftime(
+            "%Y-%m-%dT%H:%M:%S.%f%z"
+        )
 
         results = AttendanceService.batch_create(
             begin=begin_str,
