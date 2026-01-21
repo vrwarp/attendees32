@@ -90,52 +90,52 @@ class TestIntegration:
         # API root usually 200 or 403 or 404, but not 500
         assert response.status_code != 500, f"Health check failed with 500: {response.content}"
 
-    # def test_full_attendance_flow(self):
-    #     # 1. Login using force_login to bypass auth complexity
-    #     self.client.force_login(self.user)
-    #
-    #     # 2. Check if we can see the meet
-    #     # URL pattern: api/user_assembly_meets
-    #     response = self.client.get("/occasions/api/user_assembly_meets/")
-    #     assert (
-    #         response.status_code == status.HTTP_200_OK
-    #     ), f"Response: {response.content}"
+    def test_full_attendance_flow(self):
+        # 1. Login using force_login to bypass auth complexity
+        self.client.force_login(self.user)
 
-    #     # 3. Create an Attendance (Simulate joining)
-    #     # We need an Attending record first
-    #     attending = Attending.objects.create(
-    #         attendee=self.user_attendee, category="normal"
-    #     )
-    #     AttendingMeet.objects.create(
-    #         attending=attending,
-    #         meet=self.meet,
-    #         character=self.character,
-    #     )
+        # 2. Check if we can see the meet
+        # URL pattern: api/user_assembly_meets
+        response = self.client.get("/occasions/api/user_assembly_meets/")
+        assert (
+            response.status_code == status.HTTP_200_OK
+        ), f"Response: {response.content}"
 
-    #     attendance = Attendance.objects.create(
-    #         gathering=self.gathering,
-    #         attending=attending,
-    #         character=self.character,
-    #         category=Category.objects.get_or_create(display_name="scheduled")[0],
-    #         start=self.gathering.start,
-    #         finish=self.gathering.finish,
-    #     )
+        # 3. Create an Attendance (Simulate joining)
+        # We need an Attending record first
+        attending = Attending.objects.create(
+            attendee=self.user_attendee, category="normal"
+        )
+        AttendingMeet.objects.create(
+            attending=attending,
+            meet=self.meet,
+            character=self.character,
+        )
 
-    #     # 4. Verify Attendance is listed
-    #     # URL pattern: api/coworker_organization_attendances
+        attendance = Attendance.objects.create(
+            gathering=self.gathering,
+            attending=attending,
+            character=self.character,
+            category=Category.objects.get_or_create(display_name="scheduled")[0],
+            start=self.gathering.start,
+            finish=self.gathering.finish,
+        )
 
-    #     params = {
-    #         "meet_slugs": ["test-meet"],
-    #         "start": (timezone.now() - timedelta(hours=1)).isoformat(),
-    #         "finish": (timezone.now() + timedelta(hours=2)).isoformat(),
-    #     }
+        # 4. Verify Attendance is listed
+        # URL pattern: api/coworker_organization_attendances
 
-    #     response = self.client.get(
-    #         "/occasions/api/coworker_organization_attendances/", params
-    #     )
+        params = {
+            "meet_slugs": ["test-meet"],
+            "start": (timezone.now() - timedelta(hours=1)).isoformat(),
+            "finish": (timezone.now() + timedelta(hours=2)).isoformat(),
+        }
 
-    #     assert response.status_code == status.HTTP_200_OK, (
-    #         f"Coworker API failed with {response.status_code}: {response.content}"
-    #     )
-    #     assert len(response.data) > 0, "No attendance found"
-    #     assert response.data[0]["id"] == attendance.id
+        response = self.client.get(
+            "/occasions/api/coworker_organization_attendances/", params
+        )
+
+        assert response.status_code == status.HTTP_200_OK, (
+            f"Coworker API failed with {response.status_code}: {response.content}"
+        )
+        assert len(response.data) > 0, "No attendance found"
+        assert response.data[0]["id"] == attendance.id
