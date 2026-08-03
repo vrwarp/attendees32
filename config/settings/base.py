@@ -96,6 +96,7 @@ LOCAL_APPS = [
     "attendees.whereabouts.apps.WhereaboutsConfig",
     "attendees.persons.apps.PersonsConfig",
     "attendees.occasions.apps.OccasionsConfig",
+    "attendees.pcosync.apps.PcosyncConfig",
 ]
 # https://docs.djangoproject.com/en/dev/ref/settings/#installed-apps
 INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
