@@ -144,3 +144,34 @@ test.describe('somebody reads the numbers', () => {
     );
   });
 });
+
+test.describe('somebody takes the data away with them', () => {
+  test('the roster exports to a spreadsheet the browser actually receives', async ({
+    page,
+    signIn,
+  }) => {
+    // Export is how a coworker gets a list into the hands of somebody who does
+    // not have a login — a seating plan, a phone tree, a printout for a
+    // meeting. It is generated in the browser from the rows already fetched,
+    // so nothing server-side can tell you whether a file comes out at all.
+    await signIn('golden_data_organizer');
+    await visit(page, '/persons/attendees/');
+    await waitForGridRows(page, 'div.dataAttendees');
+
+    const download = page.waitForEvent('download', { timeout: 30_000 });
+    // The toolbar button is labelled by its hint; with
+    // allowExportSelectedData on it opens a menu rather than exporting at once.
+    await page
+      .locator('div.dataAttendees')
+      .getByRole('button', { name: 'export-to' })
+      .first()
+      .click();
+    const exportAll = page.locator('.dx-menu-item, .dx-item', {
+      hasText: /Export all data/i,
+    });
+    if (await exportAll.count()) await exportAll.first().click();
+
+    const file = await download;
+    expect(file.suggestedFilename()).toMatch(/\.xlsx$/);
+  });
+});

@@ -188,6 +188,7 @@ to Grace Chen.
 | `test_permissions.py` | SpyGuard, privileged pages, confidential notes |
 | `test_tally_integration.py` | the token-authenticated server-to-server sweep |
 | `test_pcosync_api.py` | the Planning Center surface: who may read the report, settle a difference or match an unlinked person |
+| `test_registrations_and_admin.py` | retreat registrations written as well as read, the Django admin, and the pghistory trail behind it |
 
 The congregation is built once per session and committed, because rebuilding it
 costs about a minute. `pytest_collection_modifyitems` in `attendees/conftest.py`
@@ -218,7 +219,10 @@ pages in **Chromium and WebKit** and waits for the grids to have rows in them.
 | `e2e/attendance.spec.ts` | the Sunday-morning register, including the signature pad |
 | `e2e/person.spec.ts` | the record-keeping a coworker does week to week |
 | `e2e/scheduling.spec.ts` | the diary: what is scheduled, the batch button's guards, the calendar |
-| `e2e/reports.spec.ts` | the participation list, the envelopes, and the statistics |
+| `e2e/reports.spec.ts` | the participation list, the envelopes, the statistics, and the spreadsheet export |
+| `e2e/household.spec.ts` | families, roles, wards and addresses — what the guards are built on |
+| `e2e/enrolment.spec.ts` | who is enrolled in what, ending it, and the church-wide list |
+| `e2e/sync.spec.ts` | narrowing the Planning Center report, and matching an unknown person by hand |
 
 The journeys are the part that catches seams, where a save succeeds but the
 thing it was supposed to change does not:
@@ -236,9 +240,10 @@ They run in path order after `datagrids.spec.ts`, so the absolute roster counts
 are asserted before anything here adds a row. Each journey either writes to a
 household nobody else asserts on — the Fengs — or puts back what it changed.
 
-**Two journeys are one-shot**, because the things they do can only be done once:
-settling the Planning Center conflict (the UI has no unresolve) and granting
-somebody membership (the button withdraws itself afterwards). CI builds the
+**Three journeys are one-shot**, because the things they do can only be done
+once: settling the Planning Center conflict (the UI has no unresolve), matching
+the unlinked Planning Center person (he is not unmatched afterwards), and
+granting somebody membership (the button withdraws itself). CI builds the
 congregation fresh for every job, so this never shows there; a second *local*
 run of the suite wants `manage.py load_golden_data --force` first.
 
