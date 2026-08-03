@@ -133,10 +133,7 @@ test.describe('a coworker writes a note', () => {
     await notes.scrollIntoViewIfNeeded();
     await notes.locator('.dx-datagrid-addrow-button').first().click();
 
-    // The grid edits in a popup, and a note needs a category before it means
-    // anything — an untyped note is how confidential things end up public.
-    // Scoped to the grid's own edit popup: the category dropdown is an overlay
-    // of its own and stays in the document behind it.
+    // The grid edits in a popup.
     const editor = page.locator('.dx-datagrid-edit-popup:visible');
     await expect(editor).toBeVisible();
 
@@ -144,15 +141,27 @@ test.describe('a coworker writes a note', () => {
       editor.locator('.dx-field-item', {
         has: page.locator('.dx-field-item-label-text', { hasText: label }),
       });
-    await field('Category').locator('.dx-texteditor-input').first().click();
-    // Scoped to the dropdown's own overlay: the edit popup is a visible
-    // overlay too, and its modal shader swallows a click aimed through it.
-    const options = page
-      .locator('.dx-dropdownlist-popup-wrapper:visible, .dx-dropdowneditor-overlay:visible')
-      .locator('.dx-list-item');
-    await expect(options.first()).toBeVisible();
-    await options.first().click();
     await field('Title').locator('.dx-texteditor-input').first().fill(written);
+
+    // A note with no category is refused, and the popup stays open. Worth
+    // pinning: the category is what decides who may read it, so an
+    // uncategorised note is how a confidential one ends up public.
+    await editor.getByRole('button', { name: /^save$/i }).first().click();
+    await expect(editor).toBeVisible();
+
+    // Pick a category from the list the editor itself says it owns. DevExtreme
+    // renders that popup under a different class depending on how many choices
+    // there are, and its options arrive asynchronously — so the input's own
+    // aria-owns is the only handle that is both correct and stable.
+    const categoryInput = field('Category').locator('.dx-texteditor-input').first();
+    await categoryInput.click();
+    const listId = await categoryInput.getAttribute('aria-owns');
+    expect(listId, 'the category editor named no list to choose from').toBeTruthy();
+
+    const choices = page.locator(`#${listId} .dx-list-item`);
+    await expect(choices.first()).toBeVisible();
+    await choices.first().click();
+    await expect(categoryInput).not.toHaveValue('');
 
     await editor.getByRole('button', { name: /^save$/i }).first().click();
     await expect(editor).toBeHidden();

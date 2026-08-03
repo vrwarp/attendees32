@@ -109,11 +109,15 @@ test.describe('the printed pages', () => {
       '/persons/directory_report/?divisionSelector=1&divisionSelector=2' +
         '&divisionSelector=3&directoryHeader=CFCCH',
     );
+    // Paged.js lays the document out one page at a time, so the first page
+    // appearing is the start of the work rather than the end of it.
     await page.waitForSelector('.pagedjs_pages .pagedjs_page');
-    expect(
-      await page.locator('.pagedjs_page').count(),
-      '350 people do not fit on one printed page',
-    ).toBeGreaterThanOrEqual(2);
+    await expect
+      .poll(async () => page.locator('.pagedjs_page').count(), {
+        message: '350 people do not fit on one printed page',
+        timeout: 60_000,
+      })
+      .toBeGreaterThanOrEqual(2);
     await expect(page.locator('.pagedjs_pages')).toContainText('CFCCH');
   });
 
