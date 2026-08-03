@@ -1,6 +1,5 @@
 import time
 
-from django.contrib.auth.mixins import LoginRequiredMixin
 from django.db.models.aggregates import Count
 from django.db.models import Q
 from rest_framework import viewsets
@@ -14,7 +13,7 @@ from attendees.persons.serializers import AttendingMeetEtcSerializer
 from attendees.persons.services import AttendingMeetService
 
 
-class ApiOrganizationMeetCharacterAttendingMeetsViewSet(LoginRequiredMixin, viewsets.ModelViewSet):
+class ApiOrganizationMeetCharacterAttendingMeetsViewSet(viewsets.ModelViewSet):
     """
     API endpoint that allows Team to be viewed or edited.
     Todo 20220514: replace LoginRequiredMixin with SpyGuard and needed seeds json
