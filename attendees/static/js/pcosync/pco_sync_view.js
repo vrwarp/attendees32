@@ -32,9 +32,13 @@
   var pollStartedAt = null;
   var currentRunId = null;
 
+  /*
+   * From the hidden input, not the cookie: CSRF_COOKIE_HTTPONLY is on, so
+   * document.cookie never carries the token and every write would be refused.
+   */
   function csrfToken() {
-    var match = document.cookie.match(/(^|;)\s*csrftoken=([^;]+)/);
-    return match ? match[2] : "";
+    var input = document.querySelector('input[name="csrfmiddlewaretoken"]');
+    return input ? input.value : "";
   }
 
   function request(url, options) {
