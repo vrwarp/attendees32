@@ -415,13 +415,26 @@ def _write_attr(name):
 
 
 def _gender_from_pco(view):
-    raw = trimmed(view.attributes.get("gender"))
-    if not raw:
+    return normalise_gender(view.attributes.get("gender"))
+
+
+def normalise_gender(raw):
+    """Fold whatever is in the column onto MALE / FEMALE / UNSPECIFIED.
+
+    ``GenderEnum.choices()`` yields ``(name, value)``, so Django stores the
+    *name* and the seed data holds ``"MALE"``. But the model's default is the
+    enum member itself and some older code writes ``GenderEnum.MALE.value``, so
+    a real database contains ``"male"`` too. Reading only the canonical spelling
+    would make every such attendee disagree with Planning Center about a field
+    nobody had touched.
+    """
+    text = trimmed(raw)
+    if not text:
         return GENDER_UNSPECIFIED
-    initial = raw[0].upper()
-    if initial == "M":
+    text = text.rsplit(".", 1)[-1].upper()  # also survives "GenderEnum.MALE"
+    if text.startswith("M"):
         return GENDER_MALE
-    if initial == "F":
+    if text.startswith("F"):
         return GENDER_FEMALE
     return GENDER_UNSPECIFIED
 
@@ -433,17 +446,24 @@ def _gender_compare(value):
     having said so. Comparing it as a value would make the first run report a
     gender conflict for every person in the organization.
     """
-    return None if value in (None, GENDER_UNSPECIFIED) else value
+    normalised = normalise_gender(value)
+    return None if normalised == GENDER_UNSPECIFIED else normalised
 
 
 def _write_gender_local(view, value):
-    view.attendee.gender = value or GENDER_UNSPECIFIED
+    # Store the canonical name, which is what GenderEnum.choices() declares and
+    # what the seed data holds.
+    view.attendee.gender = normalise_gender(value)
     view.dirty = True
 
 
 def _write_gender_pco(batch, value):
-    batch.set_attribute("gender", {GENDER_MALE: "Male",
-                                   GENDER_FEMALE: "Female"}.get(value))
+    upstream = {GENDER_MALE: "Male",
+                GENDER_FEMALE: "Female"}.get(normalise_gender(value))
+    # Never send a null. "We do not know" is not a fact worth pushing, and
+    # sending it would clear whatever Planning Center had.
+    if upstream:
+        batch.set_attribute("gender", upstream)
 
 
 def _birthday_from_local(view):
