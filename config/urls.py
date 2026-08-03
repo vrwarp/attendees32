@@ -59,6 +59,13 @@ urlpatterns = [
             namespace="persons",
         ),
     ),
+    path(
+        "pcosync/",
+        include(
+            "attendees.pcosync.urls",
+            namespace="pcosync",
+        ),
+    ),
     path("api/", include("config.api_router")),  # API base url
     path("auth-token/", obtain_auth_token),      # DRF auth token
     path(

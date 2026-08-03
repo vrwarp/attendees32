@@ -1,0 +1,132 @@
+{% extends "base.html" %}
+{% load static i18n %}
+{% block title %}
+  Planning Center Sync
+{% endblock title %}
+
+{% block extra_head %}
+  <script defer
+          type="text/javascript"
+          src="{% static 'js/pcosync/pco_sync_view.js' %}">
+  </script>
+{% endblock extra_head %}
+
+{% block content %}
+<div class="container-fluid"
+     id="pcosync"
+     data-runs-endpoint="{{ pcosync_runs_endpoint }}"
+     data-divergences-endpoint="{{ pcosync_divergences_endpoint }}"
+     data-attendee-search-endpoint="{{ pcosync_attendee_search_endpoint }}"
+     data-can-write="{% if user_is_data_admin %}1{% else %}0{% endif %}">
+
+  <h3 class="mt-3">Planning Center Sync 同步</h3>
+
+  {% if pcosync_blocking_reason %}
+    <div class="alert alert-secondary" role="alert">
+      This organization cannot sync yet: {{ pcosync_blocking_reason }}.
+      Settings live in the organization's <code>infos.settings.pcomirror</code>.
+    </div>
+  {% else %}
+    {# The louder these are, the better. Somebody reading a report of six #}
+    {# hundred differences needs to know at a glance whether anything moved. #}
+    {% if pcosync_config.dry_run %}
+      <div class="alert alert-info" role="alert">
+        <strong>Dry run.</strong> This sync reports what it would do and
+        writes nothing, to either system.
+      </div>
+    {% elif not pcosync_config.push_enabled %}
+      <div class="alert alert-warning" role="alert">
+        <strong>Pull only.</strong> Changes are applied to attendees32.
+        Nothing is written back to Planning Center.
+      </div>
+    {% else %}
+      <div class="alert alert-danger" role="alert">
+        <strong>Two-way sync is on.</strong> This run may write to Planning
+        Center, up to {{ pcosync_config.max_writes_per_run }} changes.
+      </div>
+    {% endif %}
+  {% endif %}
+
+  <div class="row">
+    <div class="col-md-8">
+      {% if user_is_data_admin and not pcosync_blocking_reason %}
+        <div class="card mb-3">
+          <div class="card-body">
+            <label for="pcosync-mode" class="form-label">Mode</label>
+            <select id="pcosync-mode" class="form-select mb-2">
+              <option value="dry_run">Dry run &mdash; plan only, write nothing</option>
+              <option value="pull_only">Pull &mdash; apply to attendees32 only</option>
+              <option value="full">Full &mdash; apply both ways</option>
+              <option value="stamp_uuids">Stamp UUIDs &mdash; write attendees_uuid only</option>
+            </select>
+            <button id="pcosync-start" class="btn btn-primary" type="button">
+              Sync now
+            </button>
+            <button id="pcosync-cancel" class="btn btn-outline-secondary d-none"
+                    type="button">Stop</button>
+            <div class="progress mt-3 d-none" id="pcosync-progress-wrap">
+              <div id="pcosync-progress"
+                   class="progress-bar progress-bar-striped progress-bar-animated"
+                   role="progressbar" style="width: 0%"></div>
+            </div>
+            <div id="pcosync-status" class="mt-2 small text-muted"></div>
+            <pre id="pcosync-log"
+                 class="small bg-light p-2 mt-2 d-none"
+                 style="max-height: 12rem; overflow: auto;"></pre>
+          </div>
+        </div>
+      {% endif %}
+
+      <div class="d-flex align-items-center mb-2">
+        <h5 class="mb-0 me-3">Differences</h5>
+        <input id="pcosync-search" class="form-control form-control-sm w-auto me-2"
+               type="search" placeholder="filter by name or field">
+        <select id="pcosync-kind" class="form-select form-select-sm w-auto">
+          <option value="">all kinds</option>
+          <option value="field_conflict">conflicts</option>
+          <option value="would_write">would write</option>
+          <option value="unlinked_person">unmatched people</option>
+          <option value="household_conflict">households</option>
+          <option value="household_membership_removed">household removals</option>
+          <option value="write_refused">refused writes</option>
+          <option value="write_indeterminate">indeterminate writes</option>
+        </select>
+      </div>
+      <div id="pcosync-divergences" class="table-responsive">
+        <p class="text-muted">Loading&hellip;</p>
+      </div>
+    </div>
+
+    <div class="col-md-4">
+      <h5>Open by kind</h5>
+      <table class="table table-sm">
+        <tbody>
+          {% for row in pcosync_open_counts %}
+            <tr>
+              <td>{{ row.kind }}</td>
+              <td class="text-end">{{ row.total }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="text-muted">nothing open</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+
+      <h5 class="mt-4">Recent runs</h5>
+      <table class="table table-sm">
+        <tbody>
+          {% for run in pcosync_runs %}
+            <tr>
+              <td>{{ run.created|date:"M j H:i" }}</td>
+              <td>{{ run.mode }}</td>
+              <td>{{ run.state }}</td>
+            </tr>
+          {% empty %}
+            <tr><td class="text-muted">never run</td></tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+{% endblock content %}
