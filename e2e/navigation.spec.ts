@@ -134,3 +134,45 @@ test.describe('the printed pages', () => {
     await expect(page.locator('body')).toBeVisible();
   });
 });
+
+
+test.describe('the Planning Center sync page', () => {
+  test('a data admin sees the differences, and why no run can start', async ({
+    page,
+    signIn,
+  }) => {
+    await signIn('golden_data_organizer');
+    await visit(page, '/pcosync/sync/');
+    await expect(page.locator('#pcosync')).toBeVisible();
+
+    // CFCCH has no Planning Center credentials, so there is nothing to press —
+    // a half-finished setup should say so rather than offer a button that
+    // writes into somebody's live church database.
+    await expect(page.locator('body')).toContainText('cannot sync yet');
+    await expect(page.locator('#pcosync-start')).toHaveCount(0);
+
+    // The report is readable regardless: the golden dataset leaves a finished
+    // dry run and the questions it raised.
+    await expect(page.locator('#pcosync-divergences')).toContainText(
+      /Chinese given name|household|Kirby/,
+    );
+    await expect(page.locator('body')).toContainText('Recent runs');
+  });
+
+  test('an ordinary member cannot reach it at all', async ({ page, signIn }) => {
+    // The page is granted to the organization's data_admins group by
+    // pcosync's own migration; everybody else meets RouteGuard.
+    await signIn('golden_member');
+    await visit(page, '/pcosync/sync/');
+    await expect(page.locator('body')).toContainText(
+      'does not have permissions to visit such route',
+    );
+  });
+
+  test('the API key never reaches the page', async ({ page, signIn }) => {
+    await signIn('golden_data_organizer');
+    await visit(page, '/pcosync/sync/');
+    const html = await page.content();
+    expect(html).not.toMatch(/api_key["\s:=]+[A-Za-z0-9]{8}/);
+  });
+});

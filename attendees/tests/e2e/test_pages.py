@@ -101,6 +101,9 @@ PAGES = (
      f"/occasions/{DIVISION_SLUGS[3]}/{AssemblySlugs.JUNIOR_REGULAR}"
      "/datagrid_assembly_all_attendances/",
      frozenset({CHILDREN_COWORKER, CHILDREN_ORGANIZER, DATA_ORGANIZER})),
+    # Seeded by pcosync's 0002_seed_menu, which grants the page to each
+    # organization's configured data_admins — for CFCCH, data_organizer alone.
+    ("pco_sync_view", "/pcosync/sync/", frozenset({DATA_ORGANIZER})),
 )
 
 #: Pages behind ``RouteAndSpyGuard``: refusal is Django's 403 page, not the
@@ -271,6 +274,23 @@ class TestPagesRender:
     def test_the_location_timeline_renders(self, golden, login):
         client = login("golden_data_organizer")
         assert client.get("/occasions/location_timeline/").status_code == 200
+
+    def test_the_sync_page_shows_what_needs_settling(self, golden, login):
+        client = login("golden_data_organizer")
+        response = client.get("/pcosync/sync/")
+        assert response.status_code == 200
+        assert response.context["user_is_data_admin"] is True
+        # Unconfigured, so the button explains itself rather than being live.
+        assert response.context["pcosync_blocking_reason"]
+        # The API key must never reach a template.
+        assert "api_key" not in str(response.context["pcosync_config"]).lower() or (
+            not response.context["pcosync_config"].get("api_key")
+        )
+        assert [run.id for run in response.context["pcosync_runs"]] == [
+            golden.pco_run.id
+        ]
+        kinds = {row["kind"] for row in response.context["pcosync_open_counts"]}
+        assert "field_conflict" in kinds
 
     def test_a_parent_can_open_their_family_attendances(self, golden, login):
         client = login("golden_member")

@@ -214,6 +214,9 @@ class GoldenDataset:
     teams: Dict[str, Team] = field(default_factory=dict)
     gatherings: List[Gathering] = field(default_factory=list)
     registrations: Dict[str, Registration] = field(default_factory=dict)
+    pco_run: object = None
+    pco_links: Dict[str, object] = field(default_factory=dict)
+    pco_divergences: Dict[str, object] = field(default_factory=dict)
     counts: Dict[str, int] = field(default_factory=dict)
 
     def attendee(self, key: str) -> Attendee:
@@ -334,6 +337,7 @@ class GoldenBuilder:
         self.build_retreat()
         self.build_history()
         self.build_users()
+        self.build_pco_sync()
         self.summarise()
         return self.data
 
@@ -1143,7 +1147,153 @@ class GoldenBuilder:
                 attendee.save()
             self.data.users[persona.username] = user
 
-    # -- 11. the manifest ---------------------------------------------------
+    # -- 11. the Planning Center mirror ------------------------------------
+    def build_pco_sync(self):
+        """One finished sync, and the questions it left behind.
+
+        The pcosync app reports what it and Planning Center disagree about and
+        waits for a person to settle each one. Its own tests prove the reporting
+        logic on constructed rows; what the golden dataset owes it is a page and
+        an API with realistic material in them — divergences that point at
+        people who exist, of several kinds and severities, some already settled.
+
+        Shapes are taken from the pcomirror divergence reports the roster itself
+        was modelled on: a field the two sides spell differently, a Planning
+        Center person nobody has matched, a household whose membership moved.
+        """
+        from attendees.pcosync.models import (
+            PcoDivergence,
+            PcoPersonLink,
+            PcoSyncRun,
+        )
+
+        run = PcoSyncRun.objects.create(
+            id=golden_uuid("pco-run", "last-dry-run"),
+            organization=self.organization,
+            started_by=self.data.users["golden_data_organizer"],
+            mode=PcoSyncRun.DRY_RUN,
+            state=PcoSyncRun.SUCCEEDED,
+        )
+        self.data.pco_run = run
+
+        # A few people the mirror has matched, so the report is not all
+        # unmatched noise.
+        linked = {}
+        for index, key in enumerate(
+            ("chen_zhiming", "lin_shufen", "chen_grace", "wong_wilson", "xu_kevin")
+        ):
+            attendee = self.data.attendees[key]
+            linked[key] = PcoPersonLink.objects.create(
+                id=golden_uuid("pco-link", key),
+                organization=self.organization,
+                attendee=attendee,
+                pco_person_id=f"1416{index:05d}",
+                state=PcoPersonLink.LIVE,
+                baseline={
+                    "first_name": attendee.first_name,
+                    "last_name": attendee.last_name,
+                },
+            )
+        self.data.pco_links = linked
+
+        now = Utility.now_with_timezone()
+
+        def divergence(key, **fields):
+            pointer = fields["pointer"]
+            return PcoDivergence.objects.create(
+                id=golden_uuid("pco-divergence", key),
+                organization=self.organization,
+                run=run,
+                dedupe_key=PcoDivergence.build_dedupe_key(
+                    pointer,
+                    fields.get("pco_person_id"),
+                    fields.get("attendee") and fields["attendee"].id,
+                ),
+                first_seen_at=now,
+                last_seen_at=now,
+                **fields,
+            )
+
+        # The one a data admin is meant to settle: the two systems spell the
+        # same person's Chinese given name differently.
+        self.data.pco_divergences = {
+            "field_conflict": divergence(
+                "chen_zhiming-first_name2",
+                kind=PcoDivergence.FIELD_CONFLICT,
+                pointer="$.person.chinese_first_name",
+                attendee=self.data.attendees["chen_zhiming"],
+                link=linked["chen_zhiming"],
+                pco_person_id=linked["chen_zhiming"].pco_person_id,
+                label="Chinese given name",
+                local_value="志明",
+                pco_value="志銘",
+                baseline_value="志明",
+                severity=PcoDivergence.WARNING,
+                note="attendees32 and Planning Center hold different characters",
+            ),
+            # Nobody has said who this Planning Center person is. The manual
+            # link is the only way it gets answered.
+            "unlinked_person": divergence(
+                "unmatched-199003050",
+                kind=PcoDivergence.UNLINKED_PERSON,
+                pointer="$.person",
+                pco_person_id="199003050",
+                label="Kirby Allen",
+                pco_value={"first_name": "Kirby", "last_name": "Allen"},
+                severity=PcoDivergence.ERROR,
+                suggestion={
+                    "candidates": [
+                        {
+                            "attendee_id": str(self.data.attendees["chen_grace"].id),
+                            "score": 0.42,
+                        }
+                    ]
+                },
+                note="no attendee matches; a person has to choose",
+            ),
+            "household_conflict": divergence(
+                "wong-household",
+                kind=PcoDivergence.HOUSEHOLD_CONFLICT,
+                pointer="$.household.members",
+                attendee=self.data.attendees["wong_wilson"],
+                link=linked["wong_wilson"],
+                pco_person_id=linked["wong_wilson"].pco_person_id,
+                label="Wong household",
+                local_value=["Wilson", "Rachel", "Marcus", "Chloe", "Naomi"],
+                pco_value=["Wilson", "Rachel", "Marcus"],
+                severity=PcoDivergence.WARNING,
+            ),
+            "info_only": divergence(
+                "xu_kevin-grade",
+                kind=PcoDivergence.WOULD_WRITE,
+                pointer="$.person.grade",
+                attendee=self.data.attendees["xu_kevin"],
+                link=linked["xu_kevin"],
+                pco_person_id=linked["xu_kevin"].pco_person_id,
+                label="grade",
+                local_value=12,
+                pco_value=None,
+                severity=PcoDivergence.INFO,
+            ),
+            # One already settled, so "open" is a filter that does something.
+            "already_settled": divergence(
+                "lin_shufen-last_name",
+                kind=PcoDivergence.FIELD_CONFLICT,
+                pointer="$.person.last_name",
+                attendee=self.data.attendees["lin_shufen"],
+                link=linked["lin_shufen"],
+                pco_person_id=linked["lin_shufen"].pco_person_id,
+                label="surname",
+                local_value="Lin",
+                pco_value="Chen",
+                severity=PcoDivergence.WARNING,
+                resolution=PcoDivergence.KEEP_LOCAL,
+                resolved_by=self.data.users["golden_data_organizer"],
+                resolved_at=now,
+            ),
+        }
+
+    # -- 12. the manifest ---------------------------------------------------
     def summarise(self):
         organization_attendees = Attendee.objects.filter(
             division__organization=self.organization
@@ -1171,7 +1321,36 @@ class GoldenBuilder:
             "attendances": Attendance.objects.count(),
             "places": Place.objects.filter(organization=self.organization).count(),
             "users": len(self.data.users),
+            "pco_links": len(self.data.pco_links),
+            "pco_divergences": len(self.data.pco_divergences),
         }
+
+
+def reseed_data_migrations():
+    """Re-apply the data migrations the flush emptied.
+
+    Some rows are seeded by ``RunPython`` rather than by
+    ``fixtures/db_seed.json`` — the Menu row that makes the Planning Center
+    Sync page reachable is one, and ``RouteGuard`` answers a missing Menu row
+    with a bare 403 for everybody. Those migrations ran when the test database
+    was created and their rows went out with the flush, so they have to be run
+    again. Calling the migration's own function keeps this from drifting into a
+    second, subtly different copy of what it seeds.
+    """
+    from importlib import import_module
+
+    from django.apps import apps as app_registry
+
+    from attendees.users.models import Menu
+
+    # Only when absent: the seed functions are written for a one-time forward
+    # migration and happily insert a second copy, which would put four
+    # identical links in the navbar.
+    for module_path, sentinel_url_name in (
+        ("attendees.pcosync.migrations.0002_seed_menu", "pco_sync_view"),
+    ):
+        if not Menu.objects.filter(url_name=sentinel_url_name).exists():
+            import_module(module_path).seed(app_registry, None)
 
 
 #: ``fixtures/db_seed.json`` links its nineteen demo attendees to two users by
@@ -1192,6 +1371,11 @@ def purge_seed_people():
 
     attendee_ct = ContentType.objects.get_for_model(Attendee)
     folk_ct = ContentType.objects.get_for_model(Folk)
+    from attendees.pcosync.models import PcoDivergence, PcoPersonLink, PcoSyncRun
+
+    PcoDivergence.all_objects.all().delete()
+    PcoPersonLink.all_objects.all().delete()
+    PcoSyncRun.objects.all().delete()
     Attendance.all_objects.all().delete()
     # Gatherings too, so the eight weeks of history are exactly the ones this
     # builder wrote — and so a second run does not collide with the first on
@@ -1229,5 +1413,6 @@ def build_golden_dataset(load_seed: bool = False) -> GoldenDataset:
         # (genres, display_order); the site-picker API reads them by raw SQL
         # and they are populated by a management command, not a migration.
         call_command("update_content_types", verbosity=0)
+        reseed_data_migrations()
     purge_seed_people()
     return GoldenBuilder().run()
