@@ -15,7 +15,6 @@ from django.db import transaction
 from django.utils import timezone
 from django.utils.dateparse import parse_datetime
 
-from attendees.persons.models import Attendee, Past
 from attendees.pcosync import mapping, merge
 from attendees.pcosync.client import (
     PcoApiError,
@@ -30,6 +29,7 @@ from attendees.pcosync.services import identity, statuses
 from attendees.pcosync.services.config import config_for
 from attendees.pcosync.services.divergences import DivergenceRecorder
 from attendees.pcosync.services.households import HouseholdSync
+from attendees.persons.models import Attendee, Past
 
 logger = logging.getLogger(__name__)
 
@@ -672,7 +672,8 @@ def status_flags_for_many(attendee_ids, config):
     that is the difference between a page load and a coffee break.
     """
     from attendees.pcosync.services.statuses import (
-        attendee_content_type, flags_from_category_ids,
+        attendee_content_type,
+        flags_from_category_ids,
     )
 
     rows = Past.objects.filter(

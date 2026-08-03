@@ -21,8 +21,8 @@ could later reconstruct.
 
 from django.contrib.contenttypes.models import ContentType
 
-from attendees.persons.models import Category, Past, Utility
 from attendees.pcosync.mapping import CONTRADICTORY
+from attendees.persons.models import Category, Past, Utility
 
 #: Written into Past.infos["comment"] so a sync-created row is identifiable
 #: later. Chosen not to contain "importer", which would trip the signal's skip.

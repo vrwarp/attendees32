@@ -19,9 +19,9 @@ import logging
 
 from django.core.exceptions import ValidationError
 
-from attendees.persons.models import Attendee
 from attendees.pcosync.mapping import fold_name, trimmed
 from attendees.pcosync.models import PcoPersonLink
+from attendees.persons.models import Attendee
 
 logger = logging.getLogger(__name__)
 
@@ -165,9 +165,7 @@ def suggest_matches(person_view, candidates, limit=MAX_SUGGESTIONS):
     siblings share surnames and birthdays, and a wrong automatic link is far
     more expensive to undo than an unanswered question is to answer.
     """
-    from attendees.pcosync.mapping import (
-        FIELDS_BY_KEY, canonical_birthday_from_pco,
-    )
+    from attendees.pcosync.mapping import FIELDS_BY_KEY, canonical_birthday_from_pco
 
     target = {
         "first": fold_name(person_view.attributes.get("first_name")),

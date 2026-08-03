@@ -3,14 +3,6 @@
 import pytest
 from django.contrib.auth.models import Group
 
-from attendees.persons.models import (
-    Attendee,
-    Category,
-    Folk,
-    FolkAttendee,
-    GenderEnum,
-    Relation,
-)
 from attendees.pcosync.models import (
     PcoDivergence,
     PcoHouseholdLink,
@@ -21,7 +13,15 @@ from attendees.pcosync.services.config import write_config
 from attendees.pcosync.services.households import HouseholdSync, fetch_memberships
 from attendees.pcosync.services.runner import Runner
 from attendees.pcosync.tests.fake_mirror import FakeMirror, FakeResponse
-from attendees.pcosync.tests.test_runner import BASE, KEY, definitions_body, _client
+from attendees.pcosync.tests.test_runner import BASE, KEY, _client, definitions_body
+from attendees.persons.models import (
+    Attendee,
+    Category,
+    Folk,
+    FolkAttendee,
+    GenderEnum,
+    Relation,
+)
 from attendees.whereabouts.models import Division, Organization
 
 

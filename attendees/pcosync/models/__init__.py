@@ -1,7 +1,7 @@
-from .run import PcoSyncRun
-from .person_link import PcoPersonLink, PcoPersonLinksHistory
-from .household_link import PcoHouseholdLink, PcoHouseholdLinksHistory
 from .divergence import PcoDivergence, PcoDivergencesHistory
+from .household_link import PcoHouseholdLink, PcoHouseholdLinksHistory
+from .person_link import PcoPersonLink, PcoPersonLinksHistory
+from .run import PcoSyncRun
 
 __all__ = [
     "PcoSyncRun",

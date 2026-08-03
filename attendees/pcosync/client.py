@@ -22,7 +22,8 @@ behaviour marked below was paid for in production; none of them are theoretical.
 import json
 import logging
 import time
-from dataclasses import dataclass, field as dataclass_field
+from dataclasses import dataclass
+from dataclasses import field as dataclass_field
 from datetime import datetime, timezone
 from email.utils import parsedate_to_datetime
 from typing import Any, Iterator, Optional

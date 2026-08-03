@@ -28,9 +28,9 @@ import logging
 
 from django.db import transaction
 
-from attendees.persons.models import Attendee, Category, Folk, FolkAttendee, Relation
 from attendees.pcosync.mapping import trimmed
 from attendees.pcosync.models import PcoDivergence, PcoHouseholdLink, PcoPersonLink
+from attendees.persons.models import Attendee, Category, Folk, FolkAttendee, Relation
 
 logger = logging.getLogger(__name__)
 

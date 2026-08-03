@@ -8,18 +8,12 @@ that quietly disappears, or a status row created twice.
 import pytest
 from django.contrib.auth.models import Group
 
-from attendees.persons.models import (
-    Attendee,
-    Category,
-    GenderEnum,
-    Past,
-    Relation,
-)
 from attendees.pcosync.models import PcoDivergence, PcoPersonLink, PcoSyncRun
 from attendees.pcosync.services.config import write_config
 from attendees.pcosync.services.runner import Runner, run_sync
 from attendees.pcosync.services.statuses import attendee_content_type
 from attendees.pcosync.tests.fake_mirror import FakeMirror, FakeResponse
+from attendees.persons.models import Attendee, Category, GenderEnum, Past, Relation
 from attendees.whereabouts.models import Division, Organization
 
 BASE = "https://mirror.test/people/v2"
