@@ -51,6 +51,30 @@ async function chooseFilter(
   );
 }
 
+/**
+ * Write on the signature pad, and check the pad agrees that something was
+ * written. A stroke that lands while the refusal toast is still fading is a
+ * stroke on the toast, so this retries rather than pressing Sign in hope.
+ */
+async function sign(page: import('@playwright/test').Page) {
+  const canvas = page.locator('canvas.signature');
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const box = await canvas.boundingBox();
+    if (!box) throw new Error('the signature canvas has no box to draw in');
+    await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.6);
+    await page.mouse.down();
+    await page.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.3, { steps: 8 });
+    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.7, { steps: 8 });
+    await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.4, { steps: 8 });
+    await page.mouse.up();
+    const written = await page.evaluate(
+      () => !(window as never as AttendeesWindow).Attendees.roster.signaturePad.isEmpty(),
+    );
+    if (written) return;
+  }
+  throw new Error('the pad recorded no stroke after three attempts');
+}
+
 /** Answer a DevExtreme confirm — a DOM dialog, not the browser's. */
 async function answerDialog(page: import('@playwright/test').Page, answer: 'Yes' | 'No') {
   const dialog = page.locator('.dx-dialog-wrapper');
@@ -170,34 +194,9 @@ test.describe('a coworker takes the register', () => {
     await expect(signing).toBeVisible();
     await expect(page.locator('canvas.signature')).toBeVisible();
 
-    // Pressing Sign on an empty canvas is refused — an unsigned child is
-    // exactly what this screen exists to prevent.
-    await signing.getByText('Sign', { exact: true }).click();
-    const refusal = page.locator('.dx-toast-content');
-    await expect(refusal).toContainText(/signature/i);
-    await expect(signing).toBeVisible();
-
-    // The refusal is a toast centred on the window — on top of the canvas —
-    // so wait it out before trying to write on the pad underneath it.
-    await expect(refusal).toBeHidden();
-
-    // Sign it properly: a signature is a pointer dragged across the canvas.
-    const canvas = page.locator('canvas.signature');
-    const box = await canvas.boundingBox();
-    if (!box) throw new Error('the signature canvas has no box to draw in');
-    await page.mouse.move(box.x + box.width * 0.2, box.y + box.height * 0.6);
-    await page.mouse.down();
-    await page.mouse.move(box.x + box.width * 0.4, box.y + box.height * 0.3, { steps: 8 });
-    await page.mouse.move(box.x + box.width * 0.6, box.y + box.height * 0.7, { steps: 8 });
-    await page.mouse.move(box.x + box.width * 0.8, box.y + box.height * 0.4, { steps: 8 });
-    await page.mouse.up();
-    expect(
-      await page.evaluate(
-        () => !(window as never as AttendeesWindow).Attendees.roster.signaturePad.isEmpty(),
-      ),
-      'the pad recorded no stroke',
-    ).toBe(true);
-
+    // Sign it: a signature is a pointer dragged across the canvas, and the pad
+    // is asked whether it agrees that something was written.
+    await sign(page);
     await signing.getByText('Sign', { exact: true }).click();
     await expect(signing).toBeHidden();
 
@@ -210,6 +209,25 @@ test.describe('a coworker takes the register', () => {
     await page.locator(`label[for="out-${attendanceId}"]`).click();
     await answerDialog(page, 'Yes');
     await expect.poll(async () => checkOut.isChecked()).toBe(false);
+
+    // Then the other half, on a clean pad: an unsigned child is exactly what
+    // this screen exists to prevent, so Sign has to refuse and the popup has
+    // to stay open. It goes last because the refusal is a toast centred over
+    // the canvas, and a stroke drawn while it fades lands on the toast.
+    await page.locator(`label[for="out-${attendanceId}"]`).click();
+    await expect(signing).toBeVisible();
+    await signing.getByText('Sign', { exact: true }).click();
+    // The error toast specifically: the saves earlier in this journey each
+    // left a success toast of their own on screen.
+    await expect(page.locator('.dx-toast-error')).toContainText(/signature/i);
+    await expect(signing).toBeVisible();
+
+    // Cancel puts the tick back where it was, so the child is still recorded
+    // as here and nobody has been written down as having collected them.
+    await signing.getByText('Cancel', { exact: true }).click();
+    await expect(signing).toBeHidden();
+    await expect.poll(async () => checkOut.isChecked()).toBe(false);
+
     // Which hands the row back the way it was found: arrived, not yet
     // collected, waiting for whoever comes for them.
   });
