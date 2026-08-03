@@ -29,6 +29,7 @@ from attendees.pcosync.services import field_definitions as fielddefs
 from attendees.pcosync.services import identity, statuses
 from attendees.pcosync.services.config import config_for
 from attendees.pcosync.services.divergences import DivergenceRecorder
+from attendees.pcosync.services.households import HouseholdSync
 
 logger = logging.getLogger(__name__)
 
@@ -714,6 +715,12 @@ def run_sync(run, client=None, limit=None):
             run.save()
             runner.sync_people(limit=limit)
             runner.report_unlinked_attendees()
+
+            # Households last: they are joined through the person links, so
+            # every link this run established is already in place.
+            run.phase = PcoSyncRun.HOUSEHOLDS
+            run.save()
+            HouseholdSync(runner).sync_all(limit=limit)
 
         run.phase = PcoSyncRun.DONE
         run.state = PcoSyncRun.CANCELLED if run.cancel_requested \
