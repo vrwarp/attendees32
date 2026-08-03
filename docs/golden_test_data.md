@@ -214,6 +214,11 @@ pages in **Chromium and WebKit** and waits for the grids to have rows in them.
 | `e2e/navigation.spec.ts` | sign-in through the real allauth form, sign-out, the group-driven navbar, both guard refusals as a user meets them, the printed pages, the Planning Center page |
 | `e2e/datagrids.spec.ts` | the DevExtreme grids: do they boot, ask the right endpoint and render the answer |
 | `e2e/journeys.spec.ts` | somebody arriving with a job to do, and finishing it — the specs that write |
+| `e2e/account.spec.ts` | the door: signup closed, password turnover, and a TOTP second factor enrolled and used |
+| `e2e/attendance.spec.ts` | the Sunday-morning register, including the signature pad |
+| `e2e/person.spec.ts` | the record-keeping a coworker does week to week |
+| `e2e/scheduling.spec.ts` | the diary: what is scheduled, the batch button's guards, the calendar |
+| `e2e/reports.spec.ts` | the participation list, the envelopes, and the statistics |
 
 The journeys are the part that catches seams, where a save succeeds but the
 thing it was supposed to change does not:
@@ -229,10 +234,22 @@ thing it was supposed to change does not:
 
 They run in path order after `datagrids.spec.ts`, so the absolute roster counts
 are asserted before anything here adds a row. Each journey either writes to a
-household nobody else asserts on or puts back what it changed — with one
-exception: settling the Planning Center conflict is permanent, because the UI
-has no unresolve. CI builds the congregation fresh; a second local run wants
-`load_golden_data --force` first.
+household nobody else asserts on — the Fengs — or puts back what it changed.
+
+**Two journeys are one-shot**, because the things they do can only be done once:
+settling the Planning Center conflict (the UI has no unresolve) and granting
+somebody membership (the button withdraws itself afterwards). CI builds the
+congregation fresh for every job, so this never shows there; a second *local*
+run of the suite wants `manage.py load_golden_data --force` first.
+
+Some journeys are deliberately **not** driven through the browser. Marking
+somebody as passed away finishes every participation and takes them off the
+roster that `datagrids.spec.ts` counts exactly, so its behaviour is proved in
+pytest where it rolls back, and the browser only proves the guard: the control
+is dead until editing is deliberately switched on, and it says what it is about
+to do. Worth knowing that the page renders Delete and Pass away even for an
+ordinary member on their own record — what stops them is the API refusing, not
+the button being absent.
 
 Unlike the pytest suite it drives a *running* application, so bring one up
 first — and give it the congregation:
