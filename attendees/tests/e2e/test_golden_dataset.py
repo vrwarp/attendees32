@@ -511,6 +511,28 @@ class TestAttendanceHistory:
     def test_attendance_volume_is_realistic(self, golden):
         assert 2000 < Attendance.objects.count() < 4000
 
+    def test_the_latest_childrens_register_is_still_open(self, golden):
+        """Some children arrived and nobody has signed for them yet.
+
+        Every other week is closed off, so this is the one gathering that looks
+        the way the roll-call screen looks while it is in use — which is the
+        only state in which the check-out pad can be reached at all.
+        """
+        the_rock = golden.meets["the_rock"]
+        open_rows = Attendance.objects.filter(
+            gathering__meet=the_rock, start__isnull=False, finish__isnull=True
+        )
+        assert open_rows.count() > 0
+        # And only in the most recent week: the history behind it is settled.
+        assert open_rows.values_list("gathering_id", flat=True).distinct().count() == 1
+        assert (
+            open_rows.first().gathering.start.date()
+            == Attendance.objects.filter(gathering__meet=the_rock)
+            .order_by("-gathering__start")
+            .first()
+            .gathering.start.date()
+        )
+
     def test_gatherings_know_their_room(self, golden):
         gathering = Gathering.objects.filter(
             meet__slug=MeetSlugs.CHINESE_SERVICE

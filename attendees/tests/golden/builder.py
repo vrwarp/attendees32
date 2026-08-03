@@ -1092,6 +1092,18 @@ class GoldenBuilder:
                         category_id = AttendanceCategory.LEAVE
                     else:
                         category_id = AttendanceCategory.ATTENDED
+                    # The children's register of the most recent Sunday is
+                    # left part-finished: some are still in the room, nobody
+                    # having signed for them yet. That is what the roll-call
+                    # screen actually looks like while it is being used, and
+                    # a dataset where every child is already collected cannot
+                    # show it.
+                    still_here = (
+                        meet_key == "the_rock"
+                        and week == 0
+                        and category_id == AttendanceCategory.ATTENDED
+                        and position % 3 == 0
+                    )
                     attendances.append(
                         Attendance(
                             gathering=gathering,
@@ -1100,7 +1112,7 @@ class GoldenBuilder:
                             team=attending_meet.team,
                             category_id=category_id,
                             start=start,
-                            finish=start + timedelta(minutes=minutes),
+                            finish=None if still_here else start + timedelta(minutes=minutes),
                             infos={"kid_points": position % 5}
                             if meet_key == "the_rock" else {},
                         )
