@@ -336,6 +336,16 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
             t2s_converter = opencc.OpenCC("t2s.json")
             self.infos["names"]["traditional"] = s2t_converter.convert(both_names)
             self.infos["names"]["simplified"] = t2s_converter.convert(both_names)
+
+        # This method derives infos["names"] on every save, so a caller that
+        # limits update_fields must still write it — otherwise the searchable
+        # names silently keep the old spelling. Django's update_or_create()
+        # passes update_fields=set(defaults) since 4.2, which is exactly how
+        # the datagrid serializers save a partial edit.
+        update_fields = kwargs.get("update_fields")
+        if update_fields is not None and "infos" not in update_fields:
+            kwargs["update_fields"] = {*update_fields, "infos"}
+
         super(Attendee, self).save(*args, **kwargs)
 
     def all_names(self):

@@ -19,6 +19,10 @@
      data-attendee-search-endpoint="{{ pcosync_attendee_search_endpoint }}"
      data-can-write="{% if user_is_data_admin %}1{% else %}0{% endif %}">
 
+  {# The csrftoken cookie is HttpOnly here, so the token has to reach the #}
+  {# fetch() calls through the DOM, the same way every other page does it. #}
+  {% csrf_token %}
+
   <h3 class="mt-3">Planning Center Sync 同步</h3>
 
   {% if pcosync_blocking_reason %}
