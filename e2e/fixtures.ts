@@ -21,6 +21,23 @@ const assetCache = new Map<string, CachedAsset>();
 /** Errors the page throws that say nothing about the application. */
 const IGNORABLE_PAGE_ERRORS = [/ResizeObserver/];
 
+/**
+ * WebKit reports a request cancelled by a navigation as "… due to access
+ * control checks." The journeys navigate on purpose while a grid is still
+ * fetching — somebody clicking Save before the page has settled does the same
+ * thing — so for the application's own host this is the browser narrating our
+ * click, not a fault.
+ *
+ * A genuine cross-origin refusal carries the identical wording, and catching
+ * those is the point of serving the CDN bytes through unchanged, so the host
+ * has to match the application under test before this is forgiven.
+ */
+function isRequestCancelledByNavigation(message: string, baseURL?: string): boolean {
+  if (!/due to access control checks/.test(message)) return false;
+  const host = baseURL ? new URL(baseURL).host : '';
+  return host !== '' && message.includes(host);
+}
+
 export const test = base.extend<{
   signIn: (persona: Persona) => Promise<void>;
   pageErrors: string[];
@@ -61,12 +78,14 @@ export const test = base.extend<{
     await use(page);
   },
 
-  pageErrors: async ({ page }, use) => {
+  pageErrors: async ({ page, baseURL }, use) => {
     const errors: string[] = [];
     page.on('pageerror', (error) => errors.push(error.message));
     await use(errors);
     const fatal = errors.filter(
-      (message) => !IGNORABLE_PAGE_ERRORS.some((pattern) => pattern.test(message)),
+      (message) =>
+        !IGNORABLE_PAGE_ERRORS.some((pattern) => pattern.test(message)) &&
+        !isRequestCancelledByNavigation(message, baseURL),
     );
     expect(fatal, 'the page threw JavaScript errors').toEqual([]);
   },
