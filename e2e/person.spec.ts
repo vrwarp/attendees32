@@ -125,7 +125,11 @@ test.describe('a coworker writes a note', () => {
     await visit(page, attendeeUrl('feng_angela'));
     await startEditing(page);
 
+    // Turning editing on rebuilds every grid on the page, so wait for the
+    // rebuilt notes grid — its add-row button only exists in editing mode —
+    // rather than clicking into one that is about to be replaced.
     const notes = page.locator('#note-past-datagrid-container');
+    await expect(notes.locator('.dx-datagrid-addrow-button')).toHaveCount(1);
     await notes.scrollIntoViewIfNeeded();
     await notes.locator('.dx-datagrid-addrow-button').first().click();
 
@@ -141,7 +145,13 @@ test.describe('a coworker writes a note', () => {
         has: page.locator('.dx-field-item-label-text', { hasText: label }),
       });
     await field('Category').locator('.dx-texteditor-input').first().click();
-    await page.locator('.dx-overlay-wrapper:visible .dx-list-item').first().click();
+    // Scoped to the dropdown's own overlay: the edit popup is a visible
+    // overlay too, and its modal shader swallows a click aimed through it.
+    const options = page
+      .locator('.dx-dropdownlist-popup-wrapper:visible, .dx-dropdowneditor-overlay:visible')
+      .locator('.dx-list-item');
+    await expect(options.first()).toBeVisible();
+    await options.first().click();
     await field('Title').locator('.dx-texteditor-input').first().fill(written);
 
     await editor.getByRole('button', { name: /^save$/i }).first().click();

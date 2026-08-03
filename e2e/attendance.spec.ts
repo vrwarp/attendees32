@@ -83,6 +83,33 @@ async function answerDialog(page: import('@playwright/test').Page, answer: 'Yes'
   await expect(dialog).toBeHidden();
 }
 
+/**
+ * Toggle a check-in and wait for the write to land.
+ *
+ * The screen sets the cell and then saves on a 500 ms debounce, so a second
+ * click sent before the first save has returned races the grid's own refresh —
+ * which is how this journey came to be green on Chromium and intermittent on
+ * WebKit.
+ */
+async function toggleCheckIn(
+  page: import('@playwright/test').Page,
+  attendanceId: string,
+  confirmFirst: boolean,
+) {
+  const saved = page.waitForResponse(
+    (response) =>
+      /attendance/i.test(response.url()) &&
+      ['POST', 'PUT', 'PATCH'].includes(response.request().method()),
+    { timeout: 30_000 },
+  );
+  await page.locator(`label[for="in-${attendanceId}"]`).click();
+  if (confirmFirst) {
+    // Unchecking asks before it throws the arrival time away.
+    await answerDialog(page, 'Yes');
+  }
+  await saved;
+}
+
 /** The Sunday the golden congregation last met, as the gatherings are named. */
 function lastSunday(): string {
   const day = new Date();
@@ -130,12 +157,7 @@ test.describe('a coworker takes the register', () => {
     const attendanceId = (rowId ?? '').replace(/^in-/, '');
     const wasChecked = await checkIn.isChecked();
 
-    await page.locator(`label[for="in-${attendanceId}"]`).click();
-
-    if (wasChecked) {
-      // Unchecking asks before it throws the arrival time away.
-      await answerDialog(page, 'Yes');
-    }
+    await toggleCheckIn(page, attendanceId, wasChecked);
     await expect
       .poll(async () => checkIn.isChecked(), {
         message: 'the check-in button never changed state',
@@ -143,11 +165,12 @@ test.describe('a coworker takes the register', () => {
       .toBe(!wasChecked);
 
     // Put the register back the way the eight weeks of history expect it.
-    await page.locator(`label[for="in-${attendanceId}"]`).click();
-    if (!wasChecked) {
-      await answerDialog(page, 'Yes');
-    }
-    await expect.poll(async () => checkIn.isChecked()).toBe(wasChecked);
+    await toggleCheckIn(page, attendanceId, !wasChecked);
+    await expect
+      .poll(async () => checkIn.isChecked(), {
+        message: 'the check-in button was never put back',
+      })
+      .toBe(wasChecked);
   });
 
   test('checks a child out, and will not do it without a signature', async ({

@@ -99,9 +99,11 @@ test.describe('a coworker ends a participation', () => {
     await waitForGridRows(page, GRID);
     await startEditing(page);
 
-    const firstRow = page.locator(`${GRID} .dx-data-row`).first();
-    await firstRow.scrollIntoViewIfNeeded();
-    await firstRow.locator('.dx-link-delete, .dx-icon-trash').first().click();
+    // Turning editing on rebuilds the grid, so wait for the rebuilt version —
+    // the add-row button only exists in editing mode — before touching a row,
+    // or the row handle is stale before it can be clicked.
+    await expect(page.locator(`${GRID} .dx-datagrid-addrow-button`)).toHaveCount(1);
+    await page.locator(`${GRID} .dx-data-row .dx-link-delete`).first().click();
 
     const confirm = page.locator('.dx-dialog-wrapper');
     await expect(confirm).toBeVisible();
