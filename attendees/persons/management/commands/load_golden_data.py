@@ -9,12 +9,15 @@ the dumped fixture diffs cleanly.  Dates are relative to *today* so ages and
 "currently participating" windows stay true however long the fixture sits.
 """
 
+import json
+from pathlib import Path
+
 from django.core.management import call_command
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
 
 from attendees.persons.models import Attendee
-from attendees.tests.golden import build_golden_dataset
+from attendees.tests.golden import PERSONA_PASSWORD, PERSONAS, build_golden_dataset
 
 
 class Command(BaseCommand):
@@ -36,6 +39,14 @@ class Command(BaseCommand):
             action="store_true",
             help="build even though golden attendees already exist",
         )
+        parser.add_argument(
+            "--manifest",
+            metavar="PATH",
+            help=(
+                "write a JSON map of golden key -> primary key to PATH, for "
+                "callers outside Python (the Playwright suite reads this)"
+            ),
+        )
 
     @transaction.atomic
     def handle(self, *args, **options):
@@ -56,6 +67,35 @@ class Command(BaseCommand):
                 f"golden dataset built: {dataset.counts['attendees']} live attendees"
             )
         )
+
+        if options["manifest"]:
+            manifest = {
+                "counts": dataset.counts,
+                "password": PERSONA_PASSWORD,
+                "personas": {
+                    persona.username: {
+                        "groups": list(persona.groups),
+                        "attendee": (
+                            str(dataset.attendee(persona.attendee_key).id)
+                            if persona.attendee_key
+                            else None
+                        ),
+                    }
+                    for persona in PERSONAS
+                },
+                "attendees": {
+                    key: str(attendee.id)
+                    for key, attendee in dataset.attendees.items()
+                },
+                "folks": {key: str(folk.id) for key, folk in dataset.folks.items()},
+            }
+            path = Path(options["manifest"])
+            path.parent.mkdir(parents=True, exist_ok=True)
+            path.write_text(
+                json.dumps(manifest, indent=2, ensure_ascii=False, sort_keys=True),
+                encoding="utf-8",
+            )
+            self.stdout.write(self.style.SUCCESS(f"manifest written to {path}"))
 
         if options["dump"]:
             call_command(

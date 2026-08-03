@@ -1106,6 +1106,11 @@ class GoldenBuilder:
     # -- 10. logins ---------------------------------------------------------
     def build_users(self):
         groups = {group.name: group for group in Group.objects.all()}
+        # Rebuilding on top of a previous run (load_golden_data --force) must
+        # not trip over the usernames it left behind.
+        User.objects.filter(
+            username__in=[persona.username for persona in PERSONAS]
+        ).delete()
         for persona in PERSONAS:
             user = User.objects.create_user(
                 username=persona.username,
@@ -1183,9 +1188,17 @@ def purge_seed_people():
     illustrate it.  The golden dataset wants the first and replaces the second,
     so the congregation really is 350 people and a count is a count.
     """
+    from schedule.models import Occurrence
+
     attendee_ct = ContentType.objects.get_for_model(Attendee)
     folk_ct = ContentType.objects.get_for_model(Folk)
     Attendance.all_objects.all().delete()
+    # Gatherings too, so the eight weeks of history are exactly the ones this
+    # builder wrote — and so a second run does not collide with the first on
+    # (meet, site, start). The Gathering post-save signal mirrors each one into
+    # a schedule Occurrence, which would otherwise be left orphaned.
+    Occurrence.objects.filter(title__startswith="gathering#").delete()
+    Gathering.all_objects.all().delete()
     AttendingMeet.all_objects.all().delete()
     Attending.all_objects.all().delete()
     Registration.all_objects.all().delete()
