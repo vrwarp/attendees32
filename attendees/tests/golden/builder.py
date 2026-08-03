@@ -32,6 +32,7 @@ from datetime import date, datetime, time, timedelta, timezone
 from decimal import Decimal
 from typing import Dict, List, Optional
 
+from allauth.account.models import EmailAddress
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
@@ -1122,6 +1123,15 @@ class GoldenBuilder:
                 group = groups.get(group_name)
                 if group:
                     user.groups.add(group)
+            # ACCOUNT_EMAIL_VERIFICATION is mandatory, so a login without a
+            # verified address is bounced to the "confirm your email" page —
+            # every real account has one of these, and the browser tests sign
+            # in through the real form.
+            EmailAddress.objects.get_or_create(
+                user=user,
+                email=user.email,
+                defaults={"verified": True, "primary": True},
+            )
             if persona.attendee_key:
                 attendee = self.data.attendees[persona.attendee_key]
                 attendee.user = user

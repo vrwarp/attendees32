@@ -21,6 +21,13 @@ TEST_RUNNER = "django.test.runner.DiscoverRunner"
 # https://docs.djangoproject.com/en/dev/ref/settings/#password-hashers
 PASSWORD_HASHERS = ["django.contrib.auth.hashers.MD5PasswordHasher"]
 
+# STATIC FILES
+# ------------------------------------------------------------------------------
+# django-compressor writes a compiled bundle into STATIC_ROOT on first render,
+# which the browser tests neither need nor benefit from: they want the source
+# files the finders already serve.
+COMPRESS_ENABLED = False
+
 # EMAIL
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#email-backend

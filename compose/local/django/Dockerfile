@@ -53,6 +53,13 @@ COPY --from=python-build-stage /usr/src/app/wheels  /wheels/
 RUN pip install --no-cache-dir --no-index --find-links=/wheels/ /wheels/* \
 	&& rm -rf /wheels/
 
+# Browsers for the end-to-end suite (attendees/tests/e2e/browser). Both engines
+# are installed: WebKit finds the layout and Intl differences Chromium forgives.
+# --with-deps pulls in the system libraries each one needs on bookworm.
+ENV PLAYWRIGHT_BROWSERS_PATH=/opt/pw-browsers
+RUN playwright install --with-deps chromium webkit \
+	&& rm -rf /var/lib/apt/lists/*
+
 COPY ./compose/production/django/entrypoint /entrypoint
 RUN sed -i 's/\r$//g' /entrypoint
 RUN chmod +x /entrypoint

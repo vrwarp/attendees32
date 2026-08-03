@@ -56,8 +56,11 @@ jobs:
       - name: Run DB Migrations
         run:  docker compose -f local.yml run --rm django python manage.py migrate
 
+      # ATTENDEES_REQUIRE_BROWSERS turns a missing Chromium or WebKit into a
+      # failure instead of a skip, so a broken image cannot quietly stop
+      # running the browser end-to-end suite.
       - name: Run Django Tests
-        run:  docker compose -f local.yml run django pytest
+        run:  docker compose -f local.yml run -e ATTENDEES_REQUIRE_BROWSERS=1 django pytest
 
       - name: Tear down the Stack
         run:  docker compose -f local.yml down

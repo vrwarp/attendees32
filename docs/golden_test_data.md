@@ -147,6 +147,10 @@ Eleven personas, all with the password `golden-password-1`:
 `golden_superuser` has no auth groups on purpose: `RouteGuard` reads groups, not
 `is_superuser`, so a superuser is refused at every page — worth pinning.
 
+Each persona also gets a verified `allauth` `EmailAddress`, because
+`ACCOUNT_EMAIL_VERIFICATION` is mandatory and the browser specs sign in through
+the real form.
+
 ## Running it
 
 The dataset is deterministic. Every UUID primary key comes from `uuid5` of a
@@ -177,6 +181,48 @@ megabytes of derived data and the builder is the source of truth.
 | `test_reports.py` | the printed directory, participation lists, envelopes |
 | `test_permissions.py` | SpyGuard, privileged pages, confidential notes |
 | `test_tally_integration.py` | the token-authenticated server-to-server sweep |
+| `browser/test_browser_navigation.py` | sign-in, the group-driven menu, the guards and the printed pages, in a real browser |
+| `browser/test_browser_datagrids.py` | the DevExtreme grids: do they boot, ask the right endpoint and render the answer |
+
+### The browser layer
+
+Everything above talks HTTP. That proves the routing, the guards, the
+serializers and the queries — but every roster screen in this application is an
+empty `<div>` server-side that DevExtreme fills over AJAX, so none of it proves
+a screen works. `attendees/tests/e2e/browser/` opens the pages in **Chromium and
+WebKit** and waits for the grids to have rows in them.
+
+Playwright is driven directly rather than through `pytest-playwright`, so both
+engines run on a bare `pytest` with no extra flags: the `browser` fixture is
+parametrised and every spec runs twice.
+
+Three things about the harness are worth knowing:
+
+* **It runs its own server.** pytest-django's `live_server` fixture drags in
+  `transactional_db`, which truncates every table after each test — and the
+  golden congregation, committed once for the whole session, is exactly what
+  gets truncated. The `app_server` fixture starts a plain `LiveServerThread`
+  instead. The consequence is that anything the *server* writes is committed
+  for real, so these specs stay read-only.
+* **Third-party assets are fetched once.** The pages pull DevExtreme (4 MB),
+  jQuery plugins and Bootstrap from public CDNs. The `cdn` fixture fetches each
+  URL once per session and replays it from memory, passing the bytes through
+  unchanged so the templates' subresource-integrity hashes still check out.
+* **The login rate limit is reset between tests.** `ACCOUNT_RATE_LIMITS`
+  allows three failed logins per IP per ten minutes, and allauth answers a
+  rate-limited attempt with the same message as a wrong password — so one test
+  of a bad password would otherwise break every login after it.
+
+Browsers are installed in `compose/local/django/Dockerfile`
+(`playwright install --with-deps chromium webkit`). Locally:
+
+```
+playwright install --with-deps chromium webkit
+```
+
+Without them the browser specs skip, **unless** `ATTENDEES_REQUIRE_BROWSERS=1`
+is set, which turns a missing engine into a failure. CI sets it, so a broken
+image cannot quietly stop running them.
 
 The congregation is built once per session and committed, because rebuilding it
 costs about a minute. `pytest_collection_modifyitems` in `attendees/conftest.py`
@@ -187,5 +233,6 @@ reused database is left as it was found.
 
 ```
 pytest attendees/tests/e2e            # the suite alone
+pytest attendees/tests/e2e/browser    # Chromium and WebKit only
 pytest                                # everything; e2e still runs last
 ```
