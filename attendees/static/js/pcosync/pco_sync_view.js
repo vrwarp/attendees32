@@ -309,7 +309,13 @@
 
     request(divergencesEndpoint + "?" + params.toString())
       .then(function (body) {
-        renderDivergences(body.results || body || []);
+        /*
+         * The project paginates with CustomStorePagination, which wraps rows as
+         * {totalCount, data} for DevExtreme -- not DRF's default
+         * {count, results}. Reading the wrong key here renders an object as if
+         * it were a list, which looks like an empty report rather than an error.
+         */
+        renderDivergences(Array.isArray(body) ? body : body.data || []);
       })
       .catch(function (error) {
         table.innerHTML =

@@ -68,6 +68,19 @@ class TestApi:
         view = viewset.as_view(action_map)
         return view(request, **kwargs)
 
+    @staticmethod
+    def rows(response):
+        """Unwrap a list response.
+
+        The project's DEFAULT_PAGINATION_CLASS is CustomStorePagination, which
+        answers ``{"totalCount": n, "data": [...]}`` for DevExtreme rather than
+        DRF's ``{"count", "results"}``. Asserting against ``response.data``
+        directly passes wherever no pagination class is configured and fails
+        where one is, which is exactly how this slipped through to CI.
+        """
+        body = response.data
+        return body if isinstance(body, list) else body["data"]
+
     # -- starting a run --------------------------------------------------
 
     def test_a_non_admin_cannot_start_a_run(self):
@@ -101,7 +114,7 @@ class TestApi:
 
         response = self.call(ApiPcoSyncRunsViewSet, {"get": "list"},
                              "get", "/pcosync/api/sync_runs/", self.admin)
-        ids = {row["id"] for row in response.data}
+        ids = {row["id"] for row in self.rows(response)}
         assert ids == {str(mine.id)}
 
     def test_cancel_is_a_request_not_a_kill(self):
@@ -297,5 +310,5 @@ class TestApi:
 
         response = self.call(ApiPcoDivergencesViewSet, {"get": "list"}, "get",
                              "/pcosync/api/divergences/", self.admin)
-        ids = {row["id"] for row in response.data}
+        ids = {row["id"] for row in self.rows(response)}
         assert ids == {str(divergence.id)}
