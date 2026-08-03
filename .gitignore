@@ -339,3 +339,6 @@ attendees/scripts/real_data
 .envs/.production/.mailgun.env
 backups/
 backups/*
+
+# pip -e installs clone here; not part of the project
+/src/
