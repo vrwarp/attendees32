@@ -29,14 +29,9 @@ from attendees.pcosync.services import identity, statuses
 from attendees.pcosync.services.config import config_for
 from attendees.pcosync.services.divergences import DivergenceRecorder
 from attendees.pcosync.services.households import HouseholdSync
-from attendees.persons.models import Attendee, Past
+from attendees.persons.models import Attendee
 
 logger = logging.getLogger(__name__)
-
-#: People hydrated individually when the bulk sweep missed them. Anyone past
-#: this is reported, never dropped -- "the sync is behind" and "eight people
-#: vanished" must not look the same.
-MAX_INDIVIDUAL_LOOKUPS = 200
 
 
 class SyncAborted(Exception):
@@ -56,7 +51,6 @@ class Runner:
         self.definitions = None
         self.uuid_index = {}
         self.writes_used = 0
-        self.creates_used = 0
         self.push_blocked_reason = None
 
     def _build_client(self):
@@ -663,34 +657,6 @@ class Runner:
                 label=attendee.display_label,
             )
             self.run.bump("unlinked_attendees")
-
-
-def status_flags_for_many(attendee_ids, config):
-    """Status flags for a batch of attendees in one query.
-
-    One query for the sweep instead of one per person; at a thousand attendees
-    that is the difference between a page load and a coffee break.
-    """
-    from attendees.pcosync.services.statuses import (
-        attendee_content_type,
-        flags_from_category_ids,
-    )
-
-    rows = Past.objects.filter(
-        content_type=attendee_content_type(),
-        object_id__in=[str(value) for value in attendee_ids],
-        is_removed=False,
-    ).values_list("object_id", "category_id")
-
-    by_attendee = {}
-    for object_id, category_id in rows:
-        by_attendee.setdefault(str(object_id), set()).add(category_id)
-    return {
-        str(attendee_id): flags_from_category_ids(
-            by_attendee.get(str(attendee_id), set()), config
-        )
-        for attendee_id in attendee_ids
-    }
 
 
 def run_sync(run, client=None, limit=None):
