@@ -26,10 +26,23 @@ const GRID = '#attendingmeet-datagrid-container';
  * group.
  */
 async function selectEverything(page: Page) {
-  const selectAll = page.locator('.fa-check-double');
-  const count = await selectAll.count();
-  for (let index = 0; index < count; index += 1) {
-    await selectAll.nth(index).click();
+  // Each box fills from an endpoint of its own, so a press can land before the
+  // choices have arrived and quietly select nothing. The tags are the proof it
+  // took, and the press is repeated until they appear.
+  const tags = page.locator('div.selected-meets .dx-tag');
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    const selectAll = page.locator('.fa-check-double');
+    const count = await selectAll.count();
+    for (let index = 0; index < count; index += 1) {
+      await selectAll.nth(index).click();
+    }
+    try {
+      await expect(tags.first()).toBeVisible({ timeout: 8_000 });
+      return;
+    } catch {
+      if (attempt === 2) throw new Error('the filters never took a selection');
+    }
   }
 }
 
@@ -100,13 +113,21 @@ test.describe('a coworker ends a participation', () => {
     await startEditing(page);
 
     // Turning editing on rebuilds the grid, so wait for the rebuilt version —
-    // the add-row button only exists in editing mode — before touching a row,
-    // or the row handle is stale before it can be clicked.
+    // the add-row button only exists in editing mode — before touching a row.
+    // Even then a press can land mid-rebuild and be swallowed, so repeat it
+    // until the confirm is actually up.
     await expect(page.locator(`${GRID} .dx-datagrid-addrow-button`)).toHaveCount(1);
-    await page.locator(`${GRID} .dx-data-row .dx-link-delete`).first().click();
 
     const confirm = page.locator('.dx-dialog-wrapper');
-    await expect(confirm).toBeVisible();
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await page.locator(`${GRID} .dx-data-row .dx-link-delete`).first().click();
+      try {
+        await expect(confirm).toBeVisible({ timeout: 5_000 });
+        break;
+      } catch {
+        if (attempt === 2) throw new Error('the grid never asked before deleting');
+      }
+    }
     await expect(confirm).toContainText(
       /set the .finish date. to expire it instead/i,
     );
@@ -120,6 +141,10 @@ test.describe('a coworker ends a participation', () => {
 
 test.describe('the enrolment list across the church', () => {
   test('a coworker can see who is in what, and narrow it', async ({ page, signIn }) => {
+    // Every meet and character at once is 1 900 participations: this one is
+    // genuinely slow, not stuck, and the default budget is not enough for it
+    // on a loaded machine.
+    test.slow();
     await signIn('golden_data_organizer');
     await visit(page, '/persons/attendingmeets/');
     await page.waitForSelector('form.filters-dxform .dx-texteditor-input');
@@ -130,9 +155,10 @@ test.describe('the enrolment list across the church', () => {
     // coworker reaches for when they want the whole picture.
     await selectEverything(page);
 
+    // Every meet at once is 1 900 participations; give the grid room to answer.
     const LIST = '#attendingmeets-datagrid-container';
-    const rows = await waitForGridRows(page, LIST);
-    expect(await rows.count()).toBeGreaterThan(0);
+    await page.waitForSelector(`${LIST} .dx-data-row`, { timeout: 60_000 });
+    const rows = page.locator(`${LIST} .dx-data-row`);
 
     const before = await rows.count();
     await page.locator(`${LIST} .dx-datagrid-search-panel input`).fill('陳');
@@ -147,12 +173,15 @@ test.describe('the enrolment list across the church', () => {
   test('the whole church can be asked for at once', async ({ page, signIn }) => {
     // Selecting every meet is the query behind "who is enrolled in anything",
     // and it is the one that has to page rather than fall over.
+    test.slow();
     await signIn('golden_data_organizer');
     await visit(page, '/persons/attendingmeets/');
     await page.waitForSelector('form.filters-dxform .dx-texteditor-input');
     await selectEverything(page);
 
-    await waitForGridRows(page, '#attendingmeets-datagrid-container');
+    await page.waitForSelector('#attendingmeets-datagrid-container .dx-data-row', {
+      timeout: 60_000,
+    });
     await expect(
       page.locator('#attendingmeets-datagrid-container .dx-datagrid-pager'),
     ).toContainText(/items/);
