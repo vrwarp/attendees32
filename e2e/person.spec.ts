@@ -127,15 +127,23 @@ test.describe('a coworker writes a note', () => {
 
     // Turning editing on rebuilds every grid on the page, so wait for the
     // rebuilt notes grid — its add-row button only exists in editing mode —
-    // rather than clicking into one that is about to be replaced.
+    // rather than clicking into one that is about to be replaced. Even then a
+    // click can land during the rebuild and be swallowed, so the press is
+    // repeated until the popup is actually up.
     const notes = page.locator('#note-past-datagrid-container');
     await expect(notes.locator('.dx-datagrid-addrow-button')).toHaveCount(1);
     await notes.scrollIntoViewIfNeeded();
-    await notes.locator('.dx-datagrid-addrow-button').first().click();
 
-    // The grid edits in a popup.
     const editor = page.locator('.dx-datagrid-edit-popup:visible');
-    await expect(editor).toBeVisible();
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await notes.locator('.dx-datagrid-addrow-button').first().click();
+      try {
+        await expect(editor).toBeVisible({ timeout: 5_000 });
+        break;
+      } catch {
+        if (attempt === 2) throw new Error('the notes grid never opened its editor');
+      }
+    }
 
     const field = (label: string) =>
       editor.locator('.dx-field-item', {

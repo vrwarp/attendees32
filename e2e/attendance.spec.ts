@@ -150,11 +150,16 @@ test.describe('a coworker takes the register', () => {
     const rows = await openLastSundaysRoster(page);
     await expect(rows.first()).toBeVisible();
 
-    // Somebody who was not marked present that week: their check-in box is
-    // clear, and the check-out button is hidden until they arrive.
-    const checkIn = page.locator(`${GRID} input.roll-call-button[value="checkIn"]`).first();
-    const rowId = await checkIn.getAttribute('id');
+    // Take somebody's row, then hold on to *them* rather than to "the first
+    // row": saving reloads the grid, and the row that comes back first need
+    // not be the one that was clicked. Every id here is the attendance's own,
+    // so it survives the reload.
+    const rowId = await page
+      .locator(`${GRID} input.roll-call-button[value="checkIn"]`)
+      .first()
+      .getAttribute('id');
     const attendanceId = (rowId ?? '').replace(/^in-/, '');
+    const checkIn = page.locator(`input#in-${attendanceId}`);
     const wasChecked = await checkIn.isChecked();
 
     await toggleCheckIn(page, attendanceId, wasChecked);
