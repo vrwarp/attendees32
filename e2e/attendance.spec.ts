@@ -84,30 +84,52 @@ async function answerDialog(page: import('@playwright/test').Page, answer: 'Yes'
 }
 
 /**
- * Toggle a check-in and wait for the write to land.
+ * Toggle a check-in, and do not return until the page says it stored it.
  *
- * The screen sets the cell and then saves on a 500 ms debounce, so a second
- * click sent before the first save has returned races the grid's own refresh —
- * which is how this journey came to be green on Chromium and intermittent on
- * WebKit.
+ * Two things make this harder than a click. The screen sets the cell and then
+ * saves on a 500 ms debounce, and the save reloads the grid — so a press that
+ * lands during that reload is dropped by DevExtreme with no error and no
+ * request at all, which is what a slower machine produces. And the page's own
+ * "update attendance success" toast is the only signal that tells a stored
+ * change apart from a checkbox that merely looks ticked.
+ *
+ * So: press, wait for the toast, and press again if it does not come. The
+ * state is re-read each time, so a repeat only ever pushes it the way it was
+ * already going.
  */
 async function toggleCheckIn(
   page: import('@playwright/test').Page,
   attendanceId: string,
-  confirmFirst: boolean,
+  wanted: boolean,
 ) {
-  const saved = page.waitForResponse(
-    (response) =>
-      /attendance/i.test(response.url()) &&
-      ['POST', 'PUT', 'PATCH'].includes(response.request().method()),
-    { timeout: 30_000 },
-  );
-  await page.locator(`label[for="in-${attendanceId}"]`).click();
-  if (confirmFirst) {
-    // Unchecking asks before it throws the arrival time away.
-    await answerDialog(page, 'Yes');
+  const box = page.locator(`input#in-${attendanceId}`);
+  const stored = page.locator('.dx-toast-success', { hasText: /attendance success/i });
+
+  for (let attempt = 0; attempt < 3; attempt += 1) {
+    if ((await box.isChecked()) === wanted) return;
+
+    // Let any toast from an earlier press clear, so the next one is this
+    // press's own answer rather than the last one's.
+    await expect(stored).toHaveCount(0, { timeout: 15_000 });
+
+    await page.locator(`label[for="in-${attendanceId}"]`).click();
+    if (!wanted) {
+      // Unchecking asks before it throws the arrival time away.
+      await answerDialog(page, 'Yes');
+    }
+
+    try {
+      await expect(stored).toBeVisible({ timeout: 10_000 });
+      await expect(box).toBeChecked({ checked: wanted, timeout: 10_000 });
+      return;
+    } catch {
+      if (attempt === 2) {
+        throw new Error(
+          `the register never stored the check-in change for ${attendanceId}`,
+        );
+      }
+    }
   }
-  await saved;
 }
 
 /** The Sunday the golden congregation last met, as the gatherings are named. */
@@ -150,27 +172,24 @@ test.describe('a coworker takes the register', () => {
     const rows = await openLastSundaysRoster(page);
     await expect(rows.first()).toBeVisible();
 
-    // Somebody who was not marked present that week: their check-in box is
-    // clear, and the check-out button is hidden until they arrive.
-    const checkIn = page.locator(`${GRID} input.roll-call-button[value="checkIn"]`).first();
-    const rowId = await checkIn.getAttribute('id');
+    // Take somebody's row, then hold on to *them* rather than to "the first
+    // row": saving reloads the grid, and the row that comes back first need
+    // not be the one that was clicked. Every id here is the attendance's own,
+    // so it survives the reload.
+    const rowId = await page
+      .locator(`${GRID} input.roll-call-button[value="checkIn"]`)
+      .first()
+      .getAttribute('id');
     const attendanceId = (rowId ?? '').replace(/^in-/, '');
+    const checkIn = page.locator(`input#in-${attendanceId}`);
     const wasChecked = await checkIn.isChecked();
 
-    await toggleCheckIn(page, attendanceId, wasChecked);
-    await expect
-      .poll(async () => checkIn.isChecked(), {
-        message: 'the check-in button never changed state',
-      })
-      .toBe(!wasChecked);
+    await toggleCheckIn(page, attendanceId, !wasChecked);
+    await expect(checkIn).toBeChecked({ checked: !wasChecked });
 
     // Put the register back the way the eight weeks of history expect it.
-    await toggleCheckIn(page, attendanceId, !wasChecked);
-    await expect
-      .poll(async () => checkIn.isChecked(), {
-        message: 'the check-in button was never put back',
-      })
-      .toBe(wasChecked);
+    await toggleCheckIn(page, attendanceId, wasChecked);
+    await expect(checkIn).toBeChecked({ checked: wasChecked });
   });
 
   test('checks a child out, and will not do it without a signature', async ({

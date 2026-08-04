@@ -127,32 +127,43 @@ test.describe('a coworker writes a note', () => {
 
     // Turning editing on rebuilds every grid on the page, so wait for the
     // rebuilt notes grid — its add-row button only exists in editing mode —
-    // rather than clicking into one that is about to be replaced.
+    // rather than clicking into one that is about to be replaced. Even then a
+    // click can land during the rebuild and be swallowed, so the press is
+    // repeated until the popup is actually up.
     const notes = page.locator('#note-past-datagrid-container');
     await expect(notes.locator('.dx-datagrid-addrow-button')).toHaveCount(1);
     await notes.scrollIntoViewIfNeeded();
-    await notes.locator('.dx-datagrid-addrow-button').first().click();
 
-    // The grid edits in a popup.
     const editor = page.locator('.dx-datagrid-edit-popup:visible');
-    await expect(editor).toBeVisible();
+    for (let attempt = 0; attempt < 3; attempt += 1) {
+      await notes.locator('.dx-datagrid-addrow-button').first().click();
+      try {
+        await expect(editor).toBeVisible({ timeout: 5_000 });
+        break;
+      } catch {
+        if (attempt === 2) throw new Error('the notes grid never opened its editor');
+      }
+    }
 
     const field = (label: string) =>
       editor.locator('.dx-field-item', {
         has: page.locator('.dx-field-item-label-text', { hasText: label }),
       });
-    await field('Title').locator('.dx-texteditor-input').first().fill(written);
 
-    // A note with no category is refused, and the popup stays open. Worth
-    // pinning: the category is what decides who may read it, so an
-    // uncategorised note is how a confidential one ends up public.
+    // An empty note is refused and the popup stays open. Worth pinning: the
+    // category is what decides who may read a note, so one saved without a
+    // category is how a confidential note ends up public.
     await editor.getByRole('button', { name: /^save$/i }).first().click();
     await expect(editor).toBeVisible();
 
-    // Pick a category from the list the editor itself says it owns. DevExtreme
-    // renders that popup under a different class depending on how many choices
-    // there are, and its options arrive asynchronously — so the input's own
-    // aria-owns is the only handle that is both correct and stable.
+    // Category first, and the title after it. Choosing a category re-renders
+    // the form, and a title typed before that is silently dropped — which
+    // showed up in CI as a saved note with a blank title rather than as any
+    // kind of error.
+    //
+    // The list is found through the input's own aria-owns: DevExtreme renders
+    // that popup under a different class depending on how many choices there
+    // are, and its options arrive asynchronously.
     const categoryInput = field('Category').locator('.dx-texteditor-input').first();
     await categoryInput.click();
     const listId = await categoryInput.getAttribute('aria-owns');
@@ -162,6 +173,12 @@ test.describe('a coworker writes a note', () => {
     await expect(choices.first()).toBeVisible();
     await choices.first().click();
     await expect(categoryInput).not.toHaveValue('');
+
+    const titleInput = field('Title').locator('.dx-texteditor-input').first();
+    await titleInput.fill(written);
+    // Read it back before saving, so a dropped value fails here rather than
+    // three lines later as a mystery about the grid.
+    await expect(titleInput).toHaveValue(written);
 
     await editor.getByRole('button', { name: /^save$/i }).first().click();
     await expect(editor).toBeHidden();
