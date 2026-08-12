@@ -14,6 +14,8 @@ import pytz
 from django.conf import settings
 from django.contrib.contenttypes.models import ContentType
 
+from attendees.utils.dbcompat.migrations import VendorSQL
+
 # from schedule.models.events import EventRelation
 from partial_date import PartialDate
 
@@ -67,24 +69,39 @@ class Utility:
 
     @staticmethod
     def pgh_default_sql(history_table_name, table_comment='pgh_obj_id is indexed id/pk', index_on_id=False, original_model_table=''):
+        """SQL run after creating a history table, as a per-vendor statement list.
+
+        SQLite gets only the index. It has no `ALTER COLUMN ... SET DEFAULT` and no
+        `COMMENT ON`, and needs neither: the column default is a backstop for raw inserts,
+        while the history triggers always supply `pgh_created_at` explicitly.
+        """
         if not original_model_table:
             original_model_table = history_table_name.replace('history', '')
 
-        results = f"""
-                ALTER TABLE {history_table_name} ALTER COLUMN pgh_created_at SET DEFAULT CURRENT_TIMESTAMP;
-                COMMENT ON TABLE {history_table_name} IS 'History table: {table_comment} of {original_model_table}';
-                """
+        index_sql = f"CREATE INDEX idx_{history_table_name}_id ON {history_table_name}(id);"
+        postgresql = [
+            f"ALTER TABLE {history_table_name} ALTER COLUMN pgh_created_at SET DEFAULT CURRENT_TIMESTAMP;",
+            f"COMMENT ON TABLE {history_table_name} IS 'History table: {table_comment} of {original_model_table}';",
+        ]
+        sqlite = []
         if index_on_id:
-            results += f"""CREATE INDEX idx_{history_table_name}_id ON {history_table_name}(id);"""
-        return results
+            postgresql.append(index_sql)
+            sqlite.append(index_sql)
+        return VendorSQL(postgresql=postgresql, sqlite=sqlite)
 
     @staticmethod
     def default_sql(table_name):
-        return f"""
-                ALTER TABLE {table_name} ALTER COLUMN created SET DEFAULT CURRENT_TIMESTAMP;
-                ALTER TABLE {table_name} ALTER COLUMN modified SET DEFAULT CURRENT_TIMESTAMP;
-                ALTER TABLE {table_name} ALTER COLUMN is_removed SET DEFAULT false;
-               """
+        """Column defaults for TimeStampedModel/SoftDeletableModel tables, per vendor.
+
+        Nothing for SQLite: these are Postgres-side defaults for the same columns Django
+        already populates, and SQLite cannot add a default to an existing column without
+        rebuilding the table.
+        """
+        return VendorSQL(postgresql=[
+            f"ALTER TABLE {table_name} ALTER COLUMN created SET DEFAULT CURRENT_TIMESTAMP;",
+            f"ALTER TABLE {table_name} ALTER COLUMN modified SET DEFAULT CURRENT_TIMESTAMP;",
+            f"ALTER TABLE {table_name} ALTER COLUMN is_removed SET DEFAULT false;",
+        ])
 
     @staticmethod
     def present_check(string):

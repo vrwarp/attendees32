@@ -12,6 +12,7 @@ import model_utils.fields
 from partial_date.fields import PartialDateField
 from attendees.persons.models.enum import GenderEnum
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -51,7 +52,7 @@ class Migration(migrations.Migration):
             },
             bases=(Utility, models.Model),
         ),
-        migrations.RunSQL(Utility.default_sql('persons_attendees')),
+        PortableRunSQL(Utility.default_sql('persons_attendees')),
         # migrations.RunSQL(
         #     sql="""
         #         ALTER TABLE persons_attendees DROP COLUMN full_name;
@@ -101,7 +102,7 @@ class Migration(migrations.Migration):
                 'db_table': 'persons_attendeeshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_attendeeshistory')),
+        PortableRunSQL(Utility.pgh_default_sql('persons_attendeeshistory')),
         pgtrigger.migrations.AddTrigger(
             model_name='attendee',
             trigger=pgtrigger.compiler.Trigger(name='attendee_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_attendeeshistory" ("created", "modified", "is_removed", "id", "division_id", "gender", "user_id", "infos", "first_name", "last_name", "first_name2", "last_name2", "photo", "actual_birthday", "estimated_birthday", "deathday", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."division_id", NEW."gender", NEW."user_id", NEW."infos", NEW."first_name", NEW."last_name", NEW."first_name2", NEW."last_name2", NEW."photo", NEW."actual_birthday", NEW."estimated_birthday", NEW."deathday", NOW(), \'attendee.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='5a8a2ae839d5139f323795d1e5274a1b9d4a910d', operation='INSERT', pgid='pgtrigger_attendee_snapshot_insert_7e147', table='persons_attendees', when='AFTER')),

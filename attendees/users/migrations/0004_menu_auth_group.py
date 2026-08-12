@@ -5,6 +5,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -31,7 +32,7 @@ class Migration(migrations.Migration):
                 'db_table': 'users_menu_auth_groups',
             },
         ),
-        migrations.RunSQL(Utility.default_sql('users_menu_auth_groups')),
+        PortableRunSQL(Utility.default_sql('users_menu_auth_groups')),
         migrations.AddConstraint(
             model_name='menuauthgroup',
             constraint=models.UniqueConstraint(fields=('auth_group', 'menu'), condition=models.Q(is_removed=False), name='auth_group_menu'),
@@ -63,7 +64,7 @@ class Migration(migrations.Migration):
                 'db_table': 'users_menu_auth_groupshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_menu_auth_groupshistory', original_model_table='users_menu_auth_groups')),
+        PortableRunSQL(Utility.pgh_default_sql('users_menu_auth_groupshistory', original_model_table='users_menu_auth_groups')),
         pgtrigger.migrations.AddTrigger(
             model_name='menuauthgroup',
             trigger=pgtrigger.compiler.Trigger(name='menuauthgroup_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_menu_auth_groupshistory" ("id", "created", "modified", "is_removed", "read", "write", "auth_group_id", "menu_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."read", NEW."write", NEW."auth_group_id", NEW."menu_id", NOW(), \'menuauthgroup.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='96ebda0f1ede8affd15d679abfa9ad944e4e305d', operation='INSERT', pgid='pgtrigger_menuauthgroup_snapshot_insert_f821d', table='users_menu_auth_groups', when='AFTER')),

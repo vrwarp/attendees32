@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -33,7 +34,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('persons_registrations')),
+        PortableRunSQL(Utility.default_sql('persons_registrations')),
         migrations.AddConstraint(
             model_name='registration',
             constraint=models.UniqueConstraint(fields=('assembly', 'registrant'), condition=models.Q(is_removed=False), name='assembly_registrant'),
@@ -62,7 +63,7 @@ class Migration(migrations.Migration):
                 'db_table': 'persons_registrationshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_registrationshistory', original_model_table='persons_registrations')),
+        PortableRunSQL(Utility.pgh_default_sql('persons_registrationshistory', original_model_table='persons_registrations')),
         pgtrigger.migrations.AddTrigger(
             model_name='registration',
             trigger=pgtrigger.compiler.Trigger(name='registration_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_registrationshistory" ("id", "created", "modified", "is_removed", "assembly_id", "infos", "registrant_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."assembly_id", NEW."infos", NEW."registrant_id", NOW(), \'registration.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='e84bb653cd7078647ac7818ff71a4408713fcfa4', operation='INSERT', pgid='pgtrigger_registration_snapshot_insert_749b9', table='persons_registrations', when='AFTER')),

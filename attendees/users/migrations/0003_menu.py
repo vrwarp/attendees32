@@ -7,6 +7,7 @@ import model_utils.fields
 import mptt.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -43,7 +44,7 @@ class Migration(migrations.Migration):
                 'db_table': 'users_menus',
             },
         ),
-        migrations.RunSQL(Utility.default_sql('users_menus')),
+        PortableRunSQL(Utility.default_sql('users_menus')),
         # migrations.AddConstraint(
         #     model_name='menu',
         #     constraint=models.UniqueConstraint(fields=('organization', 'category', 'html_type', 'url_name'), condition=models.Q(is_removed=False), name='organization_category_html_type_url_name'),
@@ -78,7 +79,7 @@ class Migration(migrations.Migration):
                 'db_table': 'users_menushistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_menushistory', original_model_table='users_menus')),
+        PortableRunSQL(Utility.pgh_default_sql('users_menushistory', original_model_table='users_menus')),
         pgtrigger.migrations.AddTrigger(
             model_name='menu',
             trigger=pgtrigger.compiler.Trigger(name='menu_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_menushistory" ("id", "created", "modified", "organization_id", "is_removed", "tree_id", "level", "lft", "rght", "display_order", "category", "url_name", "display_name", "infos", "parent_id", "urn", "html_type", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."organization_id", NEW."is_removed", NEW."tree_id", NEW."level", NEW."lft", NEW."rght", NEW."display_order", NEW."category", NEW."url_name", NEW."display_name", NEW."infos", NEW."parent_id", NEW."urn", NEW."html_type", NOW(), \'menu.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='54c7ce8565cef18c1e0b49411ea66fca35d52764', operation='INSERT', pgid='pgtrigger_menu_snapshot_insert_b8c5e', table='users_menus', when='AFTER')),

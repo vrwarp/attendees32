@@ -5,6 +5,7 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -42,7 +43,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_grouppermissionshistory', original_model_table='auth_group_permissions')),
+        PortableRunSQL(Utility.pgh_default_sql('users_grouppermissionshistory', original_model_table='auth_group_permissions')),
         pgtrigger.migrations.AddTrigger(
             model_name='grouppermissionproxy',
             trigger=pgtrigger.compiler.Trigger(name='permission_add', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_grouppermissionshistory" ("group_id", "permission_id", "id", "pgh_created_at", "pgh_label", "pgh_context_id") VALUES (NEW."group_id", NEW."permission_id", NEW."id", NOW(), \'permission.add\', _pgh_attach_context()); RETURN NULL;', hash='04593aff93fe26f4cb786d3c47cb040988e58913', operation='INSERT', pgid='pgtrigger_permission_add_1ac45', table='auth_group_permissions', when='AFTER')),

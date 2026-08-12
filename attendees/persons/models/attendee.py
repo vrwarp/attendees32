@@ -11,6 +11,8 @@ import partial_date.fields
 # import private_storage.fields
 from private_storage.storage.files import PrivateFileSystemStorage
 from django.contrib.postgres.indexes import GinIndex
+
+from attendees.utils.dbcompat.lookups import json_contains
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -231,14 +233,14 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         if str(self.id) == other_attendee_id:
             return True
         return Attendee.objects.filter(
-            pk=self.id, infos__schedulers__contains={other_attendee_id: True}
+            json_contains('infos__schedulers', {other_attendee_id: True}), pk=self.id
         ).exists()
 
     def can_schedule_attendee(self, other_attendee_id):
         if str(self.id) == other_attendee_id:
             return True
         return Attendee.objects.filter(
-            pk=other_attendee_id, infos__schedulers__contains={str(self.id): True}
+            json_contains('infos__schedulers', {str(self.id): True}), pk=other_attendee_id
         ).exists()
         # self.__class__.objects.filter(
         #     (Q(from_attendee__finish__isnull=True) | Q(from_attendee__finish__gt=Utility.now_with_timezone())),
@@ -254,7 +256,7 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         parent by "scheduler" is true in its infos__schedulers, when calling parent_attendee.scheduling_attendees(),
         the kid will be returned, means the parent can change/see schedule of the kid.
         """
-        filters = Q(infos__schedulers__contains={str(self.id): True})
+        filters = json_contains('infos__schedulers', {str(self.id): True})
 
         if include_self:
             filters.add(Q(id=self.id), Q.OR)

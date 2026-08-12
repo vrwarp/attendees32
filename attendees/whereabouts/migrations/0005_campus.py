@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -34,7 +35,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('whereabouts_campuses')),
+        PortableRunSQL(Utility.default_sql('whereabouts_campuses')),
         migrations.AddIndex(
             model_name='campus',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='campus_infos_gin'),
@@ -60,7 +61,7 @@ class Migration(migrations.Migration):
                 'db_table': 'whereabouts_campuseshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_campuseshistory', original_model_table='whereabouts_campuses')),
+        PortableRunSQL(Utility.pgh_default_sql('whereabouts_campuseshistory', original_model_table='whereabouts_campuses')),
         pgtrigger.migrations.AddTrigger(
             model_name='campus',
             trigger=pgtrigger.compiler.Trigger(name='campus_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_campuseshistory" ("id", "created", "modified", "is_removed", "organization_id", "infos", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."organization_id", NEW."infos", NEW."slug", NEW."display_name", NOW(), \'campus.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='f7ee894d4bea4ff6dd9a656041a28db93983072f', operation='INSERT', pgid='pgtrigger_campus_snapshot_insert_03a50', table='whereabouts_campuses', when='AFTER')),

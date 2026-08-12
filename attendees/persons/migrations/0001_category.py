@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -34,7 +35,7 @@ class Migration(migrations.Migration):
                 'ordering': ('type', 'display_order'),
             },
         ),
-        migrations.RunSQL(Utility.default_sql('persons_categories')),
+        PortableRunSQL(Utility.default_sql('persons_categories')),
         migrations.AddIndex(
             model_name='category',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='category_infos_gin'),
@@ -60,7 +61,7 @@ class Migration(migrations.Migration):
                 'db_table': 'persons_categorieshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_categorieshistory')),
+        PortableRunSQL(Utility.pgh_default_sql('persons_categorieshistory')),
         pgtrigger.migrations.AddTrigger(
             model_name='category',
             trigger=pgtrigger.compiler.Trigger(name='category_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_categorieshistory" ("created", "modified", "is_removed", "id", "display_order", "infos", "type", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."display_order", NEW."infos", NEW."type", NEW."display_name", NOW(), \'category.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='2c67612690a9b4a565d71e40d7b774edb7efb434', operation='INSERT', pgid='pgtrigger_category_snapshot_insert_47256', table='persons_categories', when='AFTER')),

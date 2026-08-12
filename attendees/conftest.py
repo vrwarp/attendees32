@@ -12,6 +12,24 @@ def media_storage(settings, tmpdir):
     settings.MEDIA_ROOT = tmpdir.strpath
 
 
+@pytest.fixture(autouse=True)
+def clear_cache():
+    """Isolate the process-wide cache between tests.
+
+    Several services cache by primary key — ``pcosync``'s field definitions cache on
+    ``organization_id``, for instance. On Postgres that is harmless, because sequences are
+    non-transactional and every test's rows get fresh ids, so cache keys never collide. SQLite
+    allocates rowids inside the transaction and reuses them once the test rolls back, so each
+    test builds its organization with the *same* id and inherits the previous test's cached
+    value. Clearing between tests removes the ordering dependency on both backends.
+    """
+    from django.core.cache import cache
+
+    cache.clear()
+    yield
+    cache.clear()
+
+
 @pytest.fixture
 def user() -> User:
     return UserFactory()

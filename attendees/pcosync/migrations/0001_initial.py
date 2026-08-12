@@ -10,6 +10,7 @@ import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
 import uuid
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -933,20 +934,20 @@ class Migration(migrations.Migration):
                 ),
             ),
         ),
-        migrations.RunSQL(Utility.default_sql("pcosync_person_links")),
-        migrations.RunSQL(Utility.default_sql("pcosync_household_links")),
-        migrations.RunSQL(Utility.default_sql("pcosync_divergences")),
-        migrations.RunSQL(Utility.pgh_default_sql(
+        PortableRunSQL(Utility.default_sql("pcosync_person_links")),
+        PortableRunSQL(Utility.default_sql("pcosync_household_links")),
+        PortableRunSQL(Utility.default_sql("pcosync_divergences")),
+        PortableRunSQL(Utility.pgh_default_sql(
             "pcosync_person_linkshistory",
             table_comment="the attendees32 <-> Planning Center person join, and its baseline",
             original_model_table="pcosync_person_links",
         )),
-        migrations.RunSQL(Utility.pgh_default_sql(
+        PortableRunSQL(Utility.pgh_default_sql(
             "pcosync_household_linkshistory",
             table_comment="the Folk <-> Planning Center household join",
             original_model_table="pcosync_household_links",
         )),
-        migrations.RunSQL(Utility.pgh_default_sql(
+        PortableRunSQL(Utility.pgh_default_sql(
             "pcosync_divergenceshistory",
             table_comment="disagreements between attendees32 and Planning Center",
             original_model_table="pcosync_divergences",

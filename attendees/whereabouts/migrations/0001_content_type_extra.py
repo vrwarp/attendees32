@@ -1,6 +1,19 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import migrations
 
+from attendees.utils.dbcompat.migrations import PortableRunSQL, VendorSQL
+
+_TABLE = ContentType._meta.db_table
+
+# SQLite adds one column per ALTER and has no IF NOT EXISTS for columns, so the single
+# Postgres statement becomes four. Index DDL is portable as written.
+_SQLITE_COLUMNS = [
+    "display_order SMALLINT DEFAULT 0 NOT NULL",
+    "genres VARCHAR(100) DEFAULT NULL",
+    "endpoint VARCHAR(100) DEFAULT NULL",
+    "hint VARCHAR(100) DEFAULT NULL",
+]
+
 
 class Migration(migrations.Migration):
     """
@@ -14,25 +27,41 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RunSQL(
-            sql=f"""
-                ALTER TABLE {ContentType._meta.db_table}
+        PortableRunSQL(
+            sql=VendorSQL(
+                postgresql=[
+                    f"""
+                ALTER TABLE {_TABLE}
                   ADD COLUMN IF NOT EXISTS display_order SMALLINT DEFAULT 0 NOT NULL,
                   ADD COLUMN IF NOT EXISTS genres VARCHAR(100) DEFAULT NULL,
                   ADD COLUMN IF NOT EXISTS endpoint VARCHAR(100) DEFAULT NULL,
                   ADD COLUMN IF NOT EXISTS hint VARCHAR(100) DEFAULT NULL;
-
-                CREATE INDEX IF NOT EXISTS django_content_genres
-                   ON {ContentType._meta.db_table} (genres);
                 """,
-            reverse_sql=f"""
-                DROP INDEX IF EXISTS django_content_genres;
-
-                ALTER TABLE {ContentType._meta.db_table}
+                    f"CREATE INDEX IF NOT EXISTS django_content_genres ON {_TABLE} (genres);",
+                ],
+                sqlite=[
+                    *[f"ALTER TABLE {_TABLE} ADD COLUMN {column};" for column in _SQLITE_COLUMNS],
+                    f"CREATE INDEX IF NOT EXISTS django_content_genres ON {_TABLE} (genres);",
+                ],
+            ),
+            reverse_sql=VendorSQL(
+                postgresql=[
+                    "DROP INDEX IF EXISTS django_content_genres;",
+                    f"""
+                ALTER TABLE {_TABLE}
                     DROP COLUMN IF EXISTS hint,
                     DROP COLUMN IF EXISTS endpoint,
                     DROP COLUMN IF EXISTS genres,
                     DROP COLUMN IF EXISTS display_order;
                  """,
+                ],
+                sqlite=[
+                    "DROP INDEX IF EXISTS django_content_genres;",
+                    *[
+                        f"ALTER TABLE {_TABLE} DROP COLUMN {column.split()[0]};"
+                        for column in reversed(_SQLITE_COLUMNS)
+                    ],
+                ],
+            ),
         ),
     ]

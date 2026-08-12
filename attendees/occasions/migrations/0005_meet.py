@@ -7,6 +7,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -48,7 +49,7 @@ class Migration(migrations.Migration):
             model_name='Meet',
             index=GinIndex(fields=['infos'], name='meet_infos_gin'),
         ),
-        migrations.RunSQL(Utility.default_sql('occasions_meets')),
+        PortableRunSQL(Utility.default_sql('occasions_meets')),
         migrations.CreateModel(
             name='MeetsHistory',
             fields=[
@@ -77,7 +78,7 @@ class Migration(migrations.Migration):
                 'db_table': 'occasions_meetshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_meetshistory', original_model_table='occasions_meets')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_meetshistory', original_model_table='occasions_meets')),
         pgtrigger.migrations.AddTrigger(
             model_name='meet',
             trigger=pgtrigger.compiler.Trigger(name='meet_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_meetshistory" ("id", "created", "modified", "is_removed", "shown_audience", "audience_editable", "start", "finish", "infos", "site_type_id", "slug", "site_id", "assembly_id", "major_character_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."shown_audience", NEW."audience_editable", NEW."start", NEW."finish", NEW."infos", NEW."site_type_id", NEW."slug", NEW."site_id", NEW."assembly_id", NEW."major_character_id", NEW."display_name", NOW(), \'meet.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='5281fcd913e11324a5adaed62195702ad8d9f5a7', operation='INSERT', pgid='pgtrigger_meet_snapshot_insert_fd3df', table='occasions_meets', when='AFTER')),

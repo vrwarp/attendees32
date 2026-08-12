@@ -13,7 +13,12 @@ ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["chineseforchristchurc
 # ------------------------------------------------------------------------------
 # DATABASES["default"] = env.db("DATABASE_URL")  # noqa F405
 # DATABASES["default"]["ATOMIC_REQUESTS"] = True  # noqa F405
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # noqa F405
+# SQLite defaults to 0: a persistent connection holds a read snapshot open, which stops WAL
+# from checkpointing and lets the -wal file grow without bound. Reconnecting to a local file is
+# nearly free, so there is nothing to gain by keeping it.
+DATABASES["default"]["CONN_MAX_AGE"] = env.int(  # noqa F405
+    "CONN_MAX_AGE", default=0 if IS_SQLITE else 60  # noqa F405
+)
 
 # CACHES
 # ------------------------------------------------------------------------------

@@ -6,6 +6,7 @@ import django.utils.timezone
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -50,7 +51,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_emailconfirmationhistory', original_model_table='account_emailconfirmation')),
+        PortableRunSQL(Utility.pgh_default_sql('users_emailconfirmationhistory', original_model_table='account_emailconfirmation')),
         migrations.AlterField(
             model_name='emailconfirmationhistory',
             name='pgh_obj',
