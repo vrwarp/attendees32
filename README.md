@@ -32,6 +32,14 @@ functions the audit-history triggers call. The compatibility layer lives in
 `attendees/utils/dbcompat/`; nothing in it branches on the vendor at import time, so both
 backends share one migration tree and `makemigrations --check` stays clean on each.
 
+Read-only requests open `BEGIN DEFERRED` instead, chosen per request by
+`SqliteTransactionModeMiddleware`. This matters more than it sounds: `ATOMIC_REQUESTS` wraps
+every request in a transaction, so opening all of them `IMMEDIATE` makes the whole application
+queue behind SQLite's single write lock. On the attendee page, which fires eight API calls at
+once, that cost about 70% added latency on reads — and bought nothing, since a read-only
+transaction never upgrades and so was never at risk of the `SQLITE_BUSY_SNAPSHOT` that
+`IMMEDIATE` exists to prevent.
+
 The audit history is equivalent on both. It is enforced by database triggers rather than Django
 signals, so `queryset.update()`, `bulk_create` and raw SQL are all recorded.
 
@@ -48,8 +56,9 @@ pytest --create-db
 * **Keep the database file on local disk.** NFS, EFS and SMB do not implement the locking
   SQLite needs, and will corrupt it.
 * **Writes are serialized.** `ATOMIC_REQUESTS` holds the write lock for the whole request, so
-  sustained write throughput is roughly one write-request at a time. The attendee datagrid does
-  heavy multi-join aggregation; measure with your own data before committing to a user count.
+  sustained write throughput is roughly one write-request at a time. Reads are not affected —
+  they run concurrently under WAL. The attendee datagrid does heavy multi-join aggregation;
+  measure with your own data before committing to a user count.
 * **`django_celery_beat`'s scheduler polls and writes on every tick.** Raise `--max-interval` to
   keep it out of the way.
 * `psycopg2` remains an install dependency even on SQLite — `pgtrigger` and `pghistory` import

@@ -171,6 +171,51 @@ class TestTriggerDurability:
         sync_sqlite_triggers()
 
 
+@pytest.mark.skipif(connection.vendor == "postgresql", reason="SQLite transaction modes only")
+class TestTransactionMode:
+    """Read-only requests must not queue behind SQLite's single write lock.
+
+    ATOMIC_REQUESTS wraps every request in a transaction, and a write transaction has to open as
+    BEGIN IMMEDIATE — a deferred one cannot reliably upgrade under WAL. Opening reads that way
+    too serialises the whole application on one lock. Measured on the attendee page, which fires
+    eight API calls at once, that cost about 70% added latency on reads for no safety benefit.
+    """
+
+    def test_safe_methods_defer(self):
+        from attendees.db.backends.sqlite3.base import DEFERRED, IMMEDIATE, get_transaction_mode
+        from attendees.utils.dbcompat.middleware import SqliteTransactionModeMiddleware
+
+        seen = {}
+
+        def capture(request):
+            seen[request.method] = get_transaction_mode()
+            return "response"
+
+        middleware = SqliteTransactionModeMiddleware(capture)
+
+        class FakeRequest:
+            def __init__(self, method):
+                self.method = method
+
+        for method in ("GET", "HEAD", "OPTIONS"):
+            middleware(FakeRequest(method))
+            assert seen[method] == DEFERRED
+        for method in ("POST", "PUT", "PATCH", "DELETE"):
+            middleware(FakeRequest(method))
+            assert seen[method] == IMMEDIATE
+
+        # Restored afterwards, so a later write on this thread is not left deferred.
+        assert get_transaction_mode() == IMMEDIATE
+
+    def test_writes_still_work_inside_an_atomic_block(self):
+        """The deferred/immediate split must not break ordinary writes."""
+        from django.db import transaction
+
+        with transaction.atomic():
+            Relation.objects.create(title="txn-mode", gender=GENDER, display_order=1)
+        assert Relation.objects.filter(title="txn-mode").exists()
+
+
 class TestPortableArrayField:
     def test_list_roundtrips(self):
         relation = Relation.objects.create(

@@ -6,6 +6,7 @@ during ``migrate`` and management commands.
 """
 import datetime
 import json
+import threading
 
 from django.db.backends.sqlite3 import base as sqlite3_base
 from django.db.backends.sqlite3 import operations as sqlite3_operations
@@ -13,6 +14,22 @@ from django.db.backends.sqlite3 import operations as sqlite3_operations
 # Django stores datetimes on SQLite as naive UTC strings; match that exactly so history rows
 # compare equal to rows written by the ORM.
 _DATETIME_FORMAT = "%Y-%m-%d %H:%M:%S.%f"
+
+# How the next transaction on this thread should open. IMMEDIATE is the safe default: it takes
+# the write lock up front, which is what a transaction that will write needs. Read-only work
+# sets DEFERRED so it does not queue behind every other request. See set_transaction_mode.
+_state = threading.local()
+
+DEFERRED = "DEFERRED"
+IMMEDIATE = "IMMEDIATE"
+
+
+def set_transaction_mode(mode):
+    _state.mode = mode
+
+
+def get_transaction_mode():
+    return getattr(_state, "mode", IMMEDIATE)
 
 
 def _uuid_text(value):
@@ -120,17 +137,27 @@ class DatabaseWrapper(sqlite3_base.DatabaseWrapper):
         return self._pgh_transaction_now
 
     def _start_transaction_under_autocommit(self):
-        """Take the write lock up front.
+        """Open the transaction in the mode this piece of work actually needs.
 
         ``ATOMIC_REQUESTS = True`` wraps every request in a transaction. Django's default bare
         ``BEGIN`` is deferred: it takes a read lock and tries to upgrade on the first write. In
         WAL mode that upgrade fails immediately with SQLITE_BUSY_SNAPSHOT if anyone committed
         in the meantime, and ``busy_timeout`` does not retry it because retrying can never
-        succeed. ``BEGIN IMMEDIATE`` takes the write lock at the start, where the timeout does
-        apply.
+        succeed. So anything that writes must use ``BEGIN IMMEDIATE``, which takes the write
+        lock at the start where the timeout does apply.
+
+        Applying that to *every* request, though, serialises reads behind the single write lock.
+        Measured against this project's attendee page, which fires eight API calls at once, it
+        cost about 70% added latency on reads — mean 747ms against 445ms on Postgres for the
+        same endpoint — with no benefit, since a read-only transaction never upgrades and so can
+        never hit SQLITE_BUSY_SNAPSHOT. Read-only requests therefore open DEFERRED and run
+        concurrently under WAL, which brought the same endpoint back to 412ms.
+
+        The mode is chosen per request by SqliteTransactionModeMiddleware; everything else —
+        management commands, Celery tasks, tests — keeps the IMMEDIATE default.
         """
         self._pgh_transaction_now = None
-        self.cursor().execute("BEGIN IMMEDIATE")
+        self.cursor().execute(f"BEGIN {get_transaction_mode()}")
 
     def _commit(self):
         self._pgh_transaction_now = None

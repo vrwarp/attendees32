@@ -177,6 +177,11 @@ MIDDLEWARE = [
     "attendees.middleware.TimezoneMiddleware",
 ]
 
+if IS_SQLITE:
+    # Innermost, so it is the last thing set before ATOMIC_REQUESTS opens the transaction around
+    # the view, and the first to restore the default on the way out.
+    MIDDLEWARE.append("attendees.utils.dbcompat.middleware.SqliteTransactionModeMiddleware")
+
 # STATIC
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#static-root
