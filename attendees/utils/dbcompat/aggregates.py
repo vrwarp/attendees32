@@ -76,11 +76,16 @@ class StringAgg(PGStringAgg):
     """
 
     def as_sqlite(self, compiler, connection, **extra_context):
+        if not self.distinct:
+            return _as_sqlite_function(self, compiler, connection, "group_concat")
+
+        # Keep only the aggregated expression; the delimiter cannot come along. The filter has
+        # to be carried explicitly: Aggregate.get_source_expressions() appends it and
+        # set_source_expressions() pops it back off, so slicing it away would silently promote
+        # the aggregated expression itself into the filter and leave group_concat() empty.
         sources = self.get_source_expressions()
-        if self.distinct:
-            # Keep only the aggregated expression; the delimiter cannot come along.
-            sources = sources[:1]
-        return _as_sqlite_function(self, compiler, connection, "group_concat", sources)
+        trimmed = sources[:1] + (sources[-1:] if self.filter else [])
+        return _as_sqlite_function(self, compiler, connection, "group_concat", trimmed)
 
 
 class JsonBuildObject(Func):

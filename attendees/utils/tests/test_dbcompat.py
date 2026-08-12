@@ -7,7 +7,7 @@ rather than a SQLite suite — a divergence shows up as a failure on one leg.
 import pghistory
 import pytest
 from django.db import connection
-from django.db.models import Value
+from django.db.models import Q, Value
 
 from attendees.persons.models.folk import Folk
 from attendees.persons.models.relation import Relation, RelationsHistory
@@ -231,6 +231,31 @@ class TestAggregates:
             .first()
         )
         assert list(row["orders"]) == [4]
+
+    def test_distinct_string_aggregate_with_a_filter(self):
+        """distinct + filter together, which the datagrid uses and which nearly broke.
+
+        `Aggregate.get_source_expressions()` appends the filter and `set_source_expressions()`
+        pops it back off. Dropping the delimiter for DISTINCT by slicing therefore promoted the
+        aggregated column into the filter slot and emitted `group_concat(DISTINCT )` — a
+        zero-argument call SQLite rejects outright.
+        """
+        Relation.objects.create(title="agg-df", gender=GENDER, display_order=1)
+        row = (
+            Relation.objects.filter(title="agg-df")
+            .annotate(
+                titles=StringAgg(
+                    "title",
+                    delimiter=", ",
+                    distinct=True,
+                    default=None,
+                    filter=Q(display_order__gte=0),
+                )
+            )
+            .values("titles")
+            .first()
+        )
+        assert row["titles"] == "agg-df"
 
     def test_string_aggregate_joins_with_the_delimiter(self):
         Relation.objects.create(title="agg-str", gender=GENDER, display_order=1)

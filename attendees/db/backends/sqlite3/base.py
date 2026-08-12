@@ -5,8 +5,10 @@ promise the PRAGMAs and the pghistory functions exist before *any* statement run
 during ``migrate`` and management commands.
 """
 import datetime
+import json
 
 from django.db.backends.sqlite3 import base as sqlite3_base
+from django.db.backends.sqlite3 import operations as sqlite3_operations
 
 # Django stores datetimes on SQLite as naive UTC strings; match that exactly so history rows
 # compare equal to rows written by the ORM.
@@ -28,8 +30,26 @@ def _uuid_text(value):
     return text.lower()
 
 
+class DatabaseOperations(sqlite3_operations.DatabaseOperations):
+    def adapt_json_value(self, value, encoder):
+        """Store JSON as real UTF-8 rather than \\uXXXX escapes.
+
+        Django's default serialization is ``json.dumps(..., ensure_ascii=True)``, so a name
+        like 陳 is written to SQLite as the seven literal characters ``\\u9673``. Postgres does
+        not have this problem: ``jsonb`` holds the decoded text, so casting it for a
+        ``infos__icontains`` search matches what the user typed.
+
+        Left alone, every search of a Han name silently returns nothing on SQLite — the query
+        succeeds and the grid is simply empty. This congregation's records are largely Chinese,
+        so that is a functional gap rather than a cosmetic one.
+        """
+        return json.dumps(value, cls=encoder, ensure_ascii=False)
+
+
 class DatabaseWrapper(sqlite3_base.DatabaseWrapper):
     """SQLite with WAL, a write-lock-first transaction mode, and the pghistory functions."""
+
+    ops_class = DatabaseOperations
 
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)

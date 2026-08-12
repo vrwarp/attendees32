@@ -60,9 +60,27 @@ pytest --create-db
 * `StringAgg(..., distinct=True)` joins with `,` rather than the requested delimiter. SQLite
   rejects `group_concat(DISTINCT x, ', ')` outright, and rewriting the result would corrupt any
   value containing a comma. Affects a few display-only columns.
-* `infos__icontains` searches match against a different serialization. Postgres casts `jsonb` to
-  normalized text; SQLite matches the raw stored JSON, so key order and separators differ.
+* `infos__icontains` searches match against the raw stored JSON rather than Postgres's
+  normalized `jsonb` text, so key order and separators differ. Non-ASCII text is *not* affected:
+  the SQLite backend stores JSON with `ensure_ascii=False`, so searching a Han name works the
+  same on both. (Django's default would write `陳` and quietly match nothing.)
 * GIN indexes degrade to ordinary indexes, so JSON containment queries scan rather than seek.
+
+### Running the browser suite
+
+Chromium only — the config also declares a WebKit project, which needs
+`npx playwright install webkit`.
+
+```sh
+export DATABASE_URL="sqlite:///attendees.sqlite3"
+python manage.py migrate
+python manage.py load_golden_data --seed --force --manifest e2e/golden-manifest.json
+python manage.py runserver 0.0.0.0:8008 --insecure   # DJANGO_DEBUG=True
+npm install && npx playwright test --project=chromium
+```
+
+The golden congregation is shared mutable state and the specs write to it, so rebuild it
+between full runs or later specs will fail on data an earlier one changed.
 
 ## Basic Commands
 
