@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -33,7 +34,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('whereabouts_rooms')),
+        PortableRunSQL(Utility.default_sql('whereabouts_rooms')),
         migrations.AddIndex(
             model_name='room',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='room_infos_gin'),
@@ -60,7 +61,7 @@ class Migration(migrations.Migration):
                 'db_table': 'whereabouts_roomshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_roomshistory', original_model_table='whereabouts_rooms')),
+        PortableRunSQL(Utility.pgh_default_sql('whereabouts_roomshistory', original_model_table='whereabouts_rooms')),
         pgtrigger.migrations.AddTrigger(
             model_name='room',
             trigger=pgtrigger.compiler.Trigger(name='room_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_roomshistory" ("created", "modified", "is_removed", "slug", "id", "infos", "suite_id", "display_name", "label", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."slug", NEW."id", NEW."infos", NEW."suite_id", NEW."display_name", NEW."label", NOW(), \'room.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='9e2f8a6e510731d45ca0d6219b4a611ad8d645d4', operation='INSERT', pgid='pgtrigger_room_snapshot_insert_6e9e9', table='whereabouts_rooms', when='AFTER')),

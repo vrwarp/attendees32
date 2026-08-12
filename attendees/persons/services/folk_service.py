@@ -1,6 +1,6 @@
 from collections import defaultdict
 from datetime import datetime, timezone
-from django.contrib.postgres.aggregates.general import  ArrayAgg
+from attendees.utils.dbcompat.aggregates import ArrayAgg
 from django.db.models import Max, OuterRef, Q, Subquery, Count
 
 from attendees.occasions.models import Meet

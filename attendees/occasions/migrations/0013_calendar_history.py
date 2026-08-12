@@ -5,6 +5,7 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -43,7 +44,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_calendarhistory', index_on_id=True, original_model_table='schedule_calendar')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_calendarhistory', index_on_id=True, original_model_table='schedule_calendar')),
         pgtrigger.migrations.AddTrigger(
             model_name='calendarproxy',
             trigger=pgtrigger.compiler.Trigger(name='calendar_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_calendarhistory" ("name", "slug", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."slug", NEW."id", NOW(), \'calendar.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='3e81f7cd7bbef8022bb1d621878ae86be7a79091', operation='INSERT', pgid='pgtrigger_calendar_snapshot_insert_608f9', table='schedule_calendar', when='AFTER')),

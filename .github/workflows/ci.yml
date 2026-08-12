@@ -61,3 +61,48 @@ jobs:
 
       - name: Tear down the Stack
         run:  docker compose -f local.yml down
+
+  # SQLite is a supported primary backend for small single-organization installs, so the same
+  # suite has to pass without Postgres. Runs outside Docker because the point is that a
+  # contributor needs no services at all.
+  pytest-sqlite:
+    runs-on: ubuntu-latest
+
+    env:
+      DATABASE_URL: "sqlite:///attendees.sqlite3"
+      CELERY_BROKER_URL: "redis://localhost:6379/0"
+      REDIS_URL: "redis://localhost:6379/0"
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      USE_DOCKER: "no"
+
+    steps:
+
+      - name: Checkout Code Repository
+        uses: actions/checkout@v3
+
+      - name: Set up Python
+        uses: actions/setup-python@v4
+        with:
+          python-version: "3.11"
+          cache: pip
+          cache-dependency-path: |
+            requirements/base.txt
+            requirements/local.txt
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update && sudo apt-get install -y libpq-dev
+          python -m pip install --upgrade pip
+          pip install -r requirements/local.txt
+
+      - name: Run DB Migrations
+        run: python manage.py migrate --no-input
+
+      - name: Assert migration state matches the models
+        # The strongest signal that both backends agree: identical model state means
+        # makemigrations has nothing to add on either one.
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run Django Tests
+        # --create-db because pytest.ini passes --reuse-db, and there is no database to reuse.
+        run: pytest --create-db --ignore=attendees/tests/e2e

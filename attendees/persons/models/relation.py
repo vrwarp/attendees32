@@ -1,5 +1,5 @@
 import pghistory
-from django.contrib.postgres.fields import ArrayField
+from attendees.utils.dbcompat.fields import PortableArrayField
 import django.utils.timezone
 import model_utils.fields
 from django.db import models
@@ -19,7 +19,7 @@ class Relation(TimeStampedModel, SoftDeletableModel):
         default=GenderEnum.UNSPECIFIED,
         choices=GenderEnum.choices(),
     )
-    reciprocal_ids = ArrayField(
+    reciprocal_ids = PortableArrayField(
         verbose_name="corresponding relation ids",
         base_field=models.BigIntegerField(null=False, blank=False),
         default=list,
@@ -93,7 +93,7 @@ class RelationsHistory(pghistory.get_event_model(
     scheduler = models.BooleanField(default=False, help_text='default value, can view/change the schedules of the caller?', verbose_name='to be the scheduler?')
     relative = models.BooleanField(default=False, help_text='is it a relative?', verbose_name='relative?')
     consanguinity = models.BooleanField(default=False, help_text='is it blood relatives?', verbose_name='blood relatives?')
-    reciprocal_ids = ArrayField(base_field=models.BigIntegerField(), blank=True, default=list, help_text="Have to be completely empty or in the shape of '1,2,3', no brackets", null=True, size=None, verbose_name='corresponding relation ids')
+    reciprocal_ids = PortableArrayField(base_field=models.BigIntegerField(), blank=True, default=list, help_text="Have to be completely empty or in the shape of '1,2,3', no brackets", null=True, size=None, verbose_name='corresponding relation ids')
     gender = models.CharField(choices=GenderEnum.choices(), default=GenderEnum.UNSPECIFIED, max_length=11)
     title = models.CharField(max_length=50, verbose_name='To be called')
     pgh_context = models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')

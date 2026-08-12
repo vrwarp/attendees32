@@ -10,6 +10,7 @@ import pgtrigger.migrations
 import timezone_field.fields
 
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -52,7 +53,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_crontabschedulehistory', index_on_id=True, original_model_table='django_celery_beat_crontabschedule')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_crontabschedulehistory', index_on_id=True, original_model_table='django_celery_beat_crontabschedule')),
         pgtrigger.migrations.AddTrigger(
             model_name='crontabscheduleproxy',
             trigger=pgtrigger.compiler.Trigger(name='crontabschedule_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_crontabschedulehistory" ("minute", "hour", "day_of_week", "day_of_month", "month_of_year", "timezone", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."minute", NEW."hour", NEW."day_of_week", NEW."day_of_month", NEW."month_of_year", NEW."timezone", NEW."id", NOW(), \'crontabschedule.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='9102adf40baf33e6c2e3ff02b684c2944be69f5c', operation='INSERT', pgid='pgtrigger_crontabschedule_snapshot_insert_c7b77', table='django_celery_beat_crontabschedule', when='AFTER')),

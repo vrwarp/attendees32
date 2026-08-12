@@ -5,6 +5,7 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -44,7 +45,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_statehistory', index_on_id=True, original_model_table='address_state')),
+        PortableRunSQL(Utility.pgh_default_sql('whereabouts_statehistory', index_on_id=True, original_model_table='address_state')),
         migrations.AlterField(
             model_name='statehistory',
             name='pgh_obj',

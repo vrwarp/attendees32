@@ -1,6 +1,6 @@
 import time, pytz
 from django.conf import settings
-from django.contrib.postgres.aggregates.general import JSONBAgg
+from attendees.utils.dbcompat.aggregates import JSONBAgg, JsonBuildObject
 from django.db.models import Func, Value
 from django.db.models.expressions import F
 from django.db.models.functions import Concat, Trim
@@ -168,7 +168,7 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
             qs = Attendee.objects.annotate(
                 organization_slug=F("division__organization__slug"),
                 attendingmeets=JSONBAgg(
-                    Func(
+                    JsonBuildObject(
                         Value("attending_id"),
                         "attendings__id",
                         Value("attending_is_removed"),
@@ -194,7 +194,6 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
                                 ),
                             )
                         ),
-                        function="jsonb_build_object",
                     ),
                 ),
                 # contacts=ArrayAgg('attendings__meets__slug', distinct=True),

@@ -15,6 +15,55 @@ License: MIT
 
 Moved to [settings](http://cookiecutter-django.readthedocs.io/en/latest/settings.html).
 
+## Database backends
+
+PostgreSQL is the primary, fully-featured backend. SQLite is also supported as a primary
+backend, for small single-organization installs that would rather not operate Postgres, and for
+running the test suite without Docker. Pick one with `DATABASE_URL`:
+
+```sh
+DATABASE_URL="postgres://user:password@host:5432/attendees"   # default
+DATABASE_URL="sqlite:////var/lib/attendees/attendees.sqlite3"  # note the four slashes
+```
+
+A SQLite URL automatically routes through `attendees.db.backends.sqlite3`, which enables WAL,
+sets `busy_timeout`, opens write transactions with `BEGIN IMMEDIATE`, and registers the
+functions the audit-history triggers call. The compatibility layer lives in
+`attendees/utils/dbcompat/`; nothing in it branches on the vendor at import time, so both
+backends share one migration tree and `makemigrations --check` stays clean on each.
+
+The audit history is equivalent on both. It is enforced by database triggers rather than Django
+signals, so `queryset.update()`, `bulk_create` and raw SQL are all recorded.
+
+### Running on SQLite
+
+```sh
+export DATABASE_URL="sqlite:///attendees.sqlite3"
+python manage.py migrate
+pytest --create-db
+```
+
+### Operating a SQLite install
+
+* **Keep the database file on local disk.** NFS, EFS and SMB do not implement the locking
+  SQLite needs, and will corrupt it.
+* **Writes are serialized.** `ATOMIC_REQUESTS` holds the write lock for the whole request, so
+  sustained write throughput is roughly one write-request at a time. The attendee datagrid does
+  heavy multi-join aggregation; measure with your own data before committing to a user count.
+* **`django_celery_beat`'s scheduler polls and writes on every tick.** Raise `--max-interval` to
+  keep it out of the way.
+* `psycopg2` remains an install dependency even on SQLite — `pgtrigger` and `pghistory` import
+  it at module level. `psycopg2-binary` is a fine substitute if you have no libpq headers.
+
+### Known differences on SQLite
+
+* `StringAgg(..., distinct=True)` joins with `,` rather than the requested delimiter. SQLite
+  rejects `group_concat(DISTINCT x, ', ')` outright, and rewriting the result would corrupt any
+  value containing a comma. Affects a few display-only columns.
+* `infos__icontains` searches match against a different serialization. Postgres casts `jsonb` to
+  normalized text; SQLite matches the raw stored JSON, so key order and separators differ.
+* GIN indexes degrade to ordinary indexes, so JSON containment queries scan rather than seek.
+
 ## Basic Commands
 
 ### Setting Up Your Users

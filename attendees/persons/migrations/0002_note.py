@@ -7,6 +7,7 @@ import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -36,7 +37,7 @@ class Migration(migrations.Migration):
                 'ordering': ('organization', 'category', 'content_type', 'object_id', 'display_order', '-modified',),
             },
         ),
-        migrations.RunSQL(Utility.default_sql('persons_notes')),
+        PortableRunSQL(Utility.default_sql('persons_notes')),
         migrations.AddIndex(
             model_name='note',
             index=models.Index(condition=models.Q(('is_removed', False)), fields=['content_type', 'object_id'], name='note_content_objects'),
@@ -69,7 +70,7 @@ class Migration(migrations.Migration):
                 'db_table': 'persons_noteshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_noteshistory', original_model_table='persons_notes')),
+        PortableRunSQL(Utility.pgh_default_sql('persons_noteshistory', original_model_table='persons_notes')),
         pgtrigger.migrations.AddTrigger(
             model_name='note',
             trigger=pgtrigger.compiler.Trigger(name='note_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_noteshistory" ("created", "modified", "is_removed", "id", "object_id", "display_order", "body", "infos", "category_id", "content_type_id", "organization_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."body", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NOW(), \'note.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='8fa82c65e4e71bdbc0fdb7efceae2f12a3afe8ea', operation='INSERT', pgid='pgtrigger_note_snapshot_insert_fcd72', table='persons_notes', when='AFTER')),

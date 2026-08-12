@@ -7,6 +7,7 @@ import pgtrigger.compiler
 import pgtrigger.migrations
 from private_storage.fields import PrivateFileField
 from private_storage.storage.files import PrivateFileSystemStorage
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -36,7 +37,7 @@ class Migration(migrations.Migration):
                 'ordering': ('display_order',),
             },
         ),
-        migrations.RunSQL(Utility.default_sql('persons_folk_attendees')),
+        PortableRunSQL(Utility.default_sql('persons_folk_attendees')),
         migrations.AddField(
             model_name='attendee',
             name='folks',
@@ -81,7 +82,7 @@ class Migration(migrations.Migration):
                 'db_table': 'persons_folk_attendeeshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_folk_attendeeshistory', original_model_table='persons_folk_attendees')),
+        PortableRunSQL(Utility.pgh_default_sql('persons_folk_attendeeshistory', original_model_table='persons_folk_attendees')),
         pgtrigger.migrations.AddTrigger(
             model_name='folkattendee',
             trigger=pgtrigger.compiler.Trigger(name='folkattendee_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_folk_attendeeshistory" ("id", "created", "modified", "is_removed", "display_order", "folk_id", "attendee_id", "role_id", "file", "start", "finish", "infos", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."folk_id", NEW."attendee_id", NEW."role_id", NEW."file", NEW."start", NEW."finish", NEW."infos", NOW(), \'folkattendee.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='37420d152ac14827d33eed3ca43edb386ae8cbfa', operation='INSERT', pgid='pgtrigger_folkattendee_snapshot_insert_c56b5', table='persons_folk_attendees', when='AFTER')),

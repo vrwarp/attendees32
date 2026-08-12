@@ -4,7 +4,7 @@ import pytz
 from django.conf import settings
 from django.db.models import F, Q, CharField, Value, When, Case, Count
 from django.db.models.functions import Concat, Trim
-from django.contrib.postgres.aggregates.general import StringAgg
+from attendees.utils.dbcompat.aggregates import StringAgg
 from rest_framework.utils import json
 from attendees.occasions.models import Attendance, Meet
 from attendees.persons.models import AttendingMeet

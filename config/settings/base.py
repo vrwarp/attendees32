@@ -42,6 +42,12 @@ LOCALE_PATHS = [str(ROOT_DIR / "locale")]
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {"default": env.db("DATABASE_URL")}
 DATABASES["default"]["ATOMIC_REQUESTS"] = True
+# SQLite is a supported primary backend for small single-organization installs. Route it
+# through our own backend, which adds WAL, a write-lock-first transaction mode, and the
+# pghistory functions the compiled history triggers call. See attendees/db/backends/sqlite3/.
+IS_SQLITE = DATABASES["default"]["ENGINE"].endswith("sqlite3")
+if IS_SQLITE:
+    DATABASES["default"]["ENGINE"] = "attendees.db.backends.sqlite3"
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -90,7 +96,13 @@ THIRD_PARTY_APPS = [
     "pghistory",  # django-pghistory can version a superset of models
 ]
 
+if IS_SQLITE:
+    # django_db_comments writes Postgres column comments and no-ops elsewhere; drop it rather
+    # than carry a post_migrate handler that can never do anything.
+    THIRD_PARTY_APPS.remove("django_db_comments")
+
 LOCAL_APPS = [
+    "attendees.utils.dbcompat",
     "attendees.users",
     # Your stuff: custom apps go here
     "attendees.whereabouts.apps.WhereaboutsConfig",
@@ -104,7 +116,12 @@ INSTALLED_APPS = DJANGO_APPS + THIRD_PARTY_APPS + LOCAL_APPS
 # MIGRATIONS
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#migration-modules
-MIGRATION_MODULES = {"sites": "attendees.contrib.sites.migrations"}
+MIGRATION_MODULES = {
+    "sites": "attendees.contrib.sites.migrations",
+    # pghistory's 0004 installs a PL/pgSQL stored procedure unconditionally. The vendored copy
+    # skips it on SQLite, where our database backend registers the equivalent per connection.
+    "pghistory": "attendees.contrib.pghistory.migrations",
+}
 
 # AUTHENTICATION
 # ------------------------------------------------------------------------------
