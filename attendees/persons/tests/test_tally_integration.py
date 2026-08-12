@@ -198,3 +198,136 @@ class TestTokenAuthentication:
             HTTP_X_TARGET_ATTENDEE_ID=str(stranger.id),
         )
         assert response.status_code == 403
+
+
+class TestMergedAttendees:
+    """What an id that was merged away answers.
+
+    Planning Center answers a merged person with `410 Gone` and the survivor's
+    id, and an integration that holds an old id follows it. Until attendees32
+    could say the same, a merged attendee here was a soft-delete: the id
+    404ed, indistinguishable from a typo, and silent about the fact that the
+    person still exists under a different id. Tally's own merge-following was
+    switched off against this backend for exactly that reason.
+    """
+
+    def _attendee(self, provisioned, first_name):
+        return Attendee.objects.create(
+            first_name=first_name,
+            last_name="Chen",
+            division=provisioned["division"],
+            gender="unspecified",
+            infos=Utility.attendee_infos(),
+        )
+
+    def test_a_merged_id_answers_410_with_the_survivor(self, provisioned):
+        keeper = self._attendee(provisioned, "Ava")
+        duplicate = self._attendee(provisioned, "Ava")
+        client = token_client(provisioned["token"])
+
+        merged = client.post(
+            f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
+            {"survivor": str(keeper.id)},
+            format="json",
+        )
+        assert merged.status_code == 200
+        assert merged.json()["merged_into"] == str(keeper.id)
+
+        response = client.get(f"/persons/api/datagrid_data_attendee/{duplicate.id}/")
+        assert response.status_code == 410
+        assert response.json()["merged_into"] == str(keeper.id)
+
+    def test_the_survivor_is_still_readable(self, provisioned):
+        keeper = self._attendee(provisioned, "Ava")
+        duplicate = self._attendee(provisioned, "Ava")
+        client = token_client(provisioned["token"])
+        client.post(
+            f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
+            {"survivor": str(keeper.id)},
+            format="json",
+        )
+
+        response = client.get(f"/persons/api/datagrid_data_attendee/{keeper.id}/")
+        assert response.status_code == 200
+
+    def test_a_chain_reports_its_end(self, provisioned):
+        """A into B on Sunday, B into C on Wednesday: A must answer C.
+
+        Reporting B would send a caller to another tombstone and cost them a
+        second round trip to find that out — and a caller that does not follow
+        chains would record a dead id as live.
+        """
+        first = self._attendee(provisioned, "Ava")
+        second = self._attendee(provisioned, "Ava")
+        third = self._attendee(provisioned, "Ava")
+        client = token_client(provisioned["token"])
+
+        client.post(
+            f"/persons/api/datagrid_data_attendee/{first.id}/merge/",
+            {"survivor": str(second.id)},
+            format="json",
+        )
+        client.post(
+            f"/persons/api/datagrid_data_attendee/{second.id}/merge/",
+            {"survivor": str(third.id)},
+            format="json",
+        )
+
+        response = client.get(f"/persons/api/datagrid_data_attendee/{first.id}/")
+        assert response.status_code == 410
+        assert response.json()["merged_into"] == str(third.id)
+
+    def test_a_trail_that_ends_nowhere_is_gone_without_a_forwarding_address(
+        self, provisioned
+    ):
+        keeper = self._attendee(provisioned, "Ava")
+        duplicate = self._attendee(provisioned, "Ava")
+        client = token_client(provisioned["token"])
+        client.post(
+            f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
+            {"survivor": str(keeper.id)},
+            format="json",
+        )
+        keeper.is_removed = True
+        keeper.save(update_fields=["is_removed"])
+
+        response = client.get(f"/persons/api/datagrid_data_attendee/{duplicate.id}/")
+        assert response.status_code == 410
+        # "Gone, and nobody holds them now" is a different answer from "gone,
+        # ask over there", and a caller that cannot tell them apart keeps
+        # chasing.
+        assert "merged_into" not in response.json()
+
+    def test_an_id_nobody_ever_held_is_still_a_404(self, provisioned):
+        response = token_client(provisioned["token"]).get(
+            "/persons/api/datagrid_data_attendee/8ec6a0f6-0000-4000-8000-000000000000/"
+        )
+        assert response.status_code == 404
+
+    def test_a_merged_attendee_leaves_the_roster_sweep(self, provisioned):
+        keeper = self._attendee(provisioned, "Ava")
+        duplicate = self._attendee(provisioned, "Ava")
+        client = token_client(provisioned["token"])
+        client.post(
+            f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
+            {"survivor": str(keeper.id)},
+            format="json",
+        )
+
+        listed = client.get(
+            "/persons/api/datagrid_data_attendee/", {"take": 100, "skip": 0}
+        ).json()["data"]
+        ids = {row["id"] for row in listed}
+        assert str(keeper.id) in ids
+        assert str(duplicate.id) not in ids
+
+    def test_refuses_a_merge_it_cannot_make_sense_of(self, provisioned):
+        duplicate = self._attendee(provisioned, "Ava")
+        client = token_client(provisioned["token"])
+
+        response = client.post(
+            f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
+            {"survivor": str(duplicate.id)},
+            format="json",
+        )
+        assert response.status_code == 400

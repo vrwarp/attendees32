@@ -5,7 +5,10 @@ from django.db.models import Func, Value
 from django.db.models.expressions import F
 from django.db.models.functions import Concat, Trim
 from django.shortcuts import get_object_or_404
-from rest_framework.exceptions import PermissionDenied
+from rest_framework import status
+from rest_framework.decorators import action
+from rest_framework.exceptions import APIException, PermissionDenied, ValidationError
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from urllib import parse
 from attendees.occasions.models import Gathering, Meet
@@ -16,7 +19,49 @@ from attendees.persons.models import (  # , Relationship
     Relation,
 )
 from attendees.persons.serializers import AttendeeMinimalSerializer
-from attendees.persons.services import AttendeeService, AttendingMeetService
+from attendees.persons.services import (
+    AttendeeMergeService,
+    AttendeeService,
+    AttendingMeetService,
+    MergeRefused,
+)
+
+
+class AttendeeMergedAway(APIException):
+    """410, with the forwarding address in the body.
+
+    A merged attendee is soft-deleted, so without this the id a caller holds
+    would simply 404 -- indistinguishable from a typo, and silent about the
+    fact that the person still exists under a different id. Planning Center
+    answers this case with a 410 carrying the survivor, and an integration that
+    can follow one can follow the other.
+    """
+
+    status_code = status.HTTP_410_GONE
+    default_code = "merged_away"
+
+    def __init__(self, merged_into):
+        super().__init__(
+            {
+                "detail": "That attendee was merged into another record.",
+                "merged_into": str(merged_into),
+            }
+        )
+
+
+class AttendeeGone(APIException):
+    """410 for a trail that ends nowhere.
+
+    Distinct from the above and deliberately without a forwarding address: the
+    record was merged and the survivor was later deleted, or somebody edited a
+    chain into a circle. "Gone, and nobody holds them now" is a different
+    answer from "gone, ask over there", and a caller that cannot tell them
+    apart will keep chasing.
+    """
+
+    status_code = status.HTTP_410_GONE
+    default_code = "gone"
+    default_detail = "That attendee is gone, and no record holds them now."
 
 
 class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
@@ -43,6 +88,68 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
     #            ).filter(pk=attendee_id)
     #     serializer = AttendeeMinimalSerializer(attendee)
     #     return Response(serializer.data)
+
+    def retrieve(self, request, *args, **kwargs):
+        """Answers for an id whose record has been merged away.
+
+        The ordinary path is untouched: a live attendee is served by the
+        default implementation reading `get_queryset`. This only decides what
+        happens when that finds nothing, which used to be a bare 404 for three
+        genuinely different situations -- never existed, deleted, merged. Only
+        the last has anything useful to say, and it is the one an integration
+        holding an old id actually hits.
+        """
+        if self.get_queryset().filter(pk=self.kwargs.get("pk")).exists():
+            return super().retrieve(request, *args, **kwargs)
+
+        held = Attendee.all_objects.filter(
+            pk=self.kwargs.get("pk"),
+            division__organization=request.user.organization,
+        ).first()
+        if held is not None and held.merged_into_id is not None:
+            survivor = AttendeeMergeService.survivor_of(held)
+            if survivor is None or survivor.is_removed:
+                raise AttendeeGone()
+            raise AttendeeMergedAway(survivor.pk)
+
+        return super().retrieve(request, *args, **kwargs)
+
+    @action(detail=True, methods=["post"], url_path="merge")
+    def merge(self, request, pk=None):
+        """Merges this attendee into the one named in the body.
+
+        `POST /persons/api/datagrid_data_attendee/<loser>/merge/`
+        with `{"survivor": "<uuid>"}`.
+
+        Deliberately a POST to the *loser*: the thing being changed is this
+        record, and the survivor is where it is going. Guarded by the same
+        `privileged_to_edit` check as an ordinary edit, because a merge is a
+        much larger edit than a rename -- it moves a person's attendance.
+        """
+        survivor_id = request.data.get("survivor")
+        if not survivor_id:
+            raise ValidationError({"survivor": "Name the attendee to merge into."})
+
+        organization = request.user.organization
+        loser = get_object_or_404(
+            Attendee.all_objects, pk=pk, division__organization=organization
+        )
+        survivor = get_object_or_404(
+            Attendee.all_objects, pk=survivor_id, division__organization=organization
+        )
+
+        if not request.user.privileged_to_edit(loser.id):
+            time.sleep(2)
+            raise PermissionDenied(detail="Not allowed to merge that attendee.")
+
+        try:
+            AttendeeMergeService.merge(loser, survivor)
+        except MergeRefused as refusal:
+            raise ValidationError({"survivor": str(refusal)})
+
+        return Response(
+            {"merged_into": str(survivor.pk)}, status=status.HTTP_200_OK
+        )
 
     def get_queryset(self):
         """
