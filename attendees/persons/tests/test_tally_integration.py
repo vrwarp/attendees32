@@ -298,6 +298,19 @@ class TestMergedAttendees:
         # chasing.
         assert "merged_into" not in response.json()
 
+    def test_a_deleted_but_never_merged_attendee_is_still_served(self, provisioned):
+        """Only a merge forwards. The attendee page shows a plain deletion as
+        "Deleted record of …", so its id keeps answering with the record."""
+        deleted = self._attendee(provisioned, "Ava")
+        deleted.is_removed = True
+        deleted.save(update_fields=["is_removed"])
+
+        response = token_client(provisioned["token"]).get(
+            f"/persons/api/datagrid_data_attendee/{deleted.id}/"
+        )
+        assert response.status_code == 200
+        assert response.json()["is_removed"] is True
+
     def test_an_id_nobody_ever_held_is_still_a_404(self, provisioned):
         response = token_client(provisioned["token"]).get(
             "/persons/api/datagrid_data_attendee/8ec6a0f6-0000-4000-8000-000000000000/"

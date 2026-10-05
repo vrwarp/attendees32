@@ -99,6 +99,31 @@ class TestOrganizationVocabulary:
         slugs = {row["slug"] for row in response.json()["data"]}
         assert {MeetSlugs.THE_ROCK, MeetSlugs.LITTLE_FOOT} <= slugs
 
+    def test_the_target_attendees_own_meets_lead_the_first_page(
+        self, golden, api_login
+    ):
+        """The attendee page's participation grid resolves meet names from
+        the first page of this endpoint only, so the attendee's own meets
+        must sort ahead of everyone else's -- or her rows show blank."""
+        grace = golden.attendee("chen_grace")
+        client = api_login("golden_data_organizer")
+        client.credentials(HTTP_X_TARGET_ATTENDEE_ID=str(grace.id))
+        response = client.get(
+            "/occasions/api/user_assembly_meets/",
+            {"searchOperation": "contains", "searchValue": ""},
+        )
+        assert response.status_code == 200
+        body = response.json()
+        assert body["totalCount"] > len(body["data"])  # it really is paged
+        joined = set(
+            Meet.objects.filter(attendingmeet__attending__attendee=grace).values_list(
+                "slug", flat=True
+            )
+        )
+        first_page = [row["slug"] for row in body["data"]]
+        assert joined <= set(first_page)
+        assert all(slug in joined for slug in first_page[: len(joined)])
+
     def test_teams_are_listed_per_meet(self, golden, api_login):
         client = api_login("golden_data_organizer")
         response = client.get(
