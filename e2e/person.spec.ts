@@ -132,6 +132,9 @@ test.describe('a coworker writes a note', () => {
     // repeated until the popup is actually up.
     const notes = page.locator('#note-past-datagrid-container');
     await expect(notes.locator('.dx-datagrid-addrow-button')).toHaveCount(1);
+    // The notes grid is not the last to be rebuilt; a popup opened while the
+    // others are still loading can have its editors swapped out underneath it.
+    await expect(page.locator('.dx-loadpanel-content:visible')).toHaveCount(0);
     await notes.scrollIntoViewIfNeeded();
 
     const editor = page.locator('.dx-datagrid-edit-popup:visible');
@@ -164,10 +167,18 @@ test.describe('a coworker writes a note', () => {
     // The list is found through the input's own aria-owns: DevExtreme renders
     // that popup under a different class depending on how many choices there
     // are, and its options arrive asynchronously.
+    //
+    // Like the add-row button above, a click that lands while the grids are
+    // still being rebuilt is swallowed, so the press is repeated until the
+    // list is actually open.
     const categoryInput = field('Category').locator('.dx-texteditor-input').first();
-    await categoryInput.click();
+    await expect(async () => {
+      if ((await categoryInput.getAttribute('aria-expanded')) !== 'true') {
+        await categoryInput.click();
+      }
+      await expect(categoryInput).toHaveAttribute('aria-owns', /.+/, { timeout: 2_000 });
+    }, 'the category editor named no list to choose from').toPass({ timeout: 20_000 });
     const listId = await categoryInput.getAttribute('aria-owns');
-    expect(listId, 'the category editor named no list to choose from').toBeTruthy();
 
     const choices = page.locator(`#${listId} .dx-list-item`);
     await expect(choices.first()).toBeVisible();

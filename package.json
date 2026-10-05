@@ -7,7 +7,9 @@
     "test:e2e": "playwright test",
     "test:e2e:chromium": "playwright test --project=chromium",
     "test:e2e:webkit": "playwright test --project=webkit",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ci-seed": "playwright test --project=ci-seed",
+    "test:e2e:ui": "playwright test --ui",
+    "test:e2e:install": "playwright install --with-deps chromium"
   },
   "devDependencies": {
     "@playwright/test": "1.56.0",

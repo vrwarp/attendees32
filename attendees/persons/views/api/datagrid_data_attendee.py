@@ -92,21 +92,23 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
     def retrieve(self, request, *args, **kwargs):
         """Answers for an id whose record has been merged away.
 
-        The ordinary path is untouched: a live attendee is served by the
-        default implementation reading `get_queryset`. This only decides what
-        happens when that finds nothing, which used to be a bare 404 for three
-        genuinely different situations -- never existed, deleted, merged. Only
-        the last has anything useful to say, and it is the one an integration
-        holding an old id actually hits.
+        The ordinary path is untouched: a live attendee -- and, since
+        `get_queryset` reads `all_objects` for a single id, a plainly deleted
+        one, which the attendee page shows as a "Deleted record of" -- is
+        served by the default implementation. Only a merge tombstone is
+        answered here: it is soft-deleted too, but serving it would hand the
+        caller a stale copy of a person who lives on under another id. An
+        integration holding an old id is exactly who hits this.
         """
-        if self.get_queryset().filter(pk=self.kwargs.get("pk")).exists():
-            return super().retrieve(request, *args, **kwargs)
-
         held = Attendee.all_objects.filter(
             pk=self.kwargs.get("pk"),
             division__organization=request.user.organization,
         ).first()
-        if held is not None and held.merged_into_id is not None:
+        if (
+            held is not None
+            and held.is_removed
+            and held.merged_into_id is not None
+        ):
             survivor = AttendeeMergeService.survivor_of(held)
             if survivor is None or survivor.is_removed:
                 raise AttendeeGone()
@@ -165,7 +167,7 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
         querying_term = self.request.query_params.get("searchValue")
 
         if querying_attendee_id:
-            qs = Attendee.objects.annotate(
+            qs = Attendee.all_objects.annotate(
                 organization_slug=F("division__organization__slug"),
                 attendingmeets=JSONBAgg(
                     Func(
