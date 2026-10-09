@@ -37,10 +37,10 @@ class Command(BaseCommand):
             required=True,
             help="The organization Tally connects to. Must already exist.",
         )
-        parser.add_argument("--division-slug", default=None, help="Created if absent. Default: <org-slug>_tally_youth")
-        parser.add_argument("--assembly-slug", default=None, help="Created if absent. Default: <org-slug>_tally_youth_ministry")
+        parser.add_argument("--division-slug", default=None, help="Created if absent. Default: <org-slug>_tally")
+        parser.add_argument("--assembly-slug", default=None, help="Created if absent. Default: <org-slug>_tally_checkin")
         parser.add_argument("--meet-slug", default=None, help="Created if absent. Default: <org-slug>_tally_gathering")
-        parser.add_argument("--character-slug", default=None, help="Created if absent. Default: <org-slug>_tally_student")
+        parser.add_argument("--character-slug", default=None, help="Created if absent. Default: <org-slug>_tally_participant")
         parser.add_argument("--username", default="tally-integration", help="The integration user.")
         parser.add_argument("--group", default="tally_integration", help="The auth group granted to the user.")
 
@@ -79,10 +79,10 @@ class Command(BaseCommand):
                 "python manage.py loaddata fixtures/db_seed.json"
             )
 
-        division_slug = options["division_slug"] or f"{org_slug}_tally_youth"
-        assembly_slug = options["assembly_slug"] or f"{org_slug}_tally_youth_ministry"
+        division_slug = options["division_slug"] or f"{org_slug}_tally"
+        assembly_slug = options["assembly_slug"] or f"{org_slug}_tally_checkin"
         meet_slug = options["meet_slug"] or f"{org_slug}_tally_gathering"
-        character_slug = options["character_slug"] or f"{org_slug}_tally_student"
+        character_slug = options["character_slug"] or f"{org_slug}_tally_participant"
 
         group, group_created = Group.objects.get_or_create(name=options["group"])
         self.note("auth group", group.name, group_created)
@@ -92,7 +92,7 @@ class Command(BaseCommand):
             division = Division.objects.create(
                 organization=organization,
                 slug=division_slug,
-                display_name="Youth",
+                display_name="Tally",
                 audience_auth_group=group,
                 infos={},
             )
@@ -113,7 +113,7 @@ class Command(BaseCommand):
             assembly = Assembly.objects.create(
                 division=division,
                 slug=assembly_slug,
-                display_name="Youth ministry",
+                display_name="Tally check-in",
                 category=assembly_category,
                 infos={},
             )
@@ -126,7 +126,7 @@ class Command(BaseCommand):
             character = Character.objects.create(
                 assembly=assembly,
                 slug=character_slug,
-                display_name="Student",
+                display_name="Participant",
                 type="normal",
                 infos={},
             )

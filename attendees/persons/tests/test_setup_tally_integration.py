@@ -64,7 +64,7 @@ def provisioned(organization, vocabulary):
         "user": user,
         "token": user.auth_token.key,
         "attendee": Attendee.objects.get(user=user),
-        "assembly": Assembly.objects.get(slug="testorg_tally_youth_ministry"),
+        "assembly": Assembly.objects.get(slug="testorg_tally_checkin"),
         "meet": Meet.objects.get(slug="testorg_tally_gathering"),
     }
 
@@ -73,8 +73,8 @@ class TestSetupTallyIntegration:
     def test_provisions_the_user_attendee_meet_and_token(self, provisioned):
         user = provisioned["user"]
         assert user.groups.filter(name="tally_integration").exists()
-        assert Division.objects.filter(slug="testorg_tally_youth").exists()
-        assert Character.objects.filter(slug="testorg_tally_student").exists()
+        assert Division.objects.filter(slug="testorg_tally").exists()
+        assert Character.objects.filter(slug="testorg_tally_participant").exists()
         assert f"A32_TOKEN={provisioned['token']}" in provisioned["output"]
 
     def test_grants_editing_but_not_counselor(self, provisioned):

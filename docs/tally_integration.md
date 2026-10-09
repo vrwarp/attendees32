@@ -1,8 +1,8 @@
 # Connecting Tally
 
-[Tally](https://github.com/vrwarp/tally) is a check-in app for a youth
-ministry. It can use this Attendees server as its **people backend**: the
-system of record for who its students are. Tally reads the roster's person
+[Tally](https://github.com/vrwarp/tally) is a check-in app for a church's
+ministries. It can use this Attendees server as its **people backend**: the
+system of record for the people on its rosters. Tally reads the roster's person
 data from here, creates quick-added visitors as attendees, writes profile
 edits back, files parents into families, and imports attendance history —
 all over the JSON API, as a server-to-server client with a DRF token.
@@ -25,10 +25,10 @@ It creates, or finds if they already exist:
 
 | Piece | Default | Why |
 |---|---|---|
-| Division | `<org>_tally_youth` | The division created attendees are filed under. |
-| Assembly | `<org>_tally_youth_ministry` | Namespace for the meet and character. |
-| Character | `<org>_tally_student` | The role a created student is enrolled as. |
-| Meet | `<org>_tally_gathering` | The series a created student is enrolled in. The auth group is put on its `infos.allowed_groups` (also when `--meet-slug` names an existing meet), because `organization_meets` only lists a meet to callers whose groups appear there. |
+| Division | `<org>_tally` | The division created attendees are filed under. |
+| Assembly | `<org>_tally_checkin` | Namespace for the meet and character. |
+| Character | `<org>_tally_participant` | The role a created attendee is enrolled as. |
+| Meet | `<org>_tally_gathering` | The series a created attendee is enrolled in. The auth group is put on its `infos.allowed_groups` (also when `--meet-slug` names an existing meet), because `organization_meets` only lists a meet to callers whose groups appear there. |
 | Auth group | `tally_integration` | Granted to the integration user; its name is added to the organization's `groups_see_all_meets_attendees` list, which is what allows editing attendees. It is deliberately **not** added to `counselor` (see below). |
 | User + attendee | `tally-integration` | The API caller. The linked attendee exists because `privileged_to_edit` walks `user.attendee.under_same_org_with(...)`. |
 | DRF token | — | Printed at the end. This is the `A32_TOKEN` value in Tally. |
@@ -50,9 +50,9 @@ All under token auth (`Authorization: Token …`), all JSON:
 | `GET /persons/api/datagrid_data_attendee/?take&skip` | The roster sweep (the whole organization, paginated). |
 | `GET /persons/api/datagrid_data_attendee/?searchValue=` | Person search. |
 | `GET/POST/PATCH /persons/api/datagrid_data_attendee/[{uuid}/]` | Person read, visitor create, profile edit. |
-| `GET/POST /persons/api/attendee_families/` | A student's families; creating one for a new parent. |
+| `GET/POST /persons/api/attendee_families/` | An attendee's families; creating one for a new parent. |
 | `GET/POST /persons/api/datagrid_data_familyattendees/` | Family membership rows. |
-| `GET /persons/api/attendee_attendings/` | Resolving a student's attending id. |
+| `GET /persons/api/attendee_attendings/` | Resolving an attendee's attending id. |
 | `PUT /persons/api/default_attendingmeets/` | Enrolling in / leaving the Tally meet. |
 | `GET /persons/api/all_relations/?category_id=0` | The family relation vocabulary (`child`, `parent`). |
 | `GET /occasions/api/organization_meets/?assemblies[]=<id>` | The history-import picker. |
