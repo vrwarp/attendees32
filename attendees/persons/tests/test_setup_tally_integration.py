@@ -120,6 +120,23 @@ class TestSetupTallyIntegration:
             response = client.get(path, params, **headers)
             assert response.status_code == 200, f"{path} -> {response.status_code}"
 
+    def test_the_token_can_see_the_tally_meet(self, provisioned):
+        # organization_meets hides meets whose allowed_groups misses the caller's
+        # groups; Tally looks its meet up there before enrolling anyone in it.
+        client = APIClient()
+        client.credentials(HTTP_AUTHORIZATION=f"Token {provisioned['token']}")
+        response = client.get("/occasions/api/organization_meets/")
+        assert response.status_code == 200
+        assert "testorg_tally_gathering" in {row["slug"] for row in response.json()["data"]}
+
+    def test_an_existing_meet_is_opened_to_the_group(self, provisioned):
+        meet = provisioned["meet"]
+        meet.infos["allowed_groups"] = ["ushers"]
+        meet.save(update_fields=["infos"])
+        assert "allowed group 'tally_integration' on meet: testorg_tally_gathering" in setup()
+        assert Meet.objects.get(pk=meet.pk).infos["allowed_groups"] == ["ushers", "tally_integration"]
+        assert "allowed group" not in setup()  # idempotent
+
     def test_the_relation_vocabulary_is_readable_without_counselor(self, provisioned):
         client = APIClient()
         client.credentials(HTTP_AUTHORIZATION=f"Token {provisioned['token']}")

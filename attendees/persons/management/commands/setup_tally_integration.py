@@ -148,6 +148,7 @@ class Command(BaseCommand):
                 audience_editable=False,
                 infos={
                     **Utility.meet_infos(),
+                    "allowed_groups": [group.name],
                     "default_time_zone": organization.infos.get(
                         "default_time_zone", "America/Los_Angeles"
                     ),
@@ -158,6 +159,7 @@ class Command(BaseCommand):
             self.note("meet", meet.slug, True)
         else:
             self.note("meet", meet.slug, False)
+        self.allow_group_on_meet(meet, group)
 
         user, user_created = User.objects.get_or_create(
             username=options["username"],
@@ -220,6 +222,20 @@ class Command(BaseCommand):
         self.stdout.write(f"  A32_MEET_SLUG={meet.slug}")
         self.stdout.write(f"  A32_CHARACTER_SLUG={character.slug}")
         self.stdout.write(f"  A32_ASSEMBLY_SLUG={assembly.slug}")
+
+    def allow_group_on_meet(self, meet, group):
+        """
+        organization_meets lists a meet only to callers whose group names match
+        meet.infos["allowed_groups"]. Tally resolves its meet through that
+        endpoint before enrolling anyone, so the integration group has to be on
+        the meet, whether the command just created it or --meet-slug points at
+        one that already existed.
+        """
+        allowed = meet.infos.get("allowed_groups") or []
+        if group.name not in allowed:
+            meet.infos["allowed_groups"] = [*allowed, group.name]
+            meet.save(update_fields=["infos"])
+            self.stdout.write(f"{'allowed':>8} group '{group.name}' on meet: {meet.slug}")
 
     def note(self, kind, name, created):
         verb = "created" if created else "found"

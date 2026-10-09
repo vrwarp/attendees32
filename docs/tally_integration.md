@@ -28,7 +28,7 @@ It creates, or finds if they already exist:
 | Division | `<org>_tally_youth` | The division created attendees are filed under. |
 | Assembly | `<org>_tally_youth_ministry` | Namespace for the meet and character. |
 | Character | `<org>_tally_student` | The role a created student is enrolled as. |
-| Meet | `<org>_tally_gathering` | The series a created student is enrolled in. |
+| Meet | `<org>_tally_gathering` | The series a created student is enrolled in. The auth group is put on its `infos.allowed_groups` (also when `--meet-slug` names an existing meet), because `organization_meets` only lists a meet to callers whose groups appear there. |
 | Auth group | `tally_integration` | Granted to the integration user; its name is added to the organization's `groups_see_all_meets_attendees` list, which is what allows editing attendees. It is deliberately **not** added to `counselor` (see below). |
 | User + attendee | `tally-integration` | The API caller. The linked attendee exists because `privileged_to_edit` walks `user.attendee.under_same_org_with(...)`. |
 | DRF token | — | Printed at the end. This is the `A32_TOKEN` value in Tally. |
