@@ -52,6 +52,7 @@ All under token auth (`Authorization: Token …`), all JSON:
 | `GET/POST /persons/api/attendee_families/` | An attendee's families; creating one for a new parent. |
 | `GET/POST /persons/api/datagrid_data_familyattendees/` | Family membership rows. |
 | `GET /persons/api/all_relations/?category_id=0` | The family relation vocabulary (`child`, `parent`). |
+| `GET /whereabouts/api/user_organizations/` | The organization's grade list (`infos.grade_converter`), which Tally maps its grades through. |
 | `GET /occasions/api/organization_meets/?assemblies[]=<id>` | The history-import picker. |
 | `GET /occasions/api/organization_team_gatherings/?meets[]=<slug>` | Gatherings of a meet, for history import. |
 | `GET /occasions/api/organization_meet_character_attendances/?meets[]=<slug>` | Attendance rows, for history import. |

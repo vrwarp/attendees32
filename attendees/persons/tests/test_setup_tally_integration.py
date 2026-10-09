@@ -114,6 +114,7 @@ class TestSetupTallyIntegration:
             ("/occasions/api/organization_meets/", {"assemblies[]": provisioned["assembly"].id}, {}),
             ("/occasions/api/organization_team_gatherings/", {"meets[]": provisioned["meet"].slug}, {}),
             ("/occasions/api/organization_meet_character_attendances/", {"meets[]": provisioned["meet"].slug}, {}),
+            ("/whereabouts/api/user_organizations/", {}, {}),
         ]
         for path, params, headers in reads:
             response = client.get(path, params, **headers)
