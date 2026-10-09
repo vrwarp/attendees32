@@ -38,8 +38,7 @@ at existing records to reuse a division or meet you already have. The command
 never moves anything between organizations; it errors instead.
 
 The command's final output is exactly the values Tally's configuration wants
-(`A32_API_BASE_URL`, `A32_TOKEN`, `A32_DIVISION_ID`, `A32_MEET_SLUG`,
-`A32_CHARACTER_SLUG`, `A32_ASSEMBLY_SLUG`).
+(`A32_API_BASE_URL`, `A32_TOKEN`, `A32_DIVISION_ID`, `A32_MEET_SLUG`).
 
 ## What Tally calls
 
@@ -52,8 +51,6 @@ All under token auth (`Authorization: Token …`), all JSON:
 | `GET/POST/PATCH /persons/api/datagrid_data_attendee/[{uuid}/]` | Person read, visitor create, profile edit. |
 | `GET/POST /persons/api/attendee_families/` | An attendee's families; creating one for a new parent. |
 | `GET/POST /persons/api/datagrid_data_familyattendees/` | Family membership rows. |
-| `GET /persons/api/attendee_attendings/` | Resolving an attendee's attending id. |
-| `PUT /persons/api/default_attendingmeets/` | Enrolling in / leaving the Tally meet. |
 | `GET /persons/api/all_relations/?category_id=0` | The family relation vocabulary (`child`, `parent`). |
 | `GET /occasions/api/organization_meets/?assemblies[]=<id>` | The history-import picker. |
 | `GET /occasions/api/organization_team_gatherings/?meets[]=<slug>` | Gatherings of a meet, for history import. |

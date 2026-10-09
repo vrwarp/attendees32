@@ -109,7 +109,6 @@ class TestSetupTallyIntegration:
         reads = [
             ("/persons/api/datagrid_data_attendee/", {"take": 5}, {}),
             ("/persons/api/datagrid_data_attendee/", {"searchValue": "Tally"}, {}),
-            ("/persons/api/attendee_attendings/", {}, itself),
             ("/persons/api/attendee_families/", {}, itself),
             ("/persons/api/datagrid_data_familyattendees/", {"categoryId": Attendee.FAMILY_CATEGORY}, itself),
             ("/occasions/api/organization_meets/", {"assemblies[]": provisioned["assembly"].id}, {}),

@@ -220,8 +220,6 @@ class Command(BaseCommand):
         self.stdout.write(f"  A32_TOKEN={token.key}")
         self.stdout.write(f"  A32_DIVISION_ID={division.id}")
         self.stdout.write(f"  A32_MEET_SLUG={meet.slug}")
-        self.stdout.write(f"  A32_CHARACTER_SLUG={character.slug}")
-        self.stdout.write(f"  A32_ASSEMBLY_SLUG={assembly.slug}")
 
     def allow_group_on_meet(self, meet, group):
         """
