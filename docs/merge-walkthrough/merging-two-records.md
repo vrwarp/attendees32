@@ -31,14 +31,14 @@ Type a name. Each match shows birthday, family and phone, so the right one is ea
 One screen shows the merged record before it exists, field by field, in five groups:
 
 - **Different on the two records: choose one.** Birthday and grade disagree, so each shows both values with a radio. The older record's value is preselected; one click swaps it.
-- **More than one: keep any.** Phones and emails can hold several values, so both records' values are listed with a checkbox each, all ticked. Untick what is wrong or stale.
+- **Contacts from both: kept.** Every phone, email and other contact from both records is kept, each shown with the slot it lands in; phone1 and email1 are the ones printed in the directory. A stale one is removed afterwards, like any other edit.
 - **Only on one record: kept.** The peanut allergy from the kiosk record and the insurer from the older record are kept as they are, and the screen says which record each came from.
 - **Same on both.** Name, gender, division. Listed so you can see the two really are one person.
 - **Moves over as it is.** Groups, attendance, family, addresses, notes. Counted, never chosen.
 
-One sentence at the bottom says that the merged record keeps the older record's link, that the other link opens it too, and that the merge can be undone once.
+One sentence at the bottom says that Merge makes one record and then applies what you picked, that the merged record keeps the older record's link, that the other link opens it too, and that the merge can be undone once.
 
-![A dialog titled Merge into one record listing the fields in five groups with radios, checkboxes, and a Merge button and a Cancel button](04-confirm.png)
+![A dialog titled Merge into one record listing the fields in five groups with radios for the two differences, the contacts kept with their slots, and a Merge button and a Cancel button](04-confirm.png)
 
 ### 5. Afterwards, one record says so
 
@@ -52,7 +52,7 @@ Anyone opening the other record's link lands here too, with one extra sentence.
 
 ### 6. Undo, once
 
-Undo puts both records back as they were before the merge, including the details you chose between. Anything added since the merge stays on this record.
+Undo puts both records back as they were before the merge. Groups, attendance and family added since stay on the record; details edited since, the picks included, go back to what they were.
 
 ![A dialog titled Undo this merge? with an Undo merge button](06-undo-confirm.png)
 
@@ -74,11 +74,12 @@ The same merge screen with the same words and the same groups. Since you ticked 
 
 ## What stays simple
 
-- No primary and no secondary. You see the merged record before it exists and decide it, field by field.
-- Only real differences ask a question. Same values, values on one record only, and everything that moves over are shown, not asked.
+- No primary and no secondary. You see the merged record before it exists and decide it where the two records differ.
+- Only real differences ask a question. Same values, values on one record only, contacts from both, and everything that moves over are shown, not asked.
+- A merge never drops a contact. Every phone, email and other contact from both records is kept; removing a stale one is an ordinary edit afterwards.
 - Everything else moves: groups, attendance, family, notes, addresses.
 - The merged record keeps the older record's link. The other link keeps working because it opens the merged record.
-- Undo once, from the merged record's page. Both records come back as they were, chosen details included.
-- One screen, used from the page and from the grid.
+- Undo once, from the merged record's page. Both records come back as they were before the merge, details edited since included.
+- One screen, used from the page and from the grid. Behind it, the merge itself takes no choices; your picks are the same edit the record's own form makes.
 
 Screens captured from attendees32 running the golden test data at 1280 pixels wide, with the new controls drawn into the live pages. The second Samuel Tsai was added for this walkthrough.
