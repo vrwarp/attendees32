@@ -76,7 +76,8 @@ def api_login(golden, db):
 
 @pytest.fixture
 def token_client(golden, db):
-    """A DRF client authenticated the way the Tally server-to-server client is."""
+    """``token_client("golden_member")`` -> a DRF ``APIClient`` authenticated by
+    ``Authorization: Token``, the way a server-to-server client calls the API."""
 
     def _token_client(username):
         user = golden.user(username)

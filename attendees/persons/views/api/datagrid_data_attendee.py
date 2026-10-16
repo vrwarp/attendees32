@@ -11,6 +11,10 @@ from rest_framework.exceptions import APIException, PermissionDenied, Validation
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 from urllib import parse
+import logging
+
+logger = logging.getLogger(__name__)
+
 from attendees.occasions.models import Gathering, Meet
 from attendees.persons.models import (  # , Relationship
     Attendee,
@@ -28,14 +32,7 @@ from attendees.persons.services import (
 
 
 class AttendeeMergedAway(APIException):
-    """410, with the forwarding address in the body.
-
-    A merged attendee is soft-deleted, so without this the id a caller holds
-    would simply 404 -- indistinguishable from a typo, and silent about the
-    fact that the person still exists under a different id. Planning Center
-    answers this case with a 410 carrying the survivor, and an integration that
-    can follow one can follow the other.
-    """
+    """410 with ``merged_into``: the record lives on under another id."""
 
     status_code = status.HTTP_410_GONE
     default_code = "merged_away"
@@ -50,14 +47,7 @@ class AttendeeMergedAway(APIException):
 
 
 class AttendeeGone(APIException):
-    """410 for a trail that ends nowhere.
-
-    Distinct from the above and deliberately without a forwarding address: the
-    record was merged and the survivor was later deleted, or somebody edited a
-    chain into a circle. "Gone, and nobody holds them now" is a different
-    answer from "gone, ask over there", and a caller that cannot tell them
-    apart will keep chasing.
-    """
+    """410 without a forwarding address: merged, and the primary is gone."""
 
     status_code = status.HTTP_410_GONE
     default_code = "gone"
@@ -90,16 +80,8 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
     #     return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
-        """Answers for an id whose record has been merged away.
-
-        The ordinary path is untouched: a live attendee -- and, since
-        `get_queryset` reads `all_objects` for a single id, a plainly deleted
-        one, which the attendee page shows as a "Deleted record of" -- is
-        served by the default implementation. Only a merge tombstone is
-        answered here: it is soft-deleted too, but serving it would hand the
-        caller a stale copy of a person who lives on under another id. An
-        integration holding an old id is exactly who hits this.
-        """
+        """A merge tombstone answers 410; everything else, a plain deletion
+        included, is served as before."""
         held = Attendee.all_objects.filter(
             pk=self.kwargs.get("pk"),
             division__organization=request.user.organization,
@@ -109,49 +91,95 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
             and held.is_removed
             and held.merged_into_id is not None
         ):
-            survivor = AttendeeMergeService.survivor_of(held)
-            if survivor is None or survivor.is_removed:
+            primary = AttendeeMergeService.primary_of(held)
+            if primary is None or primary.is_removed:
                 raise AttendeeGone()
-            raise AttendeeMergedAway(survivor.pk)
+            raise AttendeeMergedAway(primary.pk)
 
         return super().retrieve(request, *args, **kwargs)
 
     @action(detail=True, methods=["post"], url_path="merge")
     def merge(self, request, pk=None):
-        """Merges this attendee into the one named in the body.
+        """``POST .../<duplicate>/merge/`` with ``{"primary": "<uuid>"}``.
 
-        `POST /persons/api/datagrid_data_attendee/<loser>/merge/`
-        with `{"survivor": "<uuid>"}`.
-
-        Deliberately a POST to the *loser*: the thing being changed is this
-        record, and the survivor is where it is going. Guarded by the same
-        `privileged_to_edit` check as an ordinary edit, because a merge is a
-        much larger edit than a rename -- it moves a person's attendance.
+        Posted to the duplicate because that is the record being changed.
+        The merge takes no choices: the primary's details stay, the
+        duplicate's fill its blanks, contacts are kept from both; anything
+        else is an ordinary edit of the merged record afterwards.
+        Guarded like unmerge: the organization's ``groups_see_all_meets_attendees``.
+        ``privileged_to_edit`` would refuse a duplicate that is soft-deleted.
         """
-        survivor_id = request.data.get("survivor")
-        if not survivor_id:
-            raise ValidationError({"survivor": "Name the attendee to merge into."})
+        primary_id = request.data.get("primary")
+        if not primary_id:
+            raise ValidationError({"primary": "Name the attendee to merge into."})
 
         organization = request.user.organization
-        loser = get_object_or_404(
+        duplicate = get_object_or_404(
             Attendee.all_objects, pk=pk, division__organization=organization
         )
-        survivor = get_object_or_404(
-            Attendee.all_objects, pk=survivor_id, division__organization=organization
+        primary = get_object_or_404(
+            Attendee.all_objects, pk=primary_id, division__organization=organization
         )
 
-        if not request.user.privileged_to_edit(loser.id):
+        if not request.user.belongs_to_groups_of(
+            organization.infos.get("groups_see_all_meets_attendees", [])
+        ):
             time.sleep(2)
             raise PermissionDenied(detail="Not allowed to merge that attendee.")
 
         try:
-            AttendeeMergeService.merge(loser, survivor)
+            AttendeeMergeService.merge(duplicate, primary, by=request.user.attendee_uuid_str() or None)
         except MergeRefused as refusal:
-            raise ValidationError({"survivor": str(refusal)})
+            raise ValidationError({"detail": str(refusal)})
 
         return Response(
-            {"merged_into": str(survivor.pk)}, status=status.HTTP_200_OK
+            {"merged_into": str(primary.pk)}, status=status.HTTP_200_OK
         )
+
+    @action(detail=False, methods=["get"], url_path="merge_preview")
+    def merge_preview(self, request):
+        """``GET .../merge_preview/?a=<uuid>&b=<uuid>``: what merging the two
+        would do, for the merge screen; the older record is the primary.
+        Guarded like merge."""
+        organization = request.user.organization
+        if not request.user.belongs_to_groups_of(
+            organization.infos.get("groups_see_all_meets_attendees", [])
+        ):
+            time.sleep(2)
+            raise PermissionDenied(detail="Not allowed to merge attendees.")
+        ids = [request.query_params.get(name) for name in ("a", "b")]
+        if not all(ids):
+            raise ValidationError({"detail": "Name both attendees, as a and b."})
+        records = [
+            get_object_or_404(Attendee.all_objects, pk=pk, division__organization=organization)
+            for pk in ids
+        ]
+        try:
+            return Response(AttendeeMergeService.preview(*records))
+        except MergeRefused as refusal:
+            raise ValidationError({"detail": str(refusal)})
+
+    @action(detail=True, methods=["post"], url_path="unmerge")
+    def unmerge(self, request, pk=None):
+        """``POST .../<duplicate>/unmerge/``: puts back what the merge moved, once."""
+        organization = request.user.organization
+        duplicate = get_object_or_404(
+            Attendee.all_objects, pk=pk, division__organization=organization
+        )
+        # privileged_to_edit only sees live attendees; a tombstone gets the
+        # same groups check without that.
+        if not request.user.belongs_to_groups_of(
+            organization.infos.get("groups_see_all_meets_attendees", [])
+        ):
+            time.sleep(2)
+            raise PermissionDenied(detail="Not allowed to unmerge that attendee.")
+
+        try:
+            AttendeeMergeService.unmerge(duplicate)
+        except MergeRefused as refusal:
+            raise ValidationError({"detail": str(refusal)})
+
+        return Response({"restored": str(duplicate.pk)}, status=status.HTTP_200_OK)
 
     def get_queryset(self):
         """
@@ -208,12 +236,8 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
             qs = Attendee.objects.filter(
                 infos__icontains=querying_term,
             )
-        else:
-            # A bare list is the caller's whole organization, paginated. It used
-            # to raise UnboundLocalError (HTTP 500); integrations such as Tally
-            # sweep the org roster this way. Ordered so take/skip pages are
-            # stable between requests.
-            qs = Attendee.objects.all().order_by("id")
+        else:  # a bare list: the whole organization, ordered so pages are stable
+            qs = Attendee.objects.order_by("id")
 
         return qs.filter(division__organization=current_user.organization)
 
@@ -267,12 +291,16 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
         if self.request.user.privileged_to_edit(
             target_attendee.id
         ):  # intentionally forbid user delete him/herself
-            instance = serializer.save()
-            if self.request.META.get("HTTP_X_END_ALL_ATTENDEE_ACTIVITIES"):  # passed away
-                AttendeeService.end_all_activities(instance, self.request.user.attendee_uuid_str())
+            try:
+                instance = serializer.save()
+                if self.request.META.get("HTTP_X_END_ALL_ATTENDEE_ACTIVITIES"):  # passed away
+                    AttendeeService.end_all_activities(instance, self.request.user.attendee_uuid_str())
 
-            if self.request.META.get("HTTP_X_ADD_PAST"):
-                AttendeeService.add_past(instance, self.request.META.get("HTTP_X_ADD_PAST"), pytz.timezone(parse.unquote(tzname)))
+                if self.request.META.get("HTTP_X_ADD_PAST"):
+                    AttendeeService.add_past(instance, self.request.META.get("HTTP_X_ADD_PAST"), pytz.timezone(parse.unquote(tzname)))
+            except Exception as e:
+                logger.error(f"Error updating attendee {target_attendee.id}: {e}", exc_info=True)
+                raise
 
         else:
             time.sleep(2)

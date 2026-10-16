@@ -1,8 +1,8 @@
 from datetime import timedelta
 from django.http import JsonResponse
 from django.shortcuts import get_object_or_404
-from rest_framework import status
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import status
 from rest_framework.viewsets import ModelViewSet
 
 from attendees.occasions.models import Meet

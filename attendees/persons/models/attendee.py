@@ -81,10 +81,8 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         default=None,
         on_delete=models.SET_NULL,
         related_name="merged_from",
-        help_text="Set when this attendee was merged into another. The record is "
-        "kept as a tombstone so an id that has been handed out — to an "
-        "integration, a printed label, a bookmark — can still be followed to "
-        "whoever holds the person now.",
+        help_text="Set when this attendee was merged into another; the row "
+        "stays as a tombstone so the old id can still be followed.",
     )
     infos = models.JSONField(
         null=True,
@@ -334,6 +332,14 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
 
     def save(self, *args, **kwargs):
         self.estimated_birthday = Utility.presence(self.estimated_birthday)
+        # Every section of infos is read somewhere (names below, schedulers and
+        # emergency_contacts in AttendeeService), so an infos that arrived
+        # without some of them, or as null, is completed here rather than
+        # failing in each of those places.
+        infos = self.infos if self.infos is not None else {}
+        for section, default in Utility.attendee_infos().items():
+            infos.setdefault(section, default)
+        self.infos = infos
         name = self.name1()
         name2 = self.name2()
         both_names = f"{name} {name2}".strip()
@@ -349,11 +355,9 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
             self.infos["names"]["traditional"] = s2t_converter.convert(both_names)
             self.infos["names"]["simplified"] = t2s_converter.convert(both_names)
 
-        # This method derives infos["names"] on every save, so a caller that
-        # limits update_fields must still write it — otherwise the searchable
-        # names silently keep the old spelling. Django's update_or_create()
-        # passes update_fields=set(defaults) since 4.2, which is exactly how
-        # the datagrid serializers save a partial edit.
+        # infos["names"] is derived above on every save, so it must be written
+        # even when the caller limits update_fields -- as update_or_create()
+        # does since Django 4.2 -- or the searchable names keep the old spelling.
         update_fields = kwargs.get("update_fields")
         if update_fields is not None and "infos" not in update_fields:
             kwargs["update_fields"] = {*update_fields, "infos"}

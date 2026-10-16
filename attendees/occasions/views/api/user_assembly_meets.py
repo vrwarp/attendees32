@@ -1,11 +1,12 @@
 import time
 
 from django.contrib.auth.decorators import login_required
-from django.db.models import Case, F, When
+from django.db.models import Case, F, Prefetch, When
 from django.shortcuts import get_object_or_404
 from django.utils.decorators import method_decorator
 from rest_framework import viewsets
 from rest_framework.exceptions import AuthenticationFailed
+from schedule.models import EventRelation
 
 from attendees.occasions.models import Meet
 from attendees.occasions.serializers.meet import MeetSerializer
@@ -53,15 +54,21 @@ class ApiUserAssemblyMeetsViewSet(viewsets.ModelViewSet):
             if model:
                 filters["infos__allowed_models__regex"] = fr'({model})'
 
+            event_relations_prefetch = Prefetch(
+                'event_relations',
+                queryset=EventRelation.objects.filter(distinction='source').select_related('event__rule'),
+            )
+
             return (
                 Meet.objects.filter(**filters)
                 .annotate(
                     assembly_name=F("assembly__display_name"),
                 )
                 .order_by(
-                    # The target attendee's own meets come first: callers such as
-                    # the participation grid's lookup read only the first page,
-                    # and a meet missing from it shows as a blank row.
+                    # The target attendee's own meets come first: the attendee
+                    # page's participation grid reads only the first page of
+                    # this endpoint to name its rows, so a meet missing from
+                    # it shows as a blank row.
                     Case(
                         When(
                             id__in=AttendingMeet.objects.filter(
@@ -75,6 +82,7 @@ class ApiUserAssemblyMeetsViewSet(viewsets.ModelViewSet):
                     ),
                     'assembly_name',
                 )
+                .prefetch_related(event_relations_prefetch)
             )
 
         else:

@@ -27,6 +27,7 @@ import { defineConfig, devices } from '@playwright/test';
  *   C_PASSWORD=... npm run test:e2e:ci-seed
  */
 const CI_SEED_SPECS = [
+  'attendeeUpdate.spec.ts',
   'attendeesList.spec.ts',
   'attendingMeetEnvelopes.spec.ts',
   'attendingMeetReport.spec.ts',
