@@ -149,6 +149,7 @@ MIDDLEWARE = [
     "corsheaders.middleware.CorsMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
     "attendees.middleware.Early404Middleware",
+    "attendees.middleware.EarlyApiAuthMiddleware",
     "django.contrib.sessions.middleware.SessionMiddleware",
     "django.middleware.locale.LocaleMiddleware",
     "django.middleware.common.CommonMiddleware",
@@ -419,7 +420,13 @@ REST_FRAMEWORK = {
 }
 
 # django-cors-headers - https://github.com/adamchainz/django-cors-headers#setup
+from corsheaders.defaults import default_headers
+
 CORS_URLS_REGEX = r"^/api/.*$"
+CORS_ALLOW_HEADERS = list(default_headers) + [
+    "sentry-trace",
+    "baggage",
+]
 # Your stuff...
 # ------------------------------------------------------------------------------
 CLIENT_DEFAULT_TIME_ZONE = "America/Los_Angeles"
@@ -450,8 +457,30 @@ SHELL_PLUS_DONT_LOAD = [
 
 # allauth MFA Settings
 MFA_TOTP_ISSUER = "Attendees"
-MFA_SUPPORTED_TYPES = ["totp", "webauthn", "recovery_codes"]
+MFA_SUPPORTED_TYPES = ["webauthn", "totp", "recovery_codes"]
 MFA_PASSCODE_LENGTH = 6
 MFA_ENFORCED = env.bool("DJANGO_MFA_ENFORCED", False)  # enforce 2026
 MFA_PASSKEY_LOGIN_ENABLED = True
 MFA_WEBAUTHN_ALLOW_INSECURE_ORIGIN = env.bool("DJANGO_MFA_WEBAUTHN_INSECURE", False)
+
+# Sentry Configuration
+import sentry_sdk
+import logging
+from sentry_sdk.integrations.django import DjangoIntegration
+from sentry_sdk.integrations.logging import LoggingIntegration
+
+SENTRY_DSN = env("SENTRY_DSN", default="")
+if SENTRY_DSN:
+    sentry_logging = LoggingIntegration(
+        level=logging.INFO,  # Capture info and above as breadcrumbs
+        event_level=logging.ERROR  # Send errors as events
+    )
+    sentry_sdk.init(
+        dsn=SENTRY_DSN,
+        integrations=[DjangoIntegration(), sentry_logging],
+        send_default_pii=True,
+        traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=1.0),
+        environment=env("DJANGO_SETTINGS_MODULE", default="development").split('.')[-1],
+    )
+SENTRY_ARTIFICIAL_API_DEBUG = env.bool("SENTRY_ARTIFICIAL_API_DEBUG", default=False)
+SENTRY_FRONTEND_LIB = env("SENTRY_FRONTEND_LIB", default="")

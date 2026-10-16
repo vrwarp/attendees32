@@ -66,6 +66,8 @@ Attendees.datagridUpdate = {
   init: () => {
     console.log('attendees/static/js/persons/attendee_update_view.js');
     Attendees.datagridUpdate.displayNotifierFromSearchParam('success');
+    // The merge notice is in the page already, before the record is fetched.
+    $("div.attendee-merge-notices").on('click', 'button.attendee-unmerge-button', e => Attendees.merge.undo(e.currentTarget.dataset.duplicateId, Attendees.datagridUpdate.showUnmerged));
     Attendees.datagridUpdate.initAttendeeForm();
   },
 
@@ -74,6 +76,7 @@ Attendees.datagridUpdate = {
     $("div.form-container").on('click', 'button.attending-button', e => Attendees.datagridUpdate.initAttendingPopupDxForm(e));
     $("div.form-container").on('click', 'button.place-button', e => Attendees.datagridUpdate.initPlacePopupDxForm(e));
     $("div.form-container").on('click', 'button.family-button', e => Attendees.datagridUpdate.initFamilyAttrPopupDxForm(e));
+    $("div.nav-buttons").on('click', 'button.attendee-merge-button', () => Attendees.merge.pick(Attendees.datagridUpdate.attendeeFormConfigs.formData, Attendees.datagridUpdate.showMerged));
     Attendees.datagridUpdate.attachContactAddButton();
 
     $(window).keydown((event) => {
@@ -92,6 +95,14 @@ Attendees.datagridUpdate = {
       } // prevent user to submit form by hitting enter
     });
     // add listeners for Family, counselling, etc.
+  },
+
+  showMerged: (primaryId) => {
+    window.location = `${Attendees.datagridUpdate.attendeeUrn}${primaryId}?success=${encodeURIComponent('Merged into one record')}`;
+  },
+
+  showUnmerged: () => {
+    window.location = `${window.location.pathname}?success=${encodeURIComponent('Merge undone, both records are back')}`;
   },
 
   toggleEditing: (enabled) => {
@@ -3134,13 +3145,14 @@ Attendees.datagridUpdate = {
             return d.promise();
           },
           update: (key, values) => {
-            values.category = categoryId;
             const folkAttendeeFormData = new FormData();
             const fileRemoverCheckBox = document.querySelector('input#folkattendee-file-clear');
 
             if (values && typeof(values) === 'object'){
               for ([formKey, formValue] of Object.entries(values)){
-                if (formKey !== 'file') {
+                if (formKey === 'folk') {
+                  folkAttendeeFormData.append('folk', formValue.id);  // the grid edits folk.id; the API takes the folk's id
+                } else if (formKey !== 'file') {
                   folkAttendeeFormData.append(formKey, ['start', 'finish'].includes(formKey) ? (formValue === null ? '' : formValue) : JSON.stringify(formValue));
                 }
               }
@@ -3192,7 +3204,6 @@ Attendees.datagridUpdate = {
             });
           },
           insert: (values) => {
-            values.category = categoryId;  // somehow backend can't receive it if nested in folk object
             const folkAttendeeFormData = new FormData();
             const fileUploaded = Attendees.datagridUpdate.folkAttendeeFileUploader && Attendees.datagridUpdate.folkAttendeeFileUploader.option('value')[0];
             if (values && typeof(values) === 'object'){
@@ -3202,8 +3213,7 @@ Attendees.datagridUpdate = {
                     folkAttendeeFormData.set(formKey, JSON.stringify(formValue));
                     break;
                   case 'folk':
-                    folkAttendeeFormData.set("folk", formValue.id);  // this work with below line! somehow folk[id] didn't work
-                    folkAttendeeFormData.set("folk.category", categoryId);  // somehow needed with the above "folk" in formdata but will generate 'folk.category': ['25'],
+                    folkAttendeeFormData.set("folk", formValue.id);
                     break;
                   case 'file':
                     if (fileUploaded) {

@@ -2,8 +2,8 @@ from datetime import datetime, timezone
 
 from django.db.models import Q
 from django.shortcuts import get_object_or_404
-from rest_framework import viewsets
 from rest_framework.permissions import IsAuthenticated
+from rest_framework import viewsets
 
 from attendees.persons.models import Attendee, FolkAttendee, Utility, Past
 from attendees.persons.serializers import FolkAttendeeSerializer
@@ -64,6 +64,8 @@ class ApiDatagridDataFolkAttendeesViewsSet(viewsets.ModelViewSet
                ).exclude(  # Todo 20230502 optimize to exclude rows in other attendee's other folks
                 ~Q(attendee=target_attendee),
                 folk__in=target_attendee_in_others_other_folks,
+               ).select_related(  # the serializer nests each row's folk
+                "folk",
                ).order_by(
                 "folk",
                 "folk__display_order",

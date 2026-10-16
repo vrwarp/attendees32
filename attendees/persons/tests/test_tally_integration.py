@@ -203,7 +203,7 @@ class TestTokenAuthentication:
 class TestMergedAttendees:
     """What an id that was merged away answers.
 
-    Planning Center answers a merged person with `410 Gone` and the survivor's
+    Planning Center answers a merged person with `410 Gone` and the primary's
     id, and an integration that holds an old id follows it. Until attendees32
     could say the same, a merged attendee here was a soft-delete: the id
     404ed, indistinguishable from a typo, and silent about the fact that the
@@ -220,34 +220,34 @@ class TestMergedAttendees:
             infos=Utility.attendee_infos(),
         )
 
-    def test_a_merged_id_answers_410_with_the_survivor(self, provisioned):
-        keeper = self._attendee(provisioned, "Ava")
+    def test_a_merged_id_answers_410_with_the_primary(self, provisioned):
+        primary = self._attendee(provisioned, "Ava")
         duplicate = self._attendee(provisioned, "Ava")
         client = token_client(provisioned["token"])
 
         merged = client.post(
             f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
-            {"survivor": str(keeper.id)},
+            {"primary": str(primary.id)},
             format="json",
         )
         assert merged.status_code == 200
-        assert merged.json()["merged_into"] == str(keeper.id)
+        assert merged.json()["merged_into"] == str(primary.id)
 
         response = client.get(f"/persons/api/datagrid_data_attendee/{duplicate.id}/")
         assert response.status_code == 410
-        assert response.json()["merged_into"] == str(keeper.id)
+        assert response.json()["merged_into"] == str(primary.id)
 
-    def test_the_survivor_is_still_readable(self, provisioned):
-        keeper = self._attendee(provisioned, "Ava")
+    def test_the_primary_is_still_readable(self, provisioned):
+        primary = self._attendee(provisioned, "Ava")
         duplicate = self._attendee(provisioned, "Ava")
         client = token_client(provisioned["token"])
         client.post(
             f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
-            {"survivor": str(keeper.id)},
+            {"primary": str(primary.id)},
             format="json",
         )
 
-        response = client.get(f"/persons/api/datagrid_data_attendee/{keeper.id}/")
+        response = client.get(f"/persons/api/datagrid_data_attendee/{primary.id}/")
         assert response.status_code == 200
 
     def test_a_chain_reports_its_end(self, provisioned):
@@ -264,12 +264,12 @@ class TestMergedAttendees:
 
         client.post(
             f"/persons/api/datagrid_data_attendee/{first.id}/merge/",
-            {"survivor": str(second.id)},
+            {"primary": str(second.id)},
             format="json",
         )
         client.post(
             f"/persons/api/datagrid_data_attendee/{second.id}/merge/",
-            {"survivor": str(third.id)},
+            {"primary": str(third.id)},
             format="json",
         )
 
@@ -280,16 +280,16 @@ class TestMergedAttendees:
     def test_a_trail_that_ends_nowhere_is_gone_without_a_forwarding_address(
         self, provisioned
     ):
-        keeper = self._attendee(provisioned, "Ava")
+        primary = self._attendee(provisioned, "Ava")
         duplicate = self._attendee(provisioned, "Ava")
         client = token_client(provisioned["token"])
         client.post(
             f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
-            {"survivor": str(keeper.id)},
+            {"primary": str(primary.id)},
             format="json",
         )
-        keeper.is_removed = True
-        keeper.save(update_fields=["is_removed"])
+        primary.is_removed = True
+        primary.save(update_fields=["is_removed"])
 
         response = client.get(f"/persons/api/datagrid_data_attendee/{duplicate.id}/")
         assert response.status_code == 410
@@ -318,12 +318,12 @@ class TestMergedAttendees:
         assert response.status_code == 404
 
     def test_a_merged_attendee_leaves_the_roster_sweep(self, provisioned):
-        keeper = self._attendee(provisioned, "Ava")
+        primary = self._attendee(provisioned, "Ava")
         duplicate = self._attendee(provisioned, "Ava")
         client = token_client(provisioned["token"])
         client.post(
             f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
-            {"survivor": str(keeper.id)},
+            {"primary": str(primary.id)},
             format="json",
         )
 
@@ -331,7 +331,7 @@ class TestMergedAttendees:
             "/persons/api/datagrid_data_attendee/", {"take": 100, "skip": 0}
         ).json()["data"]
         ids = {row["id"] for row in listed}
-        assert str(keeper.id) in ids
+        assert str(primary.id) in ids
         assert str(duplicate.id) not in ids
 
     def test_refuses_a_merge_it_cannot_make_sense_of(self, provisioned):
@@ -340,7 +340,7 @@ class TestMergedAttendees:
 
         response = client.post(
             f"/persons/api/datagrid_data_attendee/{duplicate.id}/merge/",
-            {"survivor": str(duplicate.id)},
+            {"primary": str(duplicate.id)},
             format="json",
         )
         assert response.status_code == 400
