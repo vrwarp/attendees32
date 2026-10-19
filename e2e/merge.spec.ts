@@ -102,7 +102,7 @@ test.describe('Merging two records', () => {
 
       // One record now, with the pick applied and the twin's phone kept.
       await page.waitForURL(new RegExp(`/persons/attendee/${original.id}`));
-      await expect(page.locator('.attendee-merge-notices')).toContainText(`Merged with ${twin.infos.names.original}`);
+      await expect(page.locator('button.attendee-merge-chip')).toHaveText('merged ×1');
       const merged = (await record(page, original.id)).body;
       expect(merged.actual_birthday).toBe(TWIN_BIRTHDAY);
       expect(Object.values(merged.infos.contacts)).toContain(TWIN_PHONE);
@@ -111,14 +111,19 @@ test.describe('Merging two records', () => {
       // The twin's link opens the merged record and says so.
       await visit(page, `/persons/attendee/${twin.id}`);
       await expect(page).toHaveURL(new RegExp(`/persons/attendee/${original.id}\\?merged_from=${twin.id}`));
-      await expect(page.locator('.attendee-merge-notices')).toContainText('You followed a link to a record that was merged into this one.');
+      const notice = page.locator('.attendee-merge-notices .alert');
+      await expect(notice).toContainText('You followed a link to a record that was merged into this one');
+      await expect(notice).toContainText(`${twin.infos.names.original}, a record made`);
+      await expect(notice).toContainText(`with ${TWIN_PHONE}, merged on`);
+      await expect(notice).toContainText('It brought nothing else.');
 
       // Undo, once: both records come back, the pick included.
-      await page.click('button.attendee-unmerge-button');
+      await notice.locator('button.attendee-unmerge-button').click();
       await expect(page.getByText('Undo this merge?')).toBeVisible();
       await page.locator('.dx-popup-bottom .dx-button', { hasText: 'Undo merge' }).click();
       await page.waitForURL(/success=/);
       await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(0);
+      await expect(page.locator('button.attendee-merge-chip')).toHaveCount(0);
       const restored = (await record(page, original.id)).body;
       expect(restored.actual_birthday).toBe(original.actual_birthday);
       expect(restored.infos.contacts).toEqual(original.infos.contacts);
@@ -201,7 +206,7 @@ test.describe('Merging two records', () => {
 
       // 2. From the page: the third record, through the picker.
       await visit(page, `/persons/attendee/${original.id}`);
-      await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(1);
+      await expect(page.locator('button.attendee-merge-chip')).toHaveText('merged ×1');
       await expect(page.locator('h3.page-title')).toContainText('Details of');
       await page.click('button.attendee-merge-button');
       await page.locator('.dx-popup-content input.dx-texteditor-input').fill(original.infos.names.original);
@@ -211,20 +216,23 @@ test.describe('Merging two records', () => {
       await expect(page.getByText('Merge into one record')).toBeVisible();
       await page.locator('.dx-popup-bottom .dx-button', { hasText: 'Merge' }).first().click();
       await page.waitForURL(/success=/);
-      await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(2);
+      await expect(page.locator('button.attendee-merge-chip')).toHaveText('merged ×2');
       merged = (await record(page, original.id)).body;
       expect(merged.infos.fixed.medical).toBe('asthma inhaler');
       const phones = Object.entries(merged.infos.contacts).filter(([key]) => key.startsWith('phone')).map(([, value]) => value);
       expect(phones).toEqual([original.infos.contacts.phone1, '+15105550231', '+15105550232']);
       expect((await record(page, third.id)).status).toBe(410);
 
-      // 3. Undo the third record's merge only: it comes back, the second stays merged.
-      await page.locator(`button.attendee-unmerge-button[data-duplicate-id="${third.id}"]`).click();
+      // 3. Undo the third record's merge only, from the chip's list: it comes
+      // back, the second stays merged.
+      await page.locator('button.attendee-merge-chip').click();
+      await expect(page.getByText('Records merged into this one')).toBeVisible();
+      await page.locator(`.dx-popup-content button.attendee-unmerge-button[data-duplicate-id="${third.id}"]`).click();
       await expect(page.getByText('Undo this merge?')).toBeVisible();
       await page.locator('.dx-popup-bottom .dx-button', { hasText: 'Undo merge' }).click();
       await page.waitForURL(/success=/);
-      await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(1);
-      await expect(page.locator(`button.attendee-unmerge-button[data-duplicate-id="${second.id}"]`)).toBeVisible();
+      await expect(page.locator('button.attendee-merge-chip')).toHaveText('merged ×1');
+      await expect(page.locator(`.attendee-merge-list button.attendee-unmerge-button[data-duplicate-id="${second.id}"]`)).toHaveCount(1);
       expect((await record(page, third.id)).status).toBe(200);
       expect((await record(page, second.id)).status).toBe(410);
       merged = (await record(page, original.id)).body;
@@ -247,19 +255,21 @@ test.describe('Merging two records', () => {
 });
 
 test.describe('Merge notices', () => {
-  test('the New person page carries no merge notices', async ({ page, signIn }) => {
+  test('the New person page carries no merges', async ({ page, signIn }) => {
     await signIn('golden_data_organizer');
     await visit(page, '/persons/attendee/new');
     await expect(page.locator('h3.page-title')).toContainText('New person');
     // Nothing can have been merged into a record that does not exist yet.
+    await expect(page.locator('button.attendee-merge-chip')).toHaveCount(0);
     await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(0);
   });
 
-  test('from three merges on, one shows and the rest fold behind an expander', async ({ page, signIn }) => {
+  test('the chip opens the list of merges, each with what it brought', async ({ page, signIn }) => {
     await signIn('golden_data_organizer');
     const original = (await record(page, attendeeId('feng_angela'))).body;
+    const phones = ['+15105550301', '+15105550302', '+15105550303'];
     const twins = [];
-    for (const phone of ['+15105550301', '+15105550302', '+15105550303']) {
+    for (const phone of phones) {
       twins.push(await makeTwin(page, original, { infos: { names: {}, fixed: {}, contacts: { phone1: phone } } }));
     }
     try {
@@ -268,19 +278,20 @@ test.describe('Merge notices', () => {
         expect(merged.ok(), await merged.text()).toBeTruthy();
       }
       await visit(page, `/persons/attendee/${original.id}`);
-      await expect(page.locator('.attendee-merge-notices .alert:visible')).toHaveCount(1);
-      const more = page.locator('button.attendee-merge-more');
-      await expect(more).toHaveText('2 more merges');
-      await more.click();
-      await expect(page.locator('.attendee-merge-notices .alert:visible')).toHaveCount(3);
-      await expect(more).toHaveCount(0);
+      // No link was followed, so no notice: just the chip.
+      await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(0);
+      await page.locator('button.attendee-merge-chip', { hasText: 'merged ×3' }).click();
+      const list = page.locator('.dx-popup-content');
+      await expect(list.locator('.attendee-merge-entry')).toHaveCount(3);
+      for (const phone of phones) await expect(list).toContainText(`a record made ${new Date().toISOString().slice(0, 10)} with ${phone}, merged on`);
+      await expect(list.locator('button.attendee-unmerge-button')).toHaveCount(3);
     } finally {
       for (const twin of [...twins].reverse()) await call(page, 'POST', `${API}${twin.id}/unmerge/`);
       for (const twin of twins) await remove(page, twin.id);
     }
   });
 
-  test('a member sees no merge notices on their own record', async ({ page, signIn }) => {
+  test('a member sees no merges on their own record', async ({ page, signIn }) => {
     await signIn('golden_data_organizer');
     const member = (await record(page, golden.personas.golden_member.attendee as string)).body;
     const twin = await makeTwin(page, member, { infos: { names: {}, fixed: {}, contacts: { phone1: '+15105550304' } } });
@@ -290,6 +301,7 @@ test.describe('Merge notices', () => {
       await signIn('golden_member');
       await visit(page, `/persons/attendee/${member.id}?merged_from=${twin.id}`);
       await expect(page.locator('h3.page-title')).toContainText('Details of');
+      await expect(page.locator('button.attendee-merge-chip')).toHaveCount(0);
       await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(0);
       await expect(page.locator('button.attendee-merge-button')).toHaveCount(0);
     } finally {

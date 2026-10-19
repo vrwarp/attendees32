@@ -82,8 +82,9 @@ class TestAttendeeUpdate:
         assert record["followed"] is True
         assert response.context["can_merge"] is True
         html = response.content.decode()
-        assert "You followed a link to a record that was merged into this one." in html
-        assert "Merged with Ava Chen" in html
+        assert "You followed a link to a record that was merged into this one" in html
+        assert "Ava Chen" in html
+        assert "merged ×1" in html
         assert "Undo merge" in html
         assert "Merge with another record" in html
 
@@ -97,7 +98,7 @@ class TestAttendeeUpdate:
         assert response.context["merged_from"] == []
         assert "Merge with another record" not in response.content.decode()
 
-    def test_a_member_sees_no_merge_notices(self, golden, login):
+    def test_a_member_sees_no_merges(self, golden, login):
         member = golden.attendee("chen_zhiming")
         duplicate = _ava(golden)
         AttendeeMergeService.merge(duplicate, member)
@@ -107,9 +108,11 @@ class TestAttendeeUpdate:
 
         assert response.status_code == 200
         assert response.context["merged_from"] == []
-        assert "Merged with" not in response.content.decode()
+        html = response.content.decode()
+        assert "merged ×" not in html
+        assert "You followed a link" not in html
 
-    def test_the_new_person_page_carries_no_merge_notices(self, golden, login):
+    def test_the_new_person_page_carries_no_merges(self, golden, login):
         # A deleted record that was never merged is not a merge into "new".
         _ava(golden).delete()
         client = login("golden_data_organizer")
@@ -118,34 +121,28 @@ class TestAttendeeUpdate:
 
         assert response.status_code == 200
         assert response.context["merged_from"] == []
-        assert "Merged with" not in response.content.decode()
+        assert "merged ×" not in response.content.decode()
 
-    def test_two_merges_show_as_they_are(self, golden, login):
+    def test_the_chip_counts_the_merges_and_the_list_says_what_each_brought(self, golden, login):
         primary, first = _twins(golden)
         second = _ava(golden)
+        second.infos["contacts"] = {"phone1": "+15105550199"}
+        second.save()
         AttendeeMergeService.merge(first, primary)
         AttendeeMergeService.merge(second, primary)
         client = login("golden_data_organizer")
 
         response = client.get(f"/persons/attendee/{primary.id}")
 
-        assert len(response.context["merged_from_shown"]) == 2
-        assert response.context["merged_from_folded"] == []
-        assert "more merge" not in response.content.decode()
-
-    def test_from_three_merges_on_the_rest_fold(self, golden, login):
-        primary, first = _twins(golden)
-        second, third = _ava(golden), _ava(golden)
-        for duplicate in (first, second, third):
-            AttendeeMergeService.merge(duplicate, primary)
-        client = login("golden_data_organizer")
-
-        response = client.get(f"/persons/attendee/{primary.id}?merged_from={first.id}")
-
-        shown, folded = response.context["merged_from_shown"], response.context["merged_from_folded"]
-        # The record whose link was followed comes first, whatever its age.
-        assert [record["id"] for record in shown] == [str(first.id)]
-        assert {record["id"] for record in folded} == {str(second.id), str(third.id)}
         html = response.content.decode()
-        assert "2 more merges" in html
-        assert html.count("Undo merge") == 3
+        assert "merged ×2" in html
+        # No link was followed, so no notice; the list has one Undo per merge.
+        assert "You followed a link" not in html
+        assert html.count("Undo merge") == 2
+        merges = {record["id"]: record for record in response.context["merged_from"]}
+        assert set(merges) == {str(first.id), str(second.id)}
+        assert merges[str(second.id)]["made"] == second.created.date()
+        assert merges[str(second.id)]["contact"] == "+15105550199"
+        assert merges[str(second.id)]["brought"] == ""  # a plain twin brings nothing else
+        assert f"a record made {second.created:%Y-%m-%d} with +15105550199, merged on" in html
+        assert "It brought nothing else." in html

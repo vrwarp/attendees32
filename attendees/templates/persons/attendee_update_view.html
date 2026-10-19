@@ -37,6 +37,13 @@
     <h3 class="page-title">
       Fetching attendee details ...
     </h3>
+    {% if merged_from %}
+      <button type="button"
+              class="btn btn-sm btn-light border rounded-pill ms-2 align-self-center text-nowrap attendee-merge-chip"
+              title="Records merged into this one">
+        merged ×{{ merged_from|length }}
+      </button>
+    {% endif %}
   </div>
   <div class="spinner-border"
        role="status">
@@ -90,20 +97,38 @@
 </div>
 
 <div class="attendee-merge-notices">
-  {% for merge in merged_from_shown %}
-    {% include "persons/attendee_merge_notice.html" %}
+  {% for merge in merged_from %}
+    {% if merge.followed %}
+      <div class="alert alert-info d-flex align-items-center justify-content-between py-2"
+           role="status">
+        <div>
+          You followed a link to a record that was merged into this one:
+          {% include "persons/attendee_merge_line.html" %}
+        </div>
+        <button type="button"
+                class="btn btn-outline-secondary btn-sm ms-3 text-nowrap attendee-unmerge-button"
+                data-duplicate-id="{{ merge.id }}"
+                title="Put both records back as they were before the merge">
+          Undo merge
+        </button>
+      </div>
+    {% endif %}
   {% endfor %}
-  {% if merged_from_folded %}
-    <button type="button"
-            class="btn btn-link btn-sm px-0 mb-3 attendee-merge-more">
-      {{ merged_from_folded|length }} more merge{{ merged_from_folded|length|pluralize }}
-    </button>
-    <div class="attendee-merge-folded" hidden>
-      {% for merge in merged_from_folded %}
-        {% include "persons/attendee_merge_notice.html" %}
-      {% endfor %}
+</div>
+
+{# The list behind the "merged" chip; the page script shows it in a popup. #}
+<div class="attendee-merge-list" hidden>
+  {% for merge in merged_from %}
+    <div class="d-flex align-items-center justify-content-between py-2 border-bottom attendee-merge-entry">
+      <div>{% include "persons/attendee_merge_line.html" %}</div>
+      <button type="button"
+              class="btn btn-outline-secondary btn-sm ms-3 text-nowrap attendee-unmerge-button"
+              data-duplicate-id="{{ merge.id }}"
+              title="Put both records back as they were before the merge">
+        Undo merge
+      </button>
     </div>
-  {% endif %}
+  {% endfor %}
 </div>
 
 <div class="form-container">
