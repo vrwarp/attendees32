@@ -245,3 +245,13 @@ test.describe('Merging two records', () => {
     expect(restored.folkattendee_set.length).toBe(original.folkattendee_set.length);
   });
 });
+
+test.describe('Merge notices', () => {
+  test('the New person page carries no merge notices', async ({ page, signIn }) => {
+    await signIn('golden_data_organizer');
+    await visit(page, '/persons/attendee/new');
+    await expect(page.locator('h3.page-title')).toContainText('New person');
+    // Nothing can have been merged into a record that does not exist yet.
+    await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(0);
+  });
+});
