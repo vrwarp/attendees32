@@ -66,8 +66,13 @@ Attendees.datagridUpdate = {
   init: () => {
     console.log('attendees/static/js/persons/attendee_update_view.js');
     Attendees.datagridUpdate.displayNotifierFromSearchParam('success');
-    // The merge notice is in the page already, before the record is fetched.
+    // The merge notices are in the page already, before the record is fetched.
     $("div.attendee-merge-notices").on('click', 'button.attendee-unmerge-button', e => Attendees.merge.undo(e.currentTarget.dataset.duplicateId, Attendees.datagridUpdate.showUnmerged));
+    // "n more merges" shows the folded notices and goes away.
+    $("div.attendee-merge-notices").on('click', 'button.attendee-merge-more', e => {
+      $("div.attendee-merge-folded").prop('hidden', false);
+      $(e.currentTarget).remove();
+    });
     Attendees.datagridUpdate.initAttendeeForm();
   },
 

@@ -8,11 +8,13 @@ from attendees.persons.services import AttendeeMergeService
 pytestmark = pytest.mark.django_db
 
 
-def _twins(golden):
+def _ava(golden):
     division = golden.attendee("chen_grace").division
-    primary = Attendee.objects.create(first_name="Ava", last_name="Chen", division=division, gender="unspecified")
-    duplicate = Attendee.objects.create(first_name="Ava", last_name="Chen", division=division, gender="unspecified")
-    return primary, duplicate
+    return Attendee.objects.create(first_name="Ava", last_name="Chen", division=division, gender="unspecified")
+
+
+def _twins(golden):
+    return _ava(golden), _ava(golden)
 
 
 class TestAttendeeUpdate:
@@ -94,3 +96,56 @@ class TestAttendeeUpdate:
         assert response.context["can_merge"] is False
         assert response.context["merged_from"] == []
         assert "Merge with another record" not in response.content.decode()
+
+    def test_a_member_sees_no_merge_notices(self, golden, login):
+        member = golden.attendee("chen_zhiming")
+        duplicate = _ava(golden)
+        AttendeeMergeService.merge(duplicate, member)
+        client = login("golden_member")
+
+        response = client.get(f"/persons/attendee/{member.id}?merged_from={duplicate.id}")
+
+        assert response.status_code == 200
+        assert response.context["merged_from"] == []
+        assert "Merged with" not in response.content.decode()
+
+    def test_the_new_person_page_carries_no_merge_notices(self, golden, login):
+        # A deleted record that was never merged is not a merge into "new".
+        _ava(golden).delete()
+        client = login("golden_data_organizer")
+
+        response = client.get("/persons/attendee/new")
+
+        assert response.status_code == 200
+        assert response.context["merged_from"] == []
+        assert "Merged with" not in response.content.decode()
+
+    def test_two_merges_show_as_they_are(self, golden, login):
+        primary, first = _twins(golden)
+        second = _ava(golden)
+        AttendeeMergeService.merge(first, primary)
+        AttendeeMergeService.merge(second, primary)
+        client = login("golden_data_organizer")
+
+        response = client.get(f"/persons/attendee/{primary.id}")
+
+        assert len(response.context["merged_from_shown"]) == 2
+        assert response.context["merged_from_folded"] == []
+        assert "more merge" not in response.content.decode()
+
+    def test_from_three_merges_on_the_rest_fold(self, golden, login):
+        primary, first = _twins(golden)
+        second, third = _ava(golden), _ava(golden)
+        for duplicate in (first, second, third):
+            AttendeeMergeService.merge(duplicate, primary)
+        client = login("golden_data_organizer")
+
+        response = client.get(f"/persons/attendee/{primary.id}?merged_from={first.id}")
+
+        shown, folded = response.context["merged_from_shown"], response.context["merged_from_folded"]
+        # The record whose link was followed comes first, whatever its age.
+        assert [record["id"] for record in shown] == [str(first.id)]
+        assert {record["id"] for record in folded} == {str(second.id), str(third.id)}
+        html = response.content.decode()
+        assert "2 more merges" in html
+        assert html.count("Undo merge") == 3

@@ -307,17 +307,23 @@ class AttendeeMergeService:
     @staticmethod
     def merged_away(attendee_id):
         """The tombstone of a merged-away record, or ``None``."""
+        key = _uuid(attendee_id)
+        if key is None:
+            return None
         return Attendee.all_objects.filter(
-            pk=_uuid(attendee_id), is_removed=True, merged_into__isnull=False
+            pk=key, is_removed=True, merged_into__isnull=False
         ).first()
 
     @staticmethod
     def merged_from(attendee_id):
         """The records merged into this one, newest first: id, name, when, by whom."""
+        key = _uuid(attendee_id)
+        if key is None:
+            # "new", or any id that is no record: nothing was merged into it.
+            # A None key would match every deleted record instead.
+            return []
         records = []
-        for tombstone in Attendee.all_objects.filter(
-            merged_into_id=_uuid(attendee_id), is_removed=True
-        ):
+        for tombstone in Attendee.all_objects.filter(merged_into_id=key, is_removed=True):
             merge = tombstone.infos.get("merge") or {}
             by = Attendee.all_objects.filter(pk=_uuid(merge.get("by"))).first()
             records.append(

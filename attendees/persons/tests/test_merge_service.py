@@ -579,7 +579,11 @@ class TestAttendeeMergeService:
         assert record["by"] == "Olive Chen"
         assert record["at"] is not None
         assert AttendeeMergeService.merged_from(self.duplicate.id) == []
+        # A deleted record that was never merged is nobody's merge, whatever the key.
+        self._attendee("Gone").delete()
         assert AttendeeMergeService.merged_from("nonsense") == []
+        assert AttendeeMergeService.merged_from("new") == []
+        assert AttendeeMergeService.merged_from(None) == []
 
     def test_merged_away_finds_the_tombstone(self):
         assert AttendeeMergeService.merged_away(self.duplicate.id) is None

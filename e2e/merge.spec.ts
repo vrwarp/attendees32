@@ -1,5 +1,5 @@
 import { expect, test, visit, waitForGridRows } from './fixtures';
-import { attendeeId } from './golden';
+import { attendeeId, golden } from './golden';
 
 /**
  * Merging two records of one person: the picker and the merge screen on the
@@ -253,5 +253,49 @@ test.describe('Merge notices', () => {
     await expect(page.locator('h3.page-title')).toContainText('New person');
     // Nothing can have been merged into a record that does not exist yet.
     await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(0);
+  });
+
+  test('from three merges on, one shows and the rest fold behind an expander', async ({ page, signIn }) => {
+    await signIn('golden_data_organizer');
+    const original = (await record(page, attendeeId('feng_angela'))).body;
+    const twins = [];
+    for (const phone of ['+15105550301', '+15105550302', '+15105550303']) {
+      twins.push(await makeTwin(page, original, { infos: { names: {}, fixed: {}, contacts: { phone1: phone } } }));
+    }
+    try {
+      for (const twin of twins) {
+        const merged = await call(page, 'POST', `${API}${twin.id}/merge/`, { primary: original.id });
+        expect(merged.ok(), await merged.text()).toBeTruthy();
+      }
+      await visit(page, `/persons/attendee/${original.id}`);
+      await expect(page.locator('.attendee-merge-notices .alert:visible')).toHaveCount(1);
+      const more = page.locator('button.attendee-merge-more');
+      await expect(more).toHaveText('2 more merges');
+      await more.click();
+      await expect(page.locator('.attendee-merge-notices .alert:visible')).toHaveCount(3);
+      await expect(more).toHaveCount(0);
+    } finally {
+      for (const twin of [...twins].reverse()) await call(page, 'POST', `${API}${twin.id}/unmerge/`);
+      for (const twin of twins) await remove(page, twin.id);
+    }
+  });
+
+  test('a member sees no merge notices on their own record', async ({ page, signIn }) => {
+    await signIn('golden_data_organizer');
+    const member = (await record(page, golden.personas.golden_member.attendee as string)).body;
+    const twin = await makeTwin(page, member, { infos: { names: {}, fixed: {}, contacts: { phone1: '+15105550304' } } });
+    try {
+      const merged = await call(page, 'POST', `${API}${twin.id}/merge/`, { primary: member.id });
+      expect(merged.ok(), await merged.text()).toBeTruthy();
+      await signIn('golden_member');
+      await visit(page, `/persons/attendee/${member.id}?merged_from=${twin.id}`);
+      await expect(page.locator('h3.page-title')).toContainText('Details of');
+      await expect(page.locator('.attendee-merge-notices .alert')).toHaveCount(0);
+      await expect(page.locator('button.attendee-merge-button')).toHaveCount(0);
+    } finally {
+      await signIn('golden_data_organizer');
+      await call(page, 'POST', `${API}${twin.id}/unmerge/`);
+      await remove(page, twin.id);
+    }
   });
 });

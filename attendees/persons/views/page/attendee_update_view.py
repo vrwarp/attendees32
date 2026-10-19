@@ -45,11 +45,19 @@ class AttendeeUpdateView(RouteAndSpyGuard, UpdateView):
         targeting_attendee_id = self.kwargs.get(
             "attendee_id", self.request.user.attendee_uuid_str()
         )  # if more logic needed when create new, a new view will be better
-        # The records merged into this one, for the notice under the title; the
-        # one whose link was followed says so.
-        merged_from = AttendeeMergeService.merged_from(targeting_attendee_id)
+        can_merge = self.request.user.can_see_all_organizational_meets_attendees()
+        # The records merged into this one, for the notices under the title.
+        # Only a user who may merge sees them. The one whose link was followed
+        # says so and comes first. Up to two show as they are; from three on,
+        # the first shows and the rest fold behind "n more merges".
+        merged_from = AttendeeMergeService.merged_from(targeting_attendee_id) if can_merge else []
         for record in merged_from:
             record["followed"] = record["id"] == self.request.GET.get("merged_from")
+        merged_from.sort(key=lambda record: not record["followed"])
+        if len(merged_from) > 2:
+            merged_from_shown, merged_from_folded = merged_from[:1], merged_from[1:]
+        else:
+            merged_from_shown, merged_from_folded = merged_from, []
         show_create_attendee = self.kwargs.get(
             "show_create_attendee", Menu.user_can_create_attendee(self.request.user)
         )
@@ -93,8 +101,10 @@ class AttendeeUpdateView(RouteAndSpyGuard, UpdateView):
                 ),  # to avoid simultaneous AJAX calls
                 "attendee_search": "/persons/api/datagrid_data_attendees/",
                 "attendee_urn": "/persons/attendee/",
-                "can_merge": self.request.user.can_see_all_organizational_meets_attendees(),
+                "can_merge": can_merge,
                 "merged_from": merged_from,
+                "merged_from_shown": merged_from_shown,
+                "merged_from_folded": merged_from_folded,
             }
         )
         return context
