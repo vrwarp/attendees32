@@ -125,6 +125,39 @@ def _uuid(value):
         return None
 
 
+def _a_contact(attendee):
+    """One contact of the record, a phone first: what tells it from a twin."""
+    contacts = attendee.infos.get("contacts") or {}
+    for kind in ("phone", "email"):
+        for key in sorted(contacts):
+            if _kind(key) == kind and contacts[key]:
+                return contacts[key]
+    return next((value for value in contacts.values() if value), None)
+
+
+def _moved_counts(merge):
+    """How many rows of each kind a merge brought, from what it recorded."""
+    moved = merge.get("moved") or {}
+    attendings = moved.get("attendings") or {}
+    whole = attendings.get("moved") or []
+    folded = attendings.get("folded") or []
+    return {
+        "enrollments": AttendingMeet.objects.filter(attending_id__in=whole).count()
+        + sum(len(fold["enrollments"]) for fold in folded),
+        "check-ins": Attendance.objects.filter(attending_id__in=whole).count()
+        + sum(len(fold["attendances"]) for fold in folded),
+        # The record's own "other" folk is a hidden-role membership that every
+        # record has, so it does not count, as in preview.
+        "memberships": FolkAttendee.objects.filter(
+            pk__in=(moved.get("memberships") or {}).get("moved") or []
+        ).exclude(role_id=Attendee.HIDDEN_ROLE).count(),
+        "addresses": len((moved.get("places") or {}).get("moved") or []),
+        "notes": len(moved.get("notes") or []) + len(moved.get("pasts") or []),
+        "registrations": len(moved.get("registrations") or []),
+        "logins": 1 if moved.get("user") else 0,
+    }
+
+
 def _named(attendee):
     names = attendee.infos.get("names") or {}
     name = names.get("original") or f"{attendee.first_name} {attendee.last_name}".strip()
@@ -213,6 +246,9 @@ class AttendeeMergeService:
         moved = {
             "details": AttendeeMergeService._merge_details(duplicate, primary),
             "own_references": AttendeeMergeService._merge_own_references(duplicate, primary),
+            # Registrations fold before the attendings do: the duplicate's
+            # attending under a folded registration then folds by registration.
+            "registrations_folded": AttendeeMergeService._fold_registrations(duplicate, primary),
             "attendings": AttendeeMergeService._fold_attendings(duplicate, primary),
             "memberships": AttendeeMergeService._move_memberships(duplicate, primary),
             "pasts": AttendeeMergeService._move_linked(Past, duplicate, primary),
@@ -307,17 +343,24 @@ class AttendeeMergeService:
     @staticmethod
     def merged_away(attendee_id):
         """The tombstone of a merged-away record, or ``None``."""
+        key = _uuid(attendee_id)
+        if key is None:
+            return None
         return Attendee.all_objects.filter(
-            pk=_uuid(attendee_id), is_removed=True, merged_into__isnull=False
+            pk=key, is_removed=True, merged_into__isnull=False
         ).first()
 
     @staticmethod
     def merged_from(attendee_id):
-        """The records merged into this one, newest first: id, name, when, by whom."""
+        """The records merged into this one, newest first: id, name, when, by
+        whom, when the record was made, one of its contacts, what it brought."""
+        key = _uuid(attendee_id)
+        if key is None:
+            # "new", or any id that is no record: nothing was merged into it.
+            # A None key would match every deleted record instead.
+            return []
         records = []
-        for tombstone in Attendee.all_objects.filter(
-            merged_into_id=_uuid(attendee_id), is_removed=True
-        ):
+        for tombstone in Attendee.all_objects.filter(merged_into_id=key, is_removed=True):
             merge = tombstone.infos.get("merge") or {}
             by = Attendee.all_objects.filter(pk=_uuid(merge.get("by"))).first()
             records.append(
@@ -326,6 +369,9 @@ class AttendeeMergeService:
                     "name": _named(tombstone)["name"],
                     "at": datetime.fromisoformat(merge["at"]) if merge.get("at") else None,
                     "by": _named(by)["name"] if by else None,
+                    "made": tombstone.created.date(),
+                    "contact": _a_contact(tombstone),
+                    "moved": _moved_counts(merge),
                 }
             )
         return sorted(records, key=lambda record: record["at"] or datetime.min.replace(tzinfo=timezone.utc), reverse=True)
@@ -397,6 +443,13 @@ class AttendeeMergeService:
                 is_removed=False
             )
             Attending.all_objects.filter(pk=fold["attending"]).update(is_removed=False)
+        # A folded registration comes back live, its attendings under it again.
+        # Merges made before registrations folded have no such record.
+        for fold in moved.get("registrations_folded") or []:
+            Attending.all_objects.filter(pk__in=fold["attendings"]).update(
+                registration_id=fold["registration"]
+            )
+            Registration.all_objects.filter(pk=fold["registration"]).update(is_removed=False)
 
         Attendee.all_objects.filter(pk__in=moved["tombstones"]).update(merged_into=duplicate)
 
@@ -598,6 +651,33 @@ class AttendeeMergeService:
                 place.save(update_fields=["object_id"])
                 record["moved"].append(str(place.pk))
         return record
+
+    @staticmethod
+    def _fold_registrations(duplicate, primary):
+        """A registration is unique per assembly and registrant while live, so
+        one for an assembly the primary is already registered for cannot move.
+        It is retired, and the duplicate's attendings under it are pointed at
+        the primary's registration, so they fold with the primary's attending."""
+        folded = []
+        for registration in Registration.objects.filter(
+            registrant=duplicate, assembly__isnull=False
+        ):
+            theirs = Registration.objects.filter(
+                registrant=primary, assembly_id=registration.assembly_id
+            ).first()
+            if theirs is None:
+                continue
+            attendings = list(
+                Attending.objects.filter(attendee=duplicate, registration=registration)
+                .values_list("pk", flat=True)
+            )
+            Attending.objects.filter(pk__in=attendings).update(registration=theirs)
+            registration.is_removed = True
+            registration.save(update_fields=["is_removed"])
+            folded.append(
+                {"registration": str(registration.pk), "into": str(theirs.pk), "attendings": attendings}
+            )
+        return folded
 
     @staticmethod
     def _move_registrations(duplicate, primary):
