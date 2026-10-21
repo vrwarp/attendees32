@@ -36,10 +36,9 @@ carry a personal address (a college dorm, a mailing address).
 
 ## Where the shape came from
 
-The distributions are modelled on the Planning Center People payloads captured
-in the pcomirror divergence reports:
+The distributions are modelled on a real church's membership export:
 
-| in the PCO export | in the golden data |
+| in the export | in the golden data |
 | --- | --- |
 | `child` true for ~1/3 of rows | 50 of 350 are youth or children |
 | `status` inactive for ~14% | ~14% of participations are category *Inactive* |
@@ -186,7 +185,6 @@ to Grace Chen.
 | `test_admin.py` | the Django admin |
 | `test_models.py` | the checks that go through no endpoint: constraints, history, content types |
 | `test_tally_integration.py` | the token-authenticated server-to-server sweep |
-| `test_pcosync_api.py` | the Planning Center surface: who may read the report, settle a difference or match an unlinked person |
 | `helpers.py` | constants and small helpers the files above share |
 
 New tests for an endpoint go in that endpoint's file; a new endpoint gets a new file.
@@ -213,7 +211,7 @@ pages in **Chromium and WebKit** and waits for the grids to have rows in them.
 
 | spec | covers |
 | --- | --- |
-| `e2e/navigation.spec.ts` | sign-in through the real allauth form, sign-out, the group-driven navbar, both guard refusals as a user meets them, the printed pages, the Planning Center page |
+| `e2e/navigation.spec.ts` | sign-in through the real allauth form, sign-out, the group-driven navbar, both guard refusals as a user meets them, the printed pages |
 | `e2e/datagrids.spec.ts` | the DevExtreme grids: do they boot, ask the right endpoint and render the answer |
 | `e2e/journeys.spec.ts` | somebody arriving with a job to do, and finishing it — the specs that write |
 | `e2e/account.spec.ts` | the door: signup closed, password turnover, and a TOTP second factor enrolled and used |
@@ -223,7 +221,6 @@ pages in **Chromium and WebKit** and waits for the grids to have rows in them.
 | `e2e/reports.spec.ts` | the participation list, the envelopes, the statistics, and the spreadsheet export |
 | `e2e/household.spec.ts` | families, roles, wards and addresses — what the guards are built on |
 | `e2e/enrolment.spec.ts` | who is enrolled in what, ending it, and the church-wide list |
-| `e2e/sync.spec.ts` | narrowing the Planning Center report, and matching an unknown person by hand |
 
 The journeys are the part that catches seams, where a save succeeds but the
 thing it was supposed to change does not:
@@ -234,16 +231,13 @@ thing it was supposed to change does not:
 | a coworker adds a newcomer | the person on the roster, then removed again |
 | a parent looks after their children | the child's week, and a stranger's child still shut |
 | the office prints the directory | a paginated document with the dead and the opted-out left out |
-| a data admin settles a Planning Center difference | the row gone from the open report |
 | anybody looks somebody up | search by romanisation, open the record, read the household |
 
 They run in path order after `datagrids.spec.ts`, so the absolute roster counts
 are asserted before anything here adds a row. Each journey either writes to a
 household nobody else asserts on — the Fengs — or puts back what it changed.
 
-**Three journeys are one-shot**, because the things they do can only be done
-once: settling the Planning Center conflict (the UI has no unresolve), matching
-the unlinked Planning Center person (he is not unmatched afterwards), and
+**One journey is one-shot**, because what it does can only be done once:
 granting somebody membership (the button withdraws itself). CI builds the
 congregation fresh for every job, so this never shows there; a second *local*
 run of the suite wants `manage.py load_golden_data --force` first.
