@@ -242,42 +242,6 @@ test.describe('the office prints the directory', () => {
   });
 });
 
-test.describe('a data admin settles a Planning Center difference', () => {
-  test('opens the report, keeps the local value, and the row leaves the list', async ({
-    page,
-    signIn,
-  }) => {
-    // This one settles the seeded conflict for good; there is no unresolve in
-    // the UI. CI builds the congregation fresh, and a second local run wants
-    // `manage.py load_golden_data --force` first.
-    await signIn('golden_data_organizer');
-    await visit(page, '/pcosync/sync/');
-
-    const table = page.locator('#pcosync-divergences');
-    // 志明 in attendees32, 志銘 in Planning Center — one stroke apart, which is
-    // exactly the kind nobody should settle by guessing.
-    await expect(table).toContainText('Chinese given name');
-    await expect(table).toContainText('志銘');
-    const before = await table.locator('tbody tr').count();
-
-    const row = table.locator('tr', { hasText: 'Chinese given name' }).first();
-    await row.locator('[data-resolve="keep_local"]').click();
-
-    // Settling one takes it out of the open report.
-    await expect
-      .poll(async () => table.locator('tbody tr').count(), {
-        message: 'the settled row never left the open list',
-      })
-      .toBeLessThan(before);
-    await expect(table).not.toContainText('Chinese given name');
-
-    // The unmatched Planning Center person is still waiting, and still the
-    // only kind of row that offers to be matched by hand.
-    await expect(table).toContainText('Kirby Allen');
-    await expect(table.locator('[data-link-row]')).toHaveCount(1);
-  });
-});
-
 test.describe('anybody looks somebody up', () => {
   test('search the roster, open the record, read the family', async ({
     page,

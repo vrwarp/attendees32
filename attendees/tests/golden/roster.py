@@ -23,8 +23,8 @@ carry the ``bilingual`` tag and get an AttendingMeet on both worship meets.
 
 Attribute distributions (membership, grade spread, active/inactive ratio, the
 ``child`` flag, unknown birth years, names that do not equal first+last) are
-modelled on the Planning Center People payloads in the pcomirror divergence
-reports: ~1/3 children, ~14% inactive, membership split across Full Member /
+modelled on a real church's membership records:
+~1/3 children, ~14% inactive, membership split across Full Member /
 Regular Attendee / Visitor / none, grades -1 through 12, and the 1885-style
 placeholder birthdate that this codebase spells as the year 1800.
 """
@@ -68,8 +68,8 @@ BUCKET_TARGETS = {
 #
 # Romanisations deliberately mix Mandarin pinyin (Chen, Zhang, Liu) with
 # Cantonese and Taiwanese spellings (Chan, Cheung, Lau, Tsai, Hsieh) — the same
-# 陳 turns up as both Chen and Chan, which is exactly the search-collision the
-# divergence reports show when PCO matches on ``search_name_or_email``.
+# 陳 turns up as both Chen and Chan, which is exactly the search collision a
+# real roster produces.
 SURNAMES: Sequence[Tuple[str, str]] = (
     ("Chen", "陳"),
     ("Wang", "王"),
@@ -229,8 +229,8 @@ def grade_index(school_grade: int) -> int:
     """Map a school grade to the organization's ``grade_converter`` index.
 
     ``-3..-1`` are the under-threes, ``0`` is kindergarten, ``1..12`` are G1-G12
-    and ``13+`` is post-secondary.  The PCO payloads spell kindergarten as grade
-    ``0`` and pre-K as ``-1``, which lands here unchanged.
+    and ``13+`` is post-secondary.  Kindergarten as grade ``0`` and pre-K as
+    ``-1`` land here unchanged.
     """
     if school_grade <= -3:
         return 0
@@ -1110,8 +1110,8 @@ def _hand_authored(rb: "RosterBuilder") -> None:  # noqa: C901 - a census, not l
 # ------------------------------------------------------------------- generated
 #
 # Everything the hand-authored households did not cover, filled in until each
-# bucket lands exactly on its target.  The distributions below are the ones the
-# pcomirror divergence payloads show for a church of this size.
+# bucket lands exactly on its target.  The distributions below are the ones a
+# real church of this size shows.
 
 FELLOWSHIP_TAGS = (
     "fellowship_ezra",
