@@ -579,7 +579,86 @@ class TestAttendeeMergeService:
         assert record["by"] == "Olive Chen"
         assert record["at"] is not None
         assert AttendeeMergeService.merged_from(self.duplicate.id) == []
+        # A deleted record that was never merged is nobody's merge, whatever the key.
+        self._attendee("Gone").delete()
         assert AttendeeMergeService.merged_from("nonsense") == []
+        assert AttendeeMergeService.merged_from("new") == []
+        assert AttendeeMergeService.merged_from(None) == []
+
+    def test_folds_a_registration_the_primary_already_has(self):
+        """Unique per assembly and registrant while live, so the duplicate's
+        registration retires and its attending folds into the primary's."""
+        theirs = Registration.objects.create(registrant=self.primary, assembly=self.assembly)
+        ours = Registration.objects.create(registrant=self.duplicate, assembly=self.assembly)
+        Attending.objects.create(attendee=self.primary, registration=theirs)
+        attending = Attending.objects.create(attendee=self.duplicate, registration=ours)
+        enrollment = self._enroll(attending)
+        attendance = self._check_in(attending)
+
+        AttendeeMergeService.merge(self.duplicate, self.primary)
+
+        ours.refresh_from_db()
+        assert ours.is_removed and ours.registrant_id == self.duplicate.id
+        assert list(Registration.objects.filter(registrant=self.primary)) == [theirs]
+        kept = Attending.objects.get(attendee=self.primary, registration=theirs)
+        for row in (enrollment, attendance):
+            row.refresh_from_db()
+            assert row.attending_id == kept.id and not row.is_removed
+
+    def test_unmerge_puts_a_folded_registration_back(self):
+        theirs = Registration.objects.create(registrant=self.primary, assembly=self.assembly)
+        ours = Registration.objects.create(registrant=self.duplicate, assembly=self.assembly)
+        Attending.objects.create(attendee=self.primary, registration=theirs)
+        attending = Attending.objects.create(attendee=self.duplicate, registration=ours)
+        enrollment = self._enroll(attending)
+        attendance = self._check_in(attending)
+        AttendeeMergeService.merge(self.duplicate, self.primary)
+
+        AttendeeMergeService.unmerge(self.duplicate)
+
+        ours.refresh_from_db()
+        assert not ours.is_removed and ours.registrant_id == self.duplicate.id
+        attending.refresh_from_db()
+        assert not attending.is_removed
+        assert attending.attendee_id == self.duplicate.id and attending.registration_id == ours.id
+        for row in (enrollment, attendance):
+            row.refresh_from_db()
+            assert row.attending_id == attending.id and not row.is_removed
+        assert Attending.objects.filter(attendee=self.primary, registration=theirs).exists()
+
+    def test_merged_from_counts_what_the_merge_brought(self):
+        # Both registered for the assembly, so the duplicate's registration
+        # folds; a registration for another assembly only the duplicate has,
+        # so it moves. A check-in under each.
+        other_assembly = Assembly.objects.create(
+            display_name="Other Assembly", slug="other-assembly", division=self.division, category=self.category
+        )
+        theirs = Registration.objects.create(registrant=self.primary, assembly=self.assembly)
+        ours = Registration.objects.create(registrant=self.duplicate, assembly=self.assembly)
+        elsewhere = Registration.objects.create(registrant=self.duplicate, assembly=other_assembly)
+        Attending.objects.create(attendee=self.primary, registration=theirs)
+        folding = Attending.objects.create(attendee=self.duplicate, registration=ours)
+        moving = Attending.objects.create(attendee=self.duplicate, registration=elsewhere)
+        self._enroll(folding)
+        self._check_in(folding)
+        self._check_in(moving)
+        self.duplicate.infos["contacts"] = {"email1": "ava@example.org", "phone1": "+15105550199"}
+        self.duplicate.save()
+
+        AttendeeMergeService.merge(self.duplicate, self.primary)
+
+        [record] = AttendeeMergeService.merged_from(self.primary.id)
+        assert record["made"] == self.duplicate.created.date()
+        assert record["contact"] == "+15105550199"
+        assert record["moved"] == {
+            "enrollments": 1,
+            "check-ins": 2,
+            "memberships": 0,
+            "addresses": 0,
+            "notes": 0,
+            "registrations": 1,
+            "logins": 0,
+        }
 
     def test_merged_away_finds_the_tombstone(self):
         assert AttendeeMergeService.merged_away(self.duplicate.id) is None
