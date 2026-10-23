@@ -23,7 +23,13 @@ instead.
 It prints, at the end, exactly the values to copy into Tally's configuration
 plus the token — DRF stores it retrievably, so later runs print it again by
 design (it is the *server's* secret store, unlike hashed passwords).
+
+``--from FILE`` runs it with what ``backup_tally_integration`` wrote: the same
+names, the same readable meets and, if the file holds it, the same token, so a
+server rebuilt from the church's data answers Tally without re-pairing.
 """
+import json
+
 from django.contrib.auth.models import Group
 from django.core.management.base import BaseCommand, CommandError
 from django.db import transaction
@@ -45,9 +51,10 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             "--organization-slug",
-            required=True,
-            help="The organization Tally connects to. Must already exist.",
+            default=None,
+            help="The organization Tally connects to. Must already exist. Required without --from.",
         )
+        parser.add_argument("--from", dest="backup_file", default=None, metavar="FILE", help="A backup_tally_integration file to restore from.")
         parser.add_argument(
             "--division-slug",
             default=None,
@@ -65,7 +72,24 @@ class Command(BaseCommand):
 
     @transaction.atomic
     def handle(self, *args, **options):
+        restored_token = None
+        if options["backup_file"]:
+            try:
+                with open(options["backup_file"]) as handle:
+                    backup = json.load(handle)
+            except (OSError, ValueError) as error:
+                raise CommandError(f"Could not read {options['backup_file']}: {error}")
+            if backup.get("format") != "tally-integration-backup/1":
+                raise CommandError(f"{options['backup_file']} is not a backup_tally_integration file.")
+            options["organization_slug"] = backup["organization"]
+            options["division_slug"] = backup.get("division") or options["division_slug"]
+            options["username"] = backup.get("username") or options["username"]
+            options["group"] = backup.get("group") or options["group"]
+            options["readable_meet"] = list(backup.get("readable_meets") or [])
+            restored_token = backup.get("token") or None
         org_slug = options["organization_slug"]
+        if not org_slug:
+            raise CommandError("--organization-slug is required (or --from a backup file).")
         organization = Organization.objects.filter(slug=org_slug).first()
         if organization is None:
             known = ", ".join(Organization.objects.values_list("slug", flat=True)) or "(none)"
@@ -106,25 +130,28 @@ class Command(BaseCommand):
         group, group_created = Group.objects.get_or_create(name=options["group"])
         self.note("auth group", group.name, group_created)
 
-        division_created = False
         if options["division_slug"]:
-            division = Division.objects.filter(slug=options["division_slug"], organization=organization).first()
+            division = Division.all_objects.filter(slug=options["division_slug"], organization=organization).first()
             if division is None:
                 known = ", ".join(Division.objects.filter(organization=organization).values_list("slug", flat=True))
                 raise CommandError(f"No division '{options['division_slug']}' in organization '{org_slug}'. Known: {known}")
         else:
             # Tally's own bucket, so what it pushed is easy to tell apart and
             # triage into the right division later.
-            division = Division.objects.filter(slug=f"{org_slug}_tally", organization=organization).first()
-            division_created = division is None
-            if division_created:
-                division = Division.objects.create(
-                    organization=organization,
-                    slug=f"{org_slug}_tally",
-                    display_name="Tally",
-                    audience_auth_group=group,
-                    infos={},
-                )
+            division = Division.all_objects.filter(slug=f"{org_slug}_tally", organization=organization).first()
+        division_created = division is None
+        if division_created:
+            division = Division.objects.create(
+                organization=organization,
+                slug=f"{org_slug}_tally",
+                display_name="Tally",
+                audience_auth_group=group,
+                infos={},
+            )
+        elif division.is_removed:
+            # Taken down with the integration; set up again, it comes back.
+            division.is_removed = False
+            division.save(update_fields=["is_removed"])
         self.note("division", division.slug, division_created)
 
         user, user_created = User.objects.get_or_create(
@@ -191,6 +218,12 @@ class Command(BaseCommand):
             self.note("readable meet", meet.slug, meet_granted)
 
         token, token_created = Token.objects.get_or_create(user=user)
+        if restored_token and token.key != restored_token:
+            # The backup's key is the one Tally holds; a key made meanwhile is
+            # replaced so the restored server answers without re-pairing.
+            token.delete()
+            token = Token.objects.create(user=user, key=restored_token)
+            token_created = True
         self.note("DRF token", "(printed below)", token_created)
 
         # What this run was given, kept where the data is, for backup and delete.

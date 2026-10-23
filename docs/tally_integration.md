@@ -44,6 +44,52 @@ Its final output is exactly the values Tally's configuration wants
 is kept on the integration's own attendee, under `infos["tally"]`, so the
 backup and delete commands can tell what the setup made from what it found.
 
+## Backing up, taking down, putting back
+
+Three more commands cover the rest of the integration's life. They all stand
+on one fact: every change made with the token is recorded in the history
+tables with the integration user's id (`TrackedTokenAuthentication` stamps it
+into the history context, which the request middleware alone cannot do for a
+token client on the ASGI server). That history is the ledger of what Tally
+made and what it changed.
+
+```bash
+python manage.py backup_tally_integration --out tally-backup.json [--with-token]
+python manage.py delete_tally_integration                 # dry run: says what it would do
+python manage.py delete_tally_integration --force [--purge] [--unmerge] [--receipt FILE]
+python manage.py delete_tally_integration --undo tally-receipt-….json
+python manage.py setup_tally_integration --from tally-backup.json
+```
+
+**Backup** writes a small JSON file: the names the setup was run with, which
+of them it created, the readable meets, and the ledger (every record Tally
+made or changed, by id, with whether anyone else has touched it since). It
+holds no record contents; the database backup is the backup of the data.
+`--with-token` adds the token so a rebuilt server answers Tally without
+re-pairing. The file is then a secret.
+
+**Delete** revokes the token, deactivates the user and takes it out of the
+group, takes the group off the organization's privilege lists and the
+readable meets, removes the integration's own attendee, and removes the
+division only if the setup created it and nobody lives in it. The records
+Tally wrote stay. `--purge` also removes the people Tally made, with their
+memberships and families, but only the ones nobody else has touched since:
+a record a person edited afterwards is listed and kept, and so is a family
+anyone still lives in. A record Tally merged away is kept unless `--unmerge`
+undoes that merge first. Without `--force` nothing changes; the command
+prints the plan.
+
+Every real run writes a receipt, and `--undo RECEIPT` puts everything back:
+the token with the same key, the grants, the attendee, the division, and
+every record removed. All removals are soft deletes, so this is exact. The
+one thing undo does not redo is a merge that `--unmerge` undid.
+
+**Restore** is `setup_tally_integration --from FILE`: the same setup, run
+with what the backup says, token included if the file holds it.
+
+Covered by `attendees/persons/tests/test_tally_lifecycle.py` and
+`attendees/tests/e2e/test_tally_lifecycle.py`.
+
 ## What Tally calls
 
 All under token auth (`Authorization: Token …`), all JSON:
