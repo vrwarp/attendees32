@@ -44,7 +44,7 @@ def integration(organization, vocabulary, meet):  # noqa: F811
     user = User.objects.get(username="tally-integration")
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Token {user.auth_token.key}")
-    division = Division.objects.get(slug="testorg_tally_youth")
+    division = Division.objects.get(slug="testorg_unspecified")
     return {"user": user, "client": client, "division": division, "meet": meet, "organization": organization}
 
 
@@ -145,7 +145,7 @@ class TestBackup:
     def test_describes_the_connection_without_the_token(self, integration):
         backup = TallyIntegrationService.backup()
         assert backup["organization"] == "testorg"
-        assert backup["division"] == "testorg_tally_youth"
+        assert backup["division"] == "testorg_unspecified"
         assert backup["division_created"] is True
         assert backup["readable_meets"] == [integration["meet"].slug]
         assert backup["token"] is None
@@ -182,7 +182,7 @@ class TestDelete:
         integration["meet"].refresh_from_db()
         assert "tally_integration" not in integration["meet"].infos["allowed_groups"]
         assert Attendee.all_objects.get(user=user).is_removed
-        assert Division.all_objects.get(slug="testorg_tally_youth").is_removed
+        assert Division.all_objects.get(slug="testorg_unspecified").is_removed
         assert receipt["connection"]["division_removed"] is True
         assert receipt["connection"]["token"] == receipt["backup"]["token"]
 
@@ -196,7 +196,7 @@ class TestDelete:
         TallyIntegrationService.delete()
         assert Attendee.objects.filter(pk=person.id).exists()
         # Somebody still lives in the division, so it stays too.
-        assert not Division.all_objects.get(slug="testorg_tally_youth").is_removed
+        assert not Division.all_objects.get(slug="testorg_unspecified").is_removed
 
     def test_purge_removes_only_what_nobody_else_touched(self, integration, pastor):
         gone, kept = as_tally(integration), as_tally(integration, first_name="Kept")
@@ -264,7 +264,7 @@ class TestUndo:
         integration["meet"].refresh_from_db()
         assert "tally_integration" in integration["meet"].infos["allowed_groups"]
         assert not Attendee.all_objects.get(user=user).is_removed
-        assert not Division.all_objects.get(slug="testorg_tally_youth").is_removed
+        assert not Division.all_objects.get(slug="testorg_unspecified").is_removed
         assert not Attendee.all_objects.get(pk=person.id).is_removed
         assert Folk.objects.filter(attendees=person).count() == 2
         assert Attending.objects.filter(attendee=person).exists()
@@ -293,7 +293,7 @@ class TestRestore:
         integration["meet"].refresh_from_db()
         assert "tally_integration" in integration["meet"].infos["allowed_groups"]
         assert not Attendee.all_objects.get(user=user).is_removed
-        assert not Division.all_objects.get(slug="testorg_tally_youth").is_removed
+        assert not Division.all_objects.get(slug="testorg_unspecified").is_removed
         assert integration["client"].get("/persons/api/datagrid_data_attendee/", {"take": 1}).status_code == 200
 
     def test_setup_from_a_backup_without_a_token_mints_a_new_one(self, integration, tmp_path):

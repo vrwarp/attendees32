@@ -16,7 +16,7 @@ from rest_framework.test import APIClient
 from attendees.persons.models import Attendee, Folk, FolkAttendee, Relation
 from attendees.persons.services.tally_integration_service import TallyIntegrationService
 from attendees.tests.golden.builder import GOLDEN_MEET_SLUGS
-from attendees.tests.golden.constants import ORGANIZATION_SLUG
+from attendees.tests.golden.constants import DIVISION_UNSPECIFIED, ORGANIZATION_SLUG
 from attendees.users.models import User
 
 pytestmark = pytest.mark.django_db
@@ -27,10 +27,8 @@ ATTENDEE = "/persons/api/datagrid_data_attendee/"
 
 @pytest.fixture
 def tally(golden):
-    # Set up the way the church does it: into its own existing division.
     call_command(
         "setup_tally_integration", organization_slug=ORGANIZATION_SLUG,
-        division_slug=golden.attendee("chen_grace").division.slug,
         readable_meet=[YOUTH_GROUP], verbosity=0,
     )
     user = User.objects.get(username="tally-integration")
@@ -42,8 +40,9 @@ def tally(golden):
 
 
 def pushed(tally, golden, first_name, last_name="Tallyrun"):
-    """A visitor Tally pushed: a new person with a family of their own."""
-    division = golden.attendee("chen_grace").division_id
+    """A visitor Tally pushed: a new person with a family of their own, filed
+    where Tally files everyone, the unspecified division."""
+    division = DIVISION_UNSPECIFIED
     response = tally.post(
         ATTENDEE,
         {
@@ -124,7 +123,8 @@ class TestLifecycle:
         call_command("backup_tally_integration", "--out", str(backup), "--with-token", verbosity=0)
         data = json.loads(backup.read_text())
         assert data["readable_meets"] == [YOUTH_GROUP]
-        assert data["division"] == golden.attendee("chen_grace").division.slug
+        # The congregation's own unspecified division: found, not made.
+        assert data["division"] == "cfcch_unspecified"
         assert data["division_created"] is False
 
         receipt = tmp_path / "receipt.json"
@@ -132,7 +132,8 @@ class TestLifecycle:
         assert tally.get(ATTENDEE, {"take": 1}).status_code in (401, 403)
         # The person Tally made stays: no --purge.
         assert Attendee.objects.filter(pk=child.id).exists()
-        # The church's own division was found, not created, so it stays whatever else happens.
+        # The division was found, not created, so it stays whatever else happens.
+        child.division.refresh_from_db()
         assert not child.division.is_removed
 
         call_command("setup_tally_integration", "--from", str(backup), verbosity=0)
