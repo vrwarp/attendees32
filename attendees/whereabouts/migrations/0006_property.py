@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -34,7 +35,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('whereabouts_properties')),
+        PortableRunSQL(Utility.default_sql('whereabouts_properties')),
         migrations.AddIndex(
             model_name='property',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='property_infos_gin'),
@@ -60,7 +61,7 @@ class Migration(migrations.Migration):
                 'db_table': 'whereabouts_propertieshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_propertieshistory', original_model_table='whereabouts_properties')),
+        PortableRunSQL(Utility.pgh_default_sql('whereabouts_propertieshistory', original_model_table='whereabouts_properties')),
         pgtrigger.migrations.AddTrigger(
             model_name='property',
             trigger=pgtrigger.compiler.Trigger(name='property_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_propertieshistory" ("created", "modified", "is_removed", "id", "campus_id", "infos", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."campus_id", NEW."infos", NEW."slug", NEW."display_name", NOW(), \'property.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='5cb297807b6b4576132dba70b39bc05673814673', operation='INSERT', pgid='pgtrigger_property_snapshot_insert_b3f4a', table='whereabouts_properties', when='AFTER')),

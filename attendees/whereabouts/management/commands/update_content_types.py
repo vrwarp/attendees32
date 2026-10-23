@@ -32,86 +32,61 @@ class Command(BaseCommand):
 
         self.stdout.write("update extra data for ContentType ...")
 
-        cursor = connection.cursor()
-        cursor.execute(
-            f"""
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=2,
-                      endpoint='/{Room._meta.app_label}/api/organizational_rooms/',
-                      hint='single room/office'
-                  WHERE app_label='{Room._meta.app_label}'
-                    AND model='{Room._meta.model_name}';
+        # One statement per execute: SQLite's driver rejects a multi-statement script outright.
+        # The UPDATEs and the index DDL are portable as written; only COMMENT ON is not, and it
+        # is documentation rather than behaviour, so it is simply skipped off Postgres.
+        statements = [
+            self._location_update(Room, "organizational_rooms", 2, "single room/office"),
+            self._location_update(Suite, "organizational_suites", 3, "entire floor/space"),
+            self._location_update(
+                Property, "organizational_properties", 4, "entire building/villa/lodge"
+            ),
+            self._location_update(Campus, "organizational_campuses", 5, "entire campus/park"),
+            self._location_update(
+                Division, "user_divisions", 6, "entire division/department"
+            ),
+            self._location_update(
+                Organization, "user_organizations", 7, "entire organization"
+            ),
+            # Address lives in a third-party app, so its endpoint hangs off whereabouts.
+            self._location_update(
+                Address, "all_addresses", 8, "street address",
+                app_label=Organization._meta.app_label,
+            ),
+            f"CREATE INDEX IF NOT EXISTS {Occurrence._meta.db_table}_titles"
+            f"  ON {Occurrence._meta.db_table} (title)",
+            f"CREATE INDEX IF NOT EXISTS {Occurrence._meta.db_table}_description"
+            f"  ON {Occurrence._meta.db_table} (description)",
+            f"CREATE INDEX IF NOT EXISTS {Event._meta.db_table}__titles"
+            f"  ON {Event._meta.db_table} (title)",
+            f"CREATE INDEX IF NOT EXISTS {Event._meta.db_table}_description"
+            f"  ON {Event._meta.db_table} (description)",
+        ]
 
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=3,
-                      endpoint='/{Suite._meta.app_label}/api/organizational_suites/',
-                      hint='entire floor/space'
-                  WHERE app_label='{Suite._meta.app_label}'
-                    AND model='{Suite._meta.model_name}';
+        if connection.vendor == "postgresql":
+            statements += [
+                f"COMMENT ON COLUMN {Event._meta.db_table}.description"
+                f"  IS 'location: <model name>#<pk>'",
+                f"COMMENT ON COLUMN {Occurrence._meta.db_table}.description"
+                f"  IS 'location: <model name>#<pk>'",
+                f"COMMENT ON COLUMN {Occurrence._meta.db_table}.title"
+                f"  IS 'relation: gathering#<id>'",
+            ]
 
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=4,
-                      endpoint='/{Property._meta.app_label}/api/organizational_properties/',
-                      hint='entire building/villa/lodge'
-                  WHERE app_label='{Property._meta.app_label}'
-                    AND model='{Property._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=5,
-                      endpoint='/{Campus._meta.app_label}/api/organizational_campuses/',
-                      hint='entire campus/park'
-                  WHERE app_label='{Campus._meta.app_label}'
-                    AND model='{Campus._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=6,
-                      hint='entire division/department',
-                      endpoint='/{Division._meta.app_label}/api/user_divisions/'
-                  WHERE app_label='{Division._meta.app_label}'
-                    AND model='{Division._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=7,
-                      endpoint='/{Organization._meta.app_label}/api/user_organizations/',
-                      hint='entire organization'
-                  WHERE app_label='{Organization._meta.app_label}'
-                    AND model='{Organization._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=8,
-                      hint='street address',
-                      endpoint='/{Organization._meta.app_label}/api/all_addresses/'
-                  WHERE app_label='{Address._meta.app_label}'
-                    AND model='{Address._meta.model_name}';
-
-                COMMENT ON COLUMN {Event._meta.db_table}.description
-                  IS 'location: <model name>#<pk>';
-
-                COMMENT ON COLUMN {Occurrence._meta.db_table}.description
-                  IS 'location: <model name>#<pk>';
-
-                COMMENT ON COLUMN {Occurrence._meta.db_table}.title
-                  IS 'relation: gathering#<id>';
-
-                CREATE INDEX IF NOT EXISTS {Occurrence._meta.db_table}_titles
-                  ON {Occurrence._meta.db_table} (title);
-
-                CREATE INDEX IF NOT EXISTS {Occurrence._meta.db_table}_description
-                  ON {Occurrence._meta.db_table} (description);
-
-                CREATE INDEX IF NOT EXISTS {Event._meta.db_table}__titles
-                  ON {Event._meta.db_table} (title);
-
-                CREATE INDEX IF NOT EXISTS {Event._meta.db_table}_description
-                  ON {Event._meta.db_table} (description);
-                    """
-        )
+        with connection.cursor() as cursor:
+            for statement in statements:
+                cursor.execute(statement)
 
         self.stdout.write("done!")
+
+    @staticmethod
+    def _location_update(model, endpoint, display_order, hint, app_label=None):
+        return f"""
+            UPDATE {ContentType._meta.db_table}
+              SET genres='location',
+                  display_order={display_order},
+                  endpoint='/{app_label or model._meta.app_label}/api/{endpoint}/',
+                  hint='{hint}'
+              WHERE app_label='{model._meta.app_label}'
+                AND model='{model._meta.model_name}'
+        """

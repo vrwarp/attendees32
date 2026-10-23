@@ -6,6 +6,7 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -40,7 +41,7 @@ class Migration(migrations.Migration):
                 ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
             ],
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_userpermissionshistory', original_model_table='users_user_user_permissions')),
+        PortableRunSQL(Utility.pgh_default_sql('users_userpermissionshistory', original_model_table='users_user_user_permissions')),
         pgtrigger.migrations.AddTrigger(
             model_name='userpermissionproxy',
             trigger=pgtrigger.compiler.Trigger(name='user_permission_add', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_userpermissionshistory" ("user_id", "permission_id", "id", "pgh_created_at", "pgh_label", "pgh_context_id") VALUES (NEW."user_id", NEW."permission_id", NEW."id", NOW(), \'user_permission.add\', _pgh_attach_context()); RETURN NULL;', hash='81f3a1652aec793aac9c78d97285bf4c481aa15b', operation='INSERT', pgid='pgtrigger_user_permission_add_28bab', table='users_user_user_permissions', when='AFTER')),

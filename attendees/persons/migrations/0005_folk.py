@@ -7,6 +7,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -34,7 +35,7 @@ class Migration(migrations.Migration):
                 'ordering': ('division', 'category', 'display_order', 'display_name', '-modified'),
             },
         ),
-        migrations.RunSQL(Utility.default_sql('persons_folks')),
+        PortableRunSQL(Utility.default_sql('persons_folks')),
         migrations.AddIndex(
             model_name='folk',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='folk_infos_gin'),
@@ -61,7 +62,7 @@ class Migration(migrations.Migration):
                 'db_table': 'persons_folkshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_folkshistory', original_model_table='persons_folks')),
+        PortableRunSQL(Utility.pgh_default_sql('persons_folkshistory', original_model_table='persons_folks')),
         pgtrigger.migrations.AddTrigger(
             model_name='folk',
             trigger=pgtrigger.compiler.Trigger(name='folk_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_folkshistory" ("id", "created", "modified", "division_id", "is_removed", "display_order", "infos", "category_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."division_id", NEW."is_removed", NEW."display_order", NEW."infos", NEW."category_id", NEW."display_name", NOW(), \'folk.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='42d7eda763a45bfc56fec30b854dacdd064fb2d0', operation='INSERT', pgid='pgtrigger_folk_snapshot_insert_36418', table='persons_folks', when='AFTER')),

@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -33,7 +34,7 @@ class Migration(migrations.Migration):
                 'db_table': 'occasions_message_templates',
             },
         ),
-        migrations.RunSQL(Utility.default_sql('occasions_message_templates')),
+        PortableRunSQL(Utility.default_sql('occasions_message_templates')),
         migrations.AddConstraint(
             model_name='messagetemplate',
             constraint=models.UniqueConstraint(condition=models.Q(is_removed=False), fields=('organization', 'type'), name='organization_type'),
@@ -59,7 +60,7 @@ class Migration(migrations.Migration):
                 'db_table': 'occasions_message_templateshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_message_templateshistory', original_model_table='occasions_message_templates')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_message_templateshistory', original_model_table='occasions_message_templates')),
         pgtrigger.migrations.AddTrigger(
             model_name='messagetemplate',
             trigger=pgtrigger.compiler.Trigger(name='messagetemplate_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_message_templateshistory" ("id", "created", "modified", "is_removed", "organization_id", "templates", "defaults", "type", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."organization_id", NEW."templates", NEW."defaults", NEW."type", NOW(), \'messagetemplate.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='8f4a624ea128d8cac26f98bd05ce2b49291f37b8', operation='INSERT', pgid='pgtrigger_messagetemplate_snapshot_insert_a67d5', table='occasions_message_templates', when='AFTER')),

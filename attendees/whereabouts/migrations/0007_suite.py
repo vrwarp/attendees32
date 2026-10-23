@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -32,7 +33,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('whereabouts_suites')),
+        PortableRunSQL(Utility.default_sql('whereabouts_suites')),
         migrations.CreateModel(
             name='SuitesHistory',
             fields=[
@@ -54,7 +55,7 @@ class Migration(migrations.Migration):
                 'db_table': 'whereabouts_suiteshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_suiteshistory', original_model_table='whereabouts_suites')),
+        PortableRunSQL(Utility.pgh_default_sql('whereabouts_suiteshistory', original_model_table='whereabouts_suites')),
         pgtrigger.migrations.AddTrigger(
             model_name='suite',
             trigger=pgtrigger.compiler.Trigger(name='suite_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_suiteshistory" ("created", "modified", "is_removed", "site", "id", "property_id", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."site", NEW."id", NEW."property_id", NEW."slug", NEW."display_name", NOW(), \'suite.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='6cca6d2bcd26192ddf71197989d7361066877cec', operation='INSERT', pgid='pgtrigger_suite_snapshot_insert_77d30', table='whereabouts_suites', when='AFTER')),

@@ -7,6 +7,7 @@ import pgtrigger.migrations
 from schedule.models import freqs
 
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -47,7 +48,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_rulehistory', index_on_id=True, original_model_table='schedule_rule')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_rulehistory', index_on_id=True, original_model_table='schedule_rule')),
         pgtrigger.migrations.AddTrigger(
             model_name='ruleproxy',
             trigger=pgtrigger.compiler.Trigger(name='rule_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_rulehistory" ("name", "description", "frequency", "params", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."description", NEW."frequency", NEW."params", NEW."id", NOW(), \'rule.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='02645fd4d6448ea42e2491cb0099cc282fe715ba', operation='INSERT', pgid='pgtrigger_rule_snapshot_insert_cd822', table='schedule_rule', when='AFTER')),

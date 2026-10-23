@@ -3,6 +3,8 @@ from django.contrib.contenttypes.fields import GenericRelation
 from uuid import uuid4
 from django.contrib.postgres.indexes import GinIndex
 from django.db import models
+
+from attendees.utils.dbcompat.expressions import UuidAsText
 import django.utils.timezone
 import model_utils.fields
 from django.db.models.functions import Cast
@@ -23,7 +25,9 @@ class CustomGenericRelation(GenericRelation):
         from_field = self.model._meta.pk
         to_field = self.remote_field.model._meta.get_field(self.object_id_field_name)
         lookup = from_field.get_lookup('exact')(
-            Cast(from_field.get_col(alias), output_field=models.CharField()),  # UUIDField won't work
+            # UuidAsText rather than a plain Cast: SQLite stores UUIDs unhyphenated, so a cast
+            # would compare '22c29cd5a5ab...' against the hyphenated object_id and match nothing.
+            UuidAsText(from_field.get_col(alias)),  # UUIDField won't work
             to_field.get_col(remote_alias))
         cond.add(lookup, 'AND')
         return cond

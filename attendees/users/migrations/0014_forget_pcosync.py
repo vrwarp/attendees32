@@ -7,6 +7,8 @@ database that never ran pcosync has none of them, and nothing happens.
 """
 from django.db import migrations
 
+from attendees.utils.dbcompat.migrations import PortableRunSQL, VendorSQL
+
 URL_NAMES = ("pco_sync_view", "ApiPcoSyncRunsViewSet", "ApiPcoDivergencesViewSet")
 TABLES = (
     "pcosync_divergenceshistory",
@@ -34,8 +36,13 @@ class Migration(migrations.Migration):
 
     operations = [
         migrations.RunPython(forget_menus, migrations.RunPython.noop),
-        migrations.RunSQL(
-            [f"DROP TABLE IF EXISTS {table} CASCADE;" for table in TABLES],
+        PortableRunSQL(
+            # CASCADE is Postgres-only syntax. SQLite does not need it either: the tables are
+            # listed children first, so plain drops satisfy its foreign key checks.
+            VendorSQL(
+                postgresql=[f"DROP TABLE IF EXISTS {table} CASCADE;" for table in TABLES],
+                sqlite=[f"DROP TABLE IF EXISTS {table};" for table in TABLES],
+            ),
             migrations.RunSQL.noop,
         ),
     ]

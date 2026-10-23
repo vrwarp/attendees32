@@ -8,6 +8,7 @@ import pgtrigger.migrations
 import django.utils.timezone
 import model_utils.fields
 from uuid import uuid4
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -39,7 +40,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('persons_pasts')),
+        PortableRunSQL(Utility.default_sql('persons_pasts')),
         migrations.AddIndex(
             model_name='past',
             index=models.Index(condition=models.Q(('is_removed', False)), fields=['content_type', 'object_id'], name='past_subjects'),
@@ -74,7 +75,7 @@ class Migration(migrations.Migration):
                 'db_table': 'persons_pastshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_pastshistory', original_model_table='persons_pasts')),
+        PortableRunSQL(Utility.pgh_default_sql('persons_pastshistory', original_model_table='persons_pasts')),
         pgtrigger.migrations.AddTrigger(
             model_name='past',
             trigger=pgtrigger.compiler.Trigger(name='past_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_pastshistory" ("created", "modified", "is_removed", "id", "object_id", "display_order", "infos", "category_id", "content_type_id", "organization_id", "when", "finish", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NEW."when", NEW."finish", NEW."display_name", NOW(), \'past.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='11dfec053e713f8ffa2d41cd4243f9b50b0984e7', operation='INSERT', pgid='pgtrigger_past_snapshot_insert_e6306', table='persons_pasts', when='AFTER')),

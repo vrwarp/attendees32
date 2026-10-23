@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -33,7 +34,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('whereabouts_divisions')),
+        PortableRunSQL(Utility.default_sql('whereabouts_divisions')),
         migrations.AddIndex(
             model_name='division',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='division_infos_gin'),
@@ -60,7 +61,7 @@ class Migration(migrations.Migration):
                 'db_table': 'whereabouts_divisionshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_divisionshistory', original_model_table='whereabouts_divisions')),
+        PortableRunSQL(Utility.pgh_default_sql('whereabouts_divisionshistory', original_model_table='whereabouts_divisions')),
         pgtrigger.migrations.AddTrigger(
             model_name='division',
             trigger=pgtrigger.compiler.Trigger(name='division_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_divisionshistory" ("id", "created", "modified", "organization_id", "is_removed", "audience_auth_group_id", "infos", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."organization_id", NEW."is_removed", NEW."audience_auth_group_id", NEW."infos", NEW."slug", NEW."display_name", NOW(), \'division.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='1290ce62c57a609b1fa094affa02efe4e8b0d714', operation='INSERT', pgid='pgtrigger_division_snapshot_insert_8d6d6', table='whereabouts_divisions', when='AFTER')),

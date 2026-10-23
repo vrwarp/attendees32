@@ -8,6 +8,7 @@ import pgtrigger.compiler
 import pgtrigger.migrations
 from private_storage.fields import PrivateFileField
 from private_storage.storage.files import PrivateFileSystemStorage
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -41,7 +42,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('occasions_attendances')),
+        PortableRunSQL(Utility.default_sql('occasions_attendances')),
         migrations.AddConstraint(
             model_name='attendance',
             constraint=models.UniqueConstraint(fields=('gathering', 'attending', 'character', 'team', 'start'), condition=models.Q(is_removed=False), name='gathering_attending_character_team_start'),
@@ -82,7 +83,7 @@ class Migration(migrations.Migration):
                 'db_table': 'occasions_attendanceshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_attendanceshistory', original_model_table='occasions_attendances')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_attendanceshistory', original_model_table='occasions_attendances')),
         pgtrigger.migrations.AddTrigger(
             model_name='attendance',
             trigger=pgtrigger.compiler.Trigger(name='attendance_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_attendanceshistory" ("id", "created", "modified", "is_removed", "display_order", "infos", "attending_id", "character_id", "gathering_id", "category_id", "file", "team_id", "start", "finish", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."infos", NEW."attending_id", NEW."character_id", NEW."gathering_id", NEW."category_id", NEW."file", NEW."team_id", NEW."start", NEW."finish", NOW(), \'attendance.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='61aa2d0d9c11bb612134d2a286fbdddf0c158449', operation='INSERT', pgid='pgtrigger_attendance_snapshot_insert_4ff4a', table='occasions_attendances', when='AFTER')),

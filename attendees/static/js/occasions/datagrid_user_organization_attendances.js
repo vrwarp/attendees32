@@ -223,7 +223,7 @@ Attendees.personalAttendances = {
               new Date().setMonth(new Date().getMonth() + 1)
           ),
           onValueChanged: (e) => {
-            Attendees.personalAttendances.generateGatheringsButton.option('disabled', !Attendees.personalAttendances.readyToGenerate());
+            Attendees.personalAttendances.generateGatheringsButton?.option('disabled', !Attendees.personalAttendances.readyToGenerate());
             const filterTillString = e.value ? e.value.toJSON() : null;  // it can be null to get all rows
             Attendees.utilities.accessItemFromSessionStorage(Attendees.utilities.datagridStorageKeys['personalAttendancesListViewOpts'], 'filterTillString', filterTillString);
             if (Attendees.personalAttendances.filterMeetCheckbox.option('value')) {
@@ -277,7 +277,7 @@ Attendees.personalAttendances = {
             const defaultHelpText = "Can't show schedules when multiple selected. Select single one to view its schedules. Please notice that certain ones have NO attendances purposely";
             const $meetHelpText = Attendees.personalAttendances.filtersForm.getEditor('meets').element().parent().parent().find(".dx-field-item-help-text");
             Attendees.personalAttendances.selectedMeetHasRule = 0;
-            Attendees.personalAttendances.generateGatheringsButton.option('disabled', true);
+            Attendees.personalAttendances.generateGatheringsButton?.option('disabled', true);
             $meetHelpText.text(defaultHelpText);  // don't use itemOption!! https://supportcenter.devexpress.com/ticket/details/t531683
             if (e.value && e.value.length > 0) {
               Attendees.personalAttendances.attendancesDatagrid.refresh();
@@ -286,7 +286,7 @@ Attendees.personalAttendances = {
                 let finalHelpText = '';
                 let lastDuration = 0;
                 const noRuleText = 'This meet does not have schedules in EventRelation';
-                const ruleData = Attendees.personalAttendances.meetScheduleRules[ e.value[0] ];
+                const ruleData = Attendees.personalAttendances.meetScheduleRules[ e.value[0] ] || {};  // grid data may not have arrived yet
                 const timeRules = ruleData.rules;
                 const meetStart = new Date(ruleData.meetStart).toDateString();
                 const meetFinish = new Date(ruleData.meetFinish).toDateString();
@@ -306,8 +306,8 @@ Attendees.personalAttendances = {
                     }
                   });
                   finalHelpText = newHelpTexts.join(', ') + ' from ' + meetStart + ' to ' + meetFinish;
-                  if (Attendees.personalAttendances.selectedMeetHasRule && Attendees.personalAttendances.editSwitcher.option('value') && lastDuration > 0) {
-                    Attendees.personalAttendances.generateGatheringsButton.option('disabled', false);
+                  if (Attendees.personalAttendances.selectedMeetHasRule && Attendees.personalAttendances.editSwitcher?.option('value') && lastDuration > 0) {
+                    Attendees.personalAttendances.generateGatheringsButton?.option('disabled', false);
                   }
                 } else {
                   finalHelpText = noRuleText;
