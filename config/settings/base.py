@@ -410,7 +410,9 @@ STATICFILES_FINDERS += ["compressor.finders.CompressorFinder"]
 REST_FRAMEWORK = {
     "DEFAULT_AUTHENTICATION_CLASSES": (
         "rest_framework.authentication.SessionAuthentication",
-        "rest_framework.authentication.TokenAuthentication",
+        # TokenAuthentication that also names the user in the history context;
+        # see attendees/users/authentication.py.
+        "attendees.users.authentication.TrackedTokenAuthentication",
         # 'rest_framework.permissions.IsAuthenticated',
     ),
     "DEFAULT_PERMISSION_CLASSES": ("rest_framework.permissions.IsAuthenticated",),
