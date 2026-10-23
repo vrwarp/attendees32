@@ -5,6 +5,7 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -47,7 +48,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_calendarrelationhistory', original_model_table='schedule_calendarrelation')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_calendarrelationhistory', original_model_table='schedule_calendarrelation')),
         pgtrigger.migrations.AddTrigger(
             model_name='calendarrelationproxy',
             trigger=pgtrigger.compiler.Trigger(name='calendarrelation_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_calendarrelationhistory" ("calendar_id", "content_type_id", "object_id", "distinction", "inheritable", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."calendar_id", NEW."content_type_id", NEW."object_id", NEW."distinction", NEW."inheritable", NEW."id", NOW(), \'calendarrelation.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='fb28a33b801561a9ae8b3fb5ba7760d24356851c', operation='INSERT', pgid='pgtrigger_calendarrelation_snapshot_insert_2a82a', table='schedule_calendarrelation', when='AFTER')),

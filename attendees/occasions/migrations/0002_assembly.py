@@ -7,6 +7,7 @@ import pgtrigger.compiler
 import pgtrigger.migrations
 import django.utils.timezone
 import model_utils.fields
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -39,7 +40,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('occasions_assemblies')),
+        PortableRunSQL(Utility.default_sql('occasions_assemblies')),
         migrations.AddIndex(
             model_name='Assembly',
             index=GinIndex(fields=['infos'], name='assembly_infos_gin'),
@@ -69,7 +70,7 @@ class Migration(migrations.Migration):
                 'db_table': 'occasions_assemblieshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_assemblieshistory', original_model_table='occasions_assemblies')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_assemblieshistory', original_model_table='occasions_assemblies')),
         pgtrigger.migrations.AddTrigger(
             model_name='assembly',
             trigger=pgtrigger.compiler.Trigger(name='assembly_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_assemblieshistory" ("id", "created", "modified", "is_removed", "division_id", "display_order", "infos", "slug", "category_id", "display_name", "start", "finish", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."division_id", NEW."display_order", NEW."infos", NEW."slug", NEW."category_id", NEW."display_name", NEW."start", NEW."finish", NOW(), \'assembly.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='dbf4c983c2a753d459d6866ffa0e67bcb2a55ab9', operation='INSERT', pgid='pgtrigger_assembly_snapshot_insert_13c43', table='occasions_assemblies', when='AFTER')),

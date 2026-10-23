@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -35,7 +36,7 @@ class Migration(migrations.Migration):
             model_name='organization',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='organization_infos_gin'),
         ),
-        migrations.RunSQL(Utility.default_sql('whereabouts_organizations')),
+        PortableRunSQL(Utility.default_sql('whereabouts_organizations')),
         migrations.CreateModel(
             name='OrganizationsHistory',
             fields=[
@@ -56,7 +57,7 @@ class Migration(migrations.Migration):
                 'db_table': 'whereabouts_organizationshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_organizationshistory', original_model_table='whereabouts_organizations')),
+        PortableRunSQL(Utility.pgh_default_sql('whereabouts_organizationshistory', original_model_table='whereabouts_organizations')),
         pgtrigger.migrations.AddTrigger(
             model_name='organization',
             trigger=pgtrigger.compiler.Trigger(name='organization_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_organizationshistory" ("id", "created", "modified", "is_removed", "slug", "display_name", "infos", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."slug", NEW."display_name", NEW."infos", NOW(), \'organization.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='85b313e9948bbc66345ab5b9945c77329d13d0fb', operation='INSERT', pgid='pgtrigger_organization_snapshot_insert_9704e', table='whereabouts_organizations', when='AFTER')),

@@ -9,6 +9,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -97,7 +98,7 @@ class Migration(migrations.Migration):
                 'db_table': 'whereabouts_placeshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_placeshistory', original_model_table='whereabouts_places')),
+        PortableRunSQL(Utility.pgh_default_sql('whereabouts_placeshistory', original_model_table='whereabouts_places')),
         pgtrigger.migrations.AddTrigger(
             model_name='place',
             trigger=pgtrigger.compiler.Trigger(name='place_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_placeshistory" ("created", "id", "modified", "is_removed", "organization_id", "content_type_id", "object_id", "infos", "display_order", "display_name", "address_id", "start", "finish", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."id", NEW."modified", NEW."is_removed", NEW."organization_id", NEW."content_type_id", NEW."object_id", NEW."infos", NEW."display_order", NEW."display_name", NEW."address_id", NEW."start", NEW."finish", NOW(), \'place.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='db587f3a9612d6e2d3f1833df1e5f89236e5f62a', operation='INSERT', pgid='pgtrigger_place_snapshot_insert_9ab9a', table='whereabouts_places', when='AFTER')),

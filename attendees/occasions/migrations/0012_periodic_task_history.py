@@ -10,6 +10,7 @@ import pgtrigger.migrations
 import timezone_field.fields
 
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -68,7 +69,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_periodictaskhistory', index_on_id=True, original_model_table='django_celery_beat_periodictask')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_periodictaskhistory', index_on_id=True, original_model_table='django_celery_beat_periodictask')),
         pgtrigger.migrations.AddTrigger(
             model_name='periodictaskproxy',
             trigger=pgtrigger.compiler.Trigger(name='periodictask_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_periodictaskhistory" ("name", "task", "interval_id", "crontab_id", "solar_id", "clocked_id", "args", "kwargs", "queue", "exchange", "routing_key", "headers", "priority", "expires", "expire_seconds", "one_off", "start_time", "enabled", "last_run_at", "total_run_count", "date_changed", "description", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."task", NEW."interval_id", NEW."crontab_id", NEW."solar_id", NEW."clocked_id", NEW."args", NEW."kwargs", NEW."queue", NEW."exchange", NEW."routing_key", NEW."headers", NEW."priority", NEW."expires", NEW."expire_seconds", NEW."one_off", NEW."start_time", NEW."enabled", NEW."last_run_at", NEW."total_run_count", NEW."date_changed", NEW."description", NEW."id", NOW(), \'periodictask.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='a91742c91fbfc9478522a7ce804601ab6fcf1c1c', operation='INSERT', pgid='pgtrigger_periodictask_snapshot_insert_14089', table='django_celery_beat_periodictask', when='AFTER')),

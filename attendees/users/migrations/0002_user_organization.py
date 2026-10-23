@@ -8,6 +8,7 @@ from django.contrib.auth import validators
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -61,7 +62,7 @@ class Migration(migrations.Migration):
                 'db_table': 'users_userhistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_userhistory', original_model_table='users_user')),
+        PortableRunSQL(Utility.pgh_default_sql('users_userhistory', original_model_table='users_user')),
         pgtrigger.migrations.AddTrigger(
             model_name='user',
             trigger=pgtrigger.compiler.Trigger(name='user_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_userhistory" ("id", "is_superuser", "is_staff", "is_active", "organization_id", "date_joined", "username", "last_login", "email", "infos", "name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."is_superuser", NEW."is_staff", NEW."is_active", NEW."organization_id", NEW."date_joined", NEW."username", NEW."last_login", NEW."email", NEW."infos", NEW."name", NOW(), \'user.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='2c1a4e6104bd6ee9cc253ccd37751277344ff47d', operation='INSERT', pgid='pgtrigger_user_snapshot_insert_17e40', table='users_user', when='AFTER')),

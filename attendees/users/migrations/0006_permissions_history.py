@@ -5,6 +5,7 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -46,7 +47,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_permissionshistory', index_on_id=True, original_model_table='auth_permission')),
+        PortableRunSQL(Utility.pgh_default_sql('users_permissionshistory', index_on_id=True, original_model_table='auth_permission')),
         pgtrigger.migrations.AddTrigger(
             model_name='permissionproxy',
             trigger=pgtrigger.compiler.Trigger(name='permission_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_permissionshistory" ("name", "content_type_id", "codename", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."content_type_id", NEW."codename", NEW."id", NOW(), \'permission.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='22c12c6075f1eec6142bb9656427fd6d816a867a', operation='INSERT', pgid='pgtrigger_permission_snapshot_insert_6e042', table='auth_permission', when='AFTER')),

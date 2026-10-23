@@ -6,6 +6,7 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -54,7 +55,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_eventhistory', index_on_id=True, original_model_table='schedule_event')),
+        PortableRunSQL(Utility.pgh_default_sql('occasions_eventhistory', index_on_id=True, original_model_table='schedule_event')),
         pgtrigger.migrations.AddTrigger(
             model_name='eventproxy',
             trigger=pgtrigger.compiler.Trigger(name='event_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_eventhistory" ("start", "end", "title", "description", "creator_id", "created_on", "updated_on", "rule_id", "end_recurring_period", "calendar_id", "color_event", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."start", NEW."end", NEW."title", NEW."description", NEW."creator_id", NEW."created_on", NEW."updated_on", NEW."rule_id", NEW."end_recurring_period", NEW."calendar_id", NEW."color_event", NEW."id", NOW(), \'event.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='edfc6623913c351964a77a95ca2461e7c654c423', operation='INSERT', pgid='pgtrigger_event_snapshot_insert_95439', table='schedule_event', when='AFTER')),

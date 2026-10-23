@@ -6,6 +6,7 @@ import django.utils.timezone
 import model_utils.fields
 import pgtrigger.compiler
 import pgtrigger.migrations
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -37,7 +38,7 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.RunSQL(Utility.default_sql('persons_attending_meets')),
+        PortableRunSQL(Utility.default_sql('persons_attending_meets')),
         migrations.AddField(
             model_name='attending',
             name='meets',
@@ -76,7 +77,7 @@ class Migration(migrations.Migration):
                 'db_table': 'persons_attending_meetshistory',
             },
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_attending_meetshistory', original_model_table='persons_attending_meets')),
+        PortableRunSQL(Utility.pgh_default_sql('persons_attending_meetshistory', original_model_table='persons_attending_meets')),
         pgtrigger.migrations.AddTrigger(
             model_name='attendingmeet',
             trigger=pgtrigger.compiler.Trigger(name='attendingmeet_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_attending_meetshistory" ("id", "created", "modified", "is_removed", "start", "finish", "infos", "meet_id", "attending_id", "character_id", "category_id", "team_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."start", NEW."finish", NEW."infos", NEW."meet_id", NEW."attending_id", NEW."character_id", NEW."category_id", NEW."team_id", NOW(), \'attendingmeet.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='43f8830cdd08b06e9f09a405412dda0f6a0d145c', operation='INSERT', pgid='pgtrigger_attendingmeet_snapshot_insert_cf2ce', table='persons_attending_meets', when='AFTER')),

@@ -6,6 +6,7 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
+from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -40,7 +41,7 @@ class Migration(migrations.Migration):
                 ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
             ],
         ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_usergroupshistory', original_model_table='users_user_groups')),
+        PortableRunSQL(Utility.pgh_default_sql('users_usergroupshistory', original_model_table='users_user_groups')),
         pgtrigger.migrations.AddTrigger(
             model_name='usergroupproxy',
             trigger=pgtrigger.compiler.Trigger(name='group_add', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_usergroupshistory" ("user_id", "group_id", "id", "pgh_created_at", "pgh_label", "pgh_context_id") VALUES (NEW."user_id", NEW."group_id", NEW."id", NOW(), \'group.add\', _pgh_attach_context()); RETURN NULL;', hash='90d4d58a36d643f72785ba5a78620efded1b390e', operation='INSERT', pgid='pgtrigger_group_add_7431d', table='users_user_groups', when='AFTER')),
