@@ -10,8 +10,8 @@ Without ``--force`` nothing changes: the command prints the plan. With it, the
 token is revoked, the user deactivated and taken out of the group, the group
 taken off the organization's privilege lists and the readable meets, the
 integration's own attendee removed, and the division the setup created removed
-if nothing lives in it any more. The records Tally wrote stay: a youth Tally
-checked in is still a youth who was there.
+if nothing lives in it any more. The records Tally wrote stay: a person Tally
+checked in is still a person who was there.
 
 ``--purge`` also removes the records Tally made that nobody else has touched
 since, in order: memberships, families, people. A record a person edited
