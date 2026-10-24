@@ -16,7 +16,7 @@ from rest_framework.test import APIClient
 from attendees.persons.models import Attendee, Folk, FolkAttendee, Relation
 from attendees.persons.services.tally_integration_service import TallyIntegrationService
 from attendees.tests.golden.builder import GOLDEN_MEET_SLUGS
-from attendees.tests.golden.constants import DIVISION_UNSPECIFIED, ORGANIZATION_SLUG
+from attendees.tests.golden.constants import ORGANIZATION_SLUG
 from attendees.users.models import User
 
 pytestmark = pytest.mark.django_db
@@ -36,13 +36,14 @@ def tally(golden):
     client = APIClient()
     client.credentials(HTTP_AUTHORIZATION=f"Token {token.key}")
     client.user = user
+    client.division_id = Attendee.objects.get(user=user).division_id
     return client
 
 
 def pushed(tally, golden, first_name, last_name="Tallyrun"):
     """A visitor Tally pushed: a new person with a family of their own, filed
-    where Tally files everyone, the unspecified division."""
-    division = DIVISION_UNSPECIFIED
+    where Tally files everyone, its own division."""
+    division = tally.division_id
     response = tally.post(
         ATTENDEE,
         {
@@ -123,16 +124,16 @@ class TestLifecycle:
         call_command("backup_tally_integration", "--out", str(backup), "--with-token", verbosity=0)
         data = json.loads(backup.read_text())
         assert data["readable_meets"] == [YOUTH_GROUP]
-        # The congregation's own unspecified division: found, not made.
-        assert data["division"] == "cfcch_unspecified"
-        assert data["division_created"] is False
+        # A division of Tally's own, made by the setup.
+        assert data["division"] == f"{ORGANIZATION_SLUG}_tally"
+        assert data["division_created"] is True
 
         receipt = tmp_path / "receipt.json"
         call_command("delete_tally_integration", "--force", "--receipt", str(receipt), verbosity=0)
         assert tally.get(ATTENDEE, {"take": 1}).status_code in (401, 403)
         # The person Tally made stays: no --purge.
         assert Attendee.objects.filter(pk=child.id).exists()
-        # The division was found, not created, so it stays whatever else happens.
+        # The division was made by the setup, but the child still lives in it, so it stays.
         child.division.refresh_from_db()
         assert not child.division.is_removed
 
