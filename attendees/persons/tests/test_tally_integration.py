@@ -16,6 +16,8 @@ and the object-level privilege checks are byte-for-byte the same rules.
 """
 import pytest
 from django.core.management import call_command
+from django.core.management.color import no_style
+from django.db import connection
 from rest_framework.test import APIClient
 
 from attendees.occasions.models import Assembly, Character, Meet
@@ -65,20 +67,58 @@ def vocabulary():
     Relation.objects.get_or_create(
         title="parent", defaults={"gender": "UNSPECIFIED", "emergency_contact": True, "reciprocal_ids": []}
     )
+    # Rows made with an explicit pk leave the id sequence behind them, and the
+    # command's own creates would then collide. loaddata resets sequences the
+    # same way after a fixture.
+    with connection.cursor() as cursor:
+        for sql in connection.ops.sequence_reset_sql(no_style(), [Category, Relation]):
+            cursor.execute(sql)
 
 
 @pytest.fixture
-def provisioned(organization, vocabulary):
-    call_command("setup_tally_integration", "--organization-slug", "testorg")
+def meet(organization, vocabulary):
+    """A meet of the organization's own: the kind Tally reads history from."""
+    from datetime import timedelta
+
+    from django.contrib.contenttypes.models import ContentType
+    from django.utils import timezone
+
+    from django.contrib.auth.models import Group
+
+    category = Category.objects.create(type="assembly", display_name="public", display_order=0, infos={})
+    audience, _ = Group.objects.get_or_create(name="organization_participant")
+    division = Division.objects.create(
+        organization=organization, slug="testorg_main", display_name="Main", audience_auth_group=audience, infos={}
+    )
+    assembly = Assembly.objects.create(division=division, slug="testorg_youth", display_name="Youth", category=category, infos={})
+    character = Character.objects.create(assembly=assembly, slug="testorg_student", display_name="Student", type="normal", infos={})
+    now = timezone.now()
+    return Meet.objects.create(
+        assembly=assembly,
+        major_character=character,
+        slug="testorg_friday",
+        display_name="Friday",
+        start=now,
+        finish=now + timedelta(days=365),
+        shown_audience=True,
+        audience_editable=False,
+        infos={**Utility.meet_infos(), "allowed_groups": ["data_organizer"]},
+        site_type=ContentType.objects.get_for_model(Organization),
+        site_id=str(organization.id),
+    )
+
+
+@pytest.fixture
+def provisioned(organization, vocabulary, meet):
+    call_command("setup_tally_integration", "--organization-slug", "testorg", "--readable-meet", meet.slug)
     user = User.objects.get(username="tally-integration")
     return {
         "organization": organization,
         "user": user,
         "token": user.auth_token.key,
-        "division": Division.objects.get(slug="testorg_tally_youth"),
-        "assembly": Assembly.objects.get(slug="testorg_tally_youth_ministry"),
-        "meet": Meet.objects.get(slug="testorg_tally_gathering"),
-        "character": Character.objects.get(slug="testorg_tally_student"),
+        "division": Division.objects.get(slug="testorg_tally"),
+        "meet": meet,
+        "assembly": meet.assembly,
     }
 
 
@@ -96,6 +136,78 @@ class TestSetupCommand:
         org = Organization.objects.get(slug="testorg")
         assert "tally_integration" in org.infos["groups_see_all_meets_attendees"]
         assert "tally_integration" in org.infos["counselor"]
+        # Nothing but a division is made: no assembly, meet or character of Tally's own.
+        assert Meet.objects.count() == 1
+        assert Assembly.objects.count() == 1
+        assert Character.objects.count() == 1
+
+    def test_grants_the_group_on_a_readable_meet(self, provisioned):
+        meet = provisioned["meet"]
+        meet.refresh_from_db()
+        assert meet.infos["allowed_groups"] == ["data_organizer", "tally_integration"]
+
+    def test_a_meet_not_named_is_left_alone(self, organization, vocabulary, meet):
+        call_command("setup_tally_integration", "--organization-slug", "testorg")
+        meet.refresh_from_db()
+        assert meet.infos["allowed_groups"] == ["data_organizer"]
+
+    def test_refuses_a_readable_meet_it_cannot_find(self, organization, vocabulary):
+        from django.core.management.base import CommandError
+
+        with pytest.raises(CommandError, match="No meet with slug"):
+            call_command("setup_tally_integration", "--organization-slug", "testorg", "--readable-meet", "nope")
+        assert not User.objects.filter(username="tally-integration").exists()
+
+    def test_files_people_under_a_division_of_tallys_own(self, provisioned):
+        division = provisioned["division"]
+        assert division.display_name == "Tally"
+        assert Attendee.objects.get(user=provisioned["user"]).division == division
+
+    def test_adopts_the_tally_division_it_finds(self, organization, vocabulary):
+        from django.contrib.auth.models import Group
+
+        audience, _ = Group.objects.get_or_create(name="organization_participant")
+        theirs = Division.objects.create(
+            organization=organization, slug="testorg_tally", display_name="From Tally", audience_auth_group=audience, infos={}
+        )
+        call_command("setup_tally_integration", "--organization-slug", "testorg")
+        attendee = Attendee.objects.get(user__username="tally-integration")
+        assert attendee.division == theirs
+        assert attendee.infos["tally"]["division_created"] is False
+        assert Division.objects.count() == 1
+
+    def test_refuses_a_division_it_cannot_find(self, organization, vocabulary):
+        from django.core.management.base import CommandError
+
+        with pytest.raises(CommandError, match="No division 'nope'"):
+            call_command("setup_tally_integration", "--organization-slug", "testorg", "--division-slug", "nope")
+        assert not User.objects.filter(username="tally-integration").exists()
+
+    def test_remembers_what_it_was_given(self, provisioned):
+        attendee = Attendee.objects.get(user=provisioned["user"])
+        assert attendee.infos["tally"] == {
+            "group": "tally_integration",
+            "division": "testorg_tally",
+            "division_created": True,
+            "readable_meets": [provisioned["meet"].slug],
+        }
+
+    def test_a_second_run_keeps_what_the_first_created(self, provisioned):
+        # The division was created on the first run; a later run must not forget it.
+        call_command("setup_tally_integration", "--organization-slug", "testorg")
+        attendee = Attendee.objects.get(user=provisioned["user"])
+        assert attendee.infos["tally"]["division_created"] is True
+        assert attendee.infos["tally"]["readable_meets"] == [provisioned["meet"].slug]
+
+    def test_prints_only_what_tally_takes(self, organization, vocabulary):
+        from io import StringIO
+
+        out = StringIO()
+        call_command("setup_tally_integration", "--organization-slug", "testorg", stdout=out)
+        printed = out.getvalue()
+        assert "A32_TOKEN=" in printed
+        assert "A32_DIVISION_ID=" in printed
+        assert "A32_MEET_SLUG" not in printed
 
     def test_is_idempotent(self, provisioned):
         counts = (
@@ -106,7 +218,7 @@ class TestSetupCommand:
             User.objects.count(),
             Attendee.objects.count(),
         )
-        call_command("setup_tally_integration", "--organization-slug", "testorg")
+        call_command("setup_tally_integration", "--organization-slug", "testorg", "--readable-meet", provisioned["meet"].slug)
         assert counts == (
             Division.objects.count(),
             Assembly.objects.count(),
@@ -126,6 +238,13 @@ class TestTokenAuthentication:
         body = response.json()
         assert body["totalCount"] >= 1  # at least the integration attendee
         assert isinstance(body["data"], list)
+
+    def test_the_meet_is_listed_to_the_token(self, provisioned):
+        response = token_client(provisioned["token"]).get(
+            "/occasions/api/organization_meets/", {"take": 100, "skip": 0}
+        )
+        assert response.status_code == 200
+        assert provisioned["meet"].slug in [row["slug"] for row in response.json()["data"]]
 
     def test_search_reaches_the_org(self, provisioned):
         response = token_client(provisioned["token"]).get(
@@ -203,12 +322,11 @@ class TestTokenAuthentication:
 class TestMergedAttendees:
     """What an id that was merged away answers.
 
-    Planning Center answers a merged person with `410 Gone` and the primary's
-    id, and an integration that holds an old id follows it. Until attendees32
-    could say the same, a merged attendee here was a soft-delete: the id
-    404ed, indistinguishable from a typo, and silent about the fact that the
-    person still exists under a different id. Tally's own merge-following was
-    switched off against this backend for exactly that reason.
+    A merged-away attendee answers `410 Gone` with the primary's id, and an
+    integration that holds the old id follows it. Before the merge existed, a
+    merged attendee here was a soft-delete: the id 404ed, indistinguishable
+    from a typo, and silent about the fact that the person still exists under
+    a different id.
     """
 
     def _attendee(self, provisioned, first_name):
