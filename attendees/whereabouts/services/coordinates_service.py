@@ -4,10 +4,7 @@ import requests
 from django.conf import settings
 from address.models import Address
 
-from django.contrib.contenttypes.models import ContentType
-from attendees.persons.models import Attendee, Folk, AttendingMeet, FolkAttendee, Utility
-from django.db.models.functions import Cast
-from django.db import models
+from attendees.persons.models import Attendee, AttendingMeet, FolkAttendee, Utility
 from django.db.models import Q
 
 from django.db.models.expressions import RawSQL
@@ -61,7 +58,7 @@ class CoordinatesService:
             )
         """
 
-        neighbors = Place.objects.select_related('address', 'content_type').filter(
+        neighbors = Place.objects.select_related('address').filter(
             organization=user_organization,
             address__latitude__isnull=False,
             address__longitude__isnull=False,
@@ -72,9 +69,7 @@ class CoordinatesService:
             id=target_place.id
         )
 
-        attendee_ct = ContentType.objects.get_for_model(Attendee)
-        folk_ct = ContentType.objects.get_for_model(Folk)
-        neighbors = neighbors.filter(content_type__in=[attendee_ct, folk_ct])
+        neighbors = neighbors.filter(Q(attendee__isnull=False) | Q(folk__isnull=False))
 
         now_dt = Utility.now_with_timezone()
         now_date = now_dt.date()
@@ -125,17 +120,12 @@ class CoordinatesService:
                 ).values_list('folk_id', flat=True)
             )
 
-            attendee_str_ids = [str(aid) for aid in active_attendee_ids]
-            folk_str_ids = [str(fid) for fid in valid_folk_ids]
-
-            q_attendee = Q(content_type=attendee_ct, object_id__in=attendee_str_ids)
-            q_folk = Q(content_type=folk_ct, object_id__in=folk_str_ids)
-            neighbors = neighbors.filter(q_attendee | q_folk)
+            neighbors = neighbors.filter(Q(attendee_id__in=active_attendee_ids) | Q(folk_id__in=valid_folk_ids))
 
         ordered_places = list(neighbors.order_by('distance_miles'))
 
-        attendee_object_ids = [str(p.object_id) for p in ordered_places if p.content_type_id == attendee_ct.id and p.object_id]
-        folk_object_ids = [str(p.object_id) for p in ordered_places if p.content_type_id == folk_ct.id and p.object_id]
+        attendee_object_ids = [str(p.attendee_id) for p in ordered_places if p.attendee_id]
+        folk_object_ids = [str(p.folk_id) for p in ordered_places if p.folk_id]
 
         attendees_map = {}
         if attendee_object_ids:
@@ -179,23 +169,20 @@ class CoordinatesService:
         active_attendee_str_ids = {str(aid) for aid in active_attendee_ids} if active_attendee_ids is not None else None
 
         for p in ordered_places:
-            if p.content_type_id == attendee_ct.id:
-                if p.object_id:
-                    obj_id_str = str(p.object_id)
-                    if obj_id_str in attendees_map:
-                        if active_attendee_str_ids is None or obj_id_str in active_attendee_str_ids:
-                            p.target_attendee_id = obj_id_str
-                            p.target_attendee_name = attendees_map[obj_id_str]
-                            expanded_list.append(p)
-            elif p.content_type_id == folk_ct.id:
-                if p.object_id:
-                    obj_id_str = str(p.object_id)
-                    fa_list = folk_attendees_map.get(obj_id_str, [])
-                    for att_id_str, att_name in fa_list:
-                        cloned_p = copy.copy(p)
-                        cloned_p.target_attendee_id = att_id_str
-                        cloned_p.target_attendee_name = att_name
-                        expanded_list.append(cloned_p)
+            if p.attendee_id:
+                obj_id_str = str(p.attendee_id)
+                if obj_id_str in attendees_map:
+                    if active_attendee_str_ids is None or obj_id_str in active_attendee_str_ids:
+                        p.target_attendee_id = obj_id_str
+                        p.target_attendee_name = attendees_map[obj_id_str]
+                        expanded_list.append(p)
+            elif p.folk_id:
+                fa_list = folk_attendees_map.get(str(p.folk_id), [])
+                for att_id_str, att_name in fa_list:
+                    cloned_p = copy.copy(p)
+                    cloned_p.target_attendee_id = att_id_str
+                    cloned_p.target_attendee_name = att_name
+                    expanded_list.append(cloned_p)
 
         return target_place, expanded_list[skip : skip + take]
 

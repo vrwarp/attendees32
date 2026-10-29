@@ -1,8 +1,8 @@
 import pytest
 import datetime
 from unittest.mock import patch, MagicMock
-from django.contrib.contenttypes.models import ContentType
 from django.contrib.auth.models import Group
+from attendees.whereabouts.models.campus import Campus
 from attendees.whereabouts.models.organization import Organization
 from attendees.whereabouts.models.division import Division
 from attendees.whereabouts.models.place import Place
@@ -17,22 +17,22 @@ class TestPlaceSerializer:
     def test_attendee_id_resolves_from_attendee(self):
         # Mock Place instance linked to an Attendee
         mock_place = MagicMock()
-        mock_place.content_type.model = 'attendee'
-        mock_place.object_id = '123e4567-e89b-12d3-a456-426614174000'
+        mock_place.attendee_id = '123e4567-e89b-12d3-a456-426614174000'
+        mock_place.folk_id = None
         mock_place.distance_miles = None
         mock_place.address = None
 
         serializer = PlaceSerializer(mock_place)
-        
-        # Verify it just returns the object_id directly
+
+        # Verify it just returns the attendee key directly
         assert serializer.data['attendee_id'] == '123e4567-e89b-12d3-a456-426614174000'
 
     @patch('attendees.whereabouts.serializers.place_serializer.FolkAttendee')
     def test_attendee_id_resolves_from_folk_using_display_order(self, mock_folk_attendee):
         # Mock Place instance linked to a Folk
         mock_place = MagicMock()
-        mock_place.content_type.model = 'folk'
-        mock_place.object_id = '999e4567-e89b-12d3-a456-426614174000'
+        mock_place.attendee_id = None
+        mock_place.folk_id = '999e4567-e89b-12d3-a456-426614174000'
         mock_place.distance_miles = None
         mock_place.address = None
 
@@ -54,10 +54,10 @@ class TestPlaceSerializer:
         assert kwargs['folk_id'] == '999e4567-e89b-12d3-a456-426614174000'
         assert kwargs['is_removed'] is False
 
-    def test_attendee_id_with_unrelated_content_type(self):
+    def test_attendee_id_with_unrelated_subject(self):
         mock_place = MagicMock()
-        mock_place.content_type.model = 'organization'
-        mock_place.object_id = 1
+        mock_place.attendee_id = None
+        mock_place.folk_id = None
         mock_place.distance_miles = None
         mock_place.address = None
 
@@ -66,8 +66,8 @@ class TestPlaceSerializer:
 
     def test_distance_serialization(self):
         mock_place = MagicMock()
-        mock_place.content_type.model = 'attendee'
-        mock_place.object_id = '123'
+        mock_place.attendee_id = '123'
+        mock_place.folk_id = None
         mock_place.address = None
         
         # Scenario 1: distance_miles is present but no azimuth
@@ -94,7 +94,8 @@ class TestPlaceSerializer:
 
     def test_attendee_id_and_name_from_target_attributes(self):
         mock_place = MagicMock()
-        mock_place.content_type.model = 'folk'
+        mock_place.attendee_id = None
+        mock_place.folk_id = 'some-folk-uuid'
         mock_place.__dict__['target_attendee_id'] = 'cached-attendee-uuid'
         mock_place.__dict__['target_attendee_name'] = 'DEV Jane Doe'
         mock_place.distance_miles = None
@@ -131,10 +132,8 @@ class TestPlaceSerializer:
         FolkAttendee.objects.create(folk=family_folk, attendee=husband, role_id=0, display_order=0, finish=past_date)
         FolkAttendee.objects.create(folk=family_folk, attendee=wife, role_id=1, display_order=1, finish=None)
 
-        folk_ct = ContentType.objects.get_for_model(Folk)
         place = Place.objects.create(
-            content_type=folk_ct,
-            object_id=str(family_folk.id),
+            folk=family_folk,
             organization=org,
             address=address,
             display_name="Family Residence",
@@ -163,10 +162,9 @@ class TestPlaceSerializer:
             latitude=37.7749,
             longitude=-122.4194,
         )
-        ctype_org = ContentType.objects.get_for_model(Organization)
+        campus = Campus.objects.create(organization=org, display_name="Office campus", slug="office-campus")
         place = Place.objects.create(
-            content_type=ctype_org,
-            object_id=str(org.id),
+            campus=campus,
             organization=org,
             address=old_address,
             display_name="Old Office",

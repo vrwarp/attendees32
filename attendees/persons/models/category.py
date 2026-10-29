@@ -1,8 +1,6 @@
-# from django.contrib.postgres.fields.jsonb import JSONField
 import pghistory
 import django.utils.timezone
 import model_utils.fields
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
@@ -39,12 +37,6 @@ class Category(TimeStampedModel, SoftDeletableModel):
         db_table = "persons_categories"
         verbose_name_plural = "Categories"
         ordering = ("type", "display_order")
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="category_infos_gin",
-            ),
-        ]
 
 
 class CategoriesHistory(pghistory.get_event_model(

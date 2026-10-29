@@ -1,7 +1,6 @@
 import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
 
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 import model_utils.fields
@@ -15,7 +14,6 @@ from attendees.persons.models import Note, Utility
 class Organization(TimeStampedModel, SoftDeletableModel, Utility):
     notes = GenericRelation(Note)
     calendar_relations = GenericRelation(CalendarRelation)
-    places = GenericRelation("whereabouts.Place")
     gathering = GenericRelation(
         Gathering,
         object_id_field="site_id",
@@ -42,12 +40,6 @@ class Organization(TimeStampedModel, SoftDeletableModel, Utility):
 
     class Meta:
         db_table = "whereabouts_organizations"
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="organization_infos_gin",
-            ),
-        ]
 
     def __str__(self):
         return "%s" % self.display_name

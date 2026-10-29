@@ -5,8 +5,9 @@ from address.models import Address, Locality, State, Country
 from attendees.whereabouts.services.coordinates_service import CoordinatesService
 from attendees.whereabouts.serializers.place_serializer import PlaceSerializer
 from attendees.whereabouts.models.place import Place
-from attendees.whereabouts.models.organization import Organization
 from django.contrib.contenttypes.models import ContentType
+from attendees.whereabouts.models.campus import Campus
+from attendees.whereabouts.models.organization import Organization
 from attendees.persons.models import Attendee, Attending, AttendingMeet, Folk, FolkAttendee, Category, Relation
 from attendees.occasions.models import Meet, Assembly, Character
 from attendees.whereabouts.models import Division
@@ -204,6 +205,7 @@ class TestCoordinatesService:
     def test_get_nearest_neighbors_target_not_found(self, address_setup):
         """Test get_nearest_neighbors when the target Place doesn't exist."""
         org = Organization.objects.create(slug="test-org-notfound", display_name="Test Org")
+        campus = Campus.objects.create(organization=org, display_name="Campus", slug=f"campus-{org.slug}")
         # 9999 doesn't exist
         target, neighbors = CoordinatesService.get_nearest_neighbors(9999, org)
         assert target is None
@@ -212,11 +214,10 @@ class TestCoordinatesService:
     def test_get_nearest_neighbors_target_no_coordinates(self, address_setup):
         """Test get_nearest_neighbors when the target Place exists but has no coordinates."""
         org = Organization.objects.create(slug="test-org", display_name="Test Org")
-        ctype = ContentType.objects.get_for_model(Organization)
+        campus = Campus.objects.create(organization=org, display_name="Campus", slug=f"campus-{org.slug}")
         
         target_place = Place.objects.create(
-            content_type=ctype,
-            object_id=str(org.id),
+            campus=campus,
             organization=org,
             address=address_setup['address1'], # no coordinates
             display_name="No Coords Place"
@@ -232,11 +233,10 @@ class TestCoordinatesService:
         attending_category, _ = Category.objects.get_or_create(id=25, defaults={"type": "attending", "display_name": "attending"})
         Relation.objects.get_or_create(id=0, defaults={"title": "self", "gender": "unspecified"})
         org = Organization.objects.create(slug="test-org-succ", display_name="Test Org Succ")
+        campus = Campus.objects.create(organization=org, display_name="Campus", slug=f"campus-{org.slug}")
         auth_group = Group.objects.create(name="test-group-succ")
         div = Division.objects.create(organization=org, slug="div-succ", display_name="Div Succ", audience_auth_group=auth_group, infos={"acronym": "SU"})
         
-        ctype_org = ContentType.objects.get_for_model(Organization)
-        ctype_att = ContentType.objects.get_for_model(Attendee)
         
         # Target place: San Francisco (approx)
         addr1 = address_setup['address1']
@@ -244,7 +244,7 @@ class TestCoordinatesService:
         addr1.longitude = -122.4194
         addr1.save()
         target_place = Place.objects.create(
-            content_type=ctype_org, object_id=str(org.id), organization=org,
+            campus=campus, organization=org,
             address=addr1, display_name="Target SF"
         )
         
@@ -257,7 +257,7 @@ class TestCoordinatesService:
         addr2.longitude = -122.2712
         addr2.save()
         neighbor_oakland = Place.objects.create(
-            content_type=ctype_att, object_id=str(att_oak.id), organization=org,
+            attendee=att_oak, organization=org,
             address=addr2, display_name="Oakland"
         )
         
@@ -267,14 +267,14 @@ class TestCoordinatesService:
         addr3.longitude = -121.8863
         addr3.save()
         neighbor_sj = Place.objects.create(
-            content_type=ctype_att, object_id=str(att_sj.id), organization=org,
+            attendee=att_sj, organization=org,
             address=addr3, display_name="San Jose"
         )
         
         # Another place without coordinates (should be ignored)
         addr_no_coords = Address.objects.create(raw="No coords", locality=addr1.locality)
         Place.objects.create(
-            content_type=ctype_att, object_id=str(att_oak.id), organization=org,
+            attendee=att_oak, organization=org,
             address=addr_no_coords, display_name="No Coords"
         )
         
@@ -306,6 +306,7 @@ class TestCoordinatesService:
         Relation.objects.create(id=0, title="self", gender="unspecified")
         
         org = Organization.objects.create(slug="test-org", display_name="Test Org")
+        campus = Campus.objects.create(organization=org, display_name="Campus", slug=f"campus-{org.slug}")
         auth_group = Group.objects.create(name="test-group")
         div = Division.objects.create(organization=org, slug="test-div", display_name="Test Div", audience_auth_group=auth_group)
         assembly = Assembly.objects.create(division=div, slug="test-assembly", display_name="Test Assembly", category=assembly_category)
@@ -348,19 +349,17 @@ class TestCoordinatesService:
         FolkAttendee.objects.create(folk=folk_b, attendee=attendee_b, role_id=0)
         
         # Places
-        attendee_ct = ContentType.objects.get_for_model(Attendee)
-        folk_ct = ContentType.objects.get_for_model(Folk)
         
         target_place = Place.objects.create(
-            content_type=attendee_ct, object_id=str(attendee_target.id), organization=org,
+            attendee=attendee_target, organization=org,
             address=addr1, display_name="Target SF"
         )
         neighbor_oakland = Place.objects.create(
-            content_type=attendee_ct, object_id=str(attendee_a.id), organization=org,
+            attendee=attendee_a, organization=org,
             address=addr2, display_name="Oakland"
         )
         neighbor_sj = Place.objects.create(
-            content_type=folk_ct, object_id=str(folk_b.id), organization=org,
+            folk=folk_b, organization=org,
             address=addr3, display_name="San Jose"
         )
         
@@ -392,6 +391,7 @@ class TestCoordinatesService:
         Relation.objects.get_or_create(id=1, defaults={"title": "spouse", "gender": "unspecified"})
 
         org = Organization.objects.create(slug="test-org-hw", display_name="Test Org HW")
+        campus = Campus.objects.create(organization=org, display_name="Campus", slug=f"campus-{org.slug}")
         auth_group = Group.objects.create(name="test-group-hw")
         div = Division.objects.create(organization=org, slug="div-hw", display_name="Div HW", audience_auth_group=auth_group, infos={"acronym": "HW"})
         assembly = Assembly.objects.create(division=div, slug="assembly-hw", display_name="Assembly HW", category=assembly_category)
@@ -427,15 +427,13 @@ class TestCoordinatesService:
         attending_wife = Attending.objects.create(attendee=wife, category=attending_category)
         AttendingMeet.objects.create(attending=attending_wife, meet=meet, character=character, category=attending_category, start=now, finish=now + datetime.timedelta(days=1))
 
-        attendee_ct = ContentType.objects.get_for_model(Attendee)
-        folk_ct = ContentType.objects.get_for_model(Folk)
 
         target_place = Place.objects.create(
-            content_type=attendee_ct, object_id=str(attendee_target.id), organization=org,
+            attendee=attendee_target, organization=org,
             address=addr_target, display_name="Target Residence"
         )
         family_place = Place.objects.create(
-            content_type=folk_ct, object_id=str(family_folk.id), organization=org,
+            folk=family_folk, organization=org,
             address=addr_family, display_name="Smith Family Residence"
         )
 
@@ -459,6 +457,7 @@ class TestCoordinatesService:
         Relation.objects.get_or_create(id=0, defaults={"title": "self", "gender": "unspecified"})
 
         org = Organization.objects.create(slug="org-exc", display_name="Org Excl")
+        campus = Campus.objects.create(organization=org, display_name="Campus", slug=f"campus-{org.slug}")
         auth_group = Group.objects.create(name="grp-exc")
         div = Division.objects.create(organization=org, slug="div-exc", display_name="Div Excl", audience_auth_group=auth_group, infos={"acronym": "EX"})
 
@@ -472,33 +471,30 @@ class TestCoordinatesService:
         addr_neighbor.longitude = -122.2712
         addr_neighbor.save()
 
-        attendee_ct = ContentType.objects.get_for_model(Attendee)
-        folk_ct = ContentType.objects.get_for_model(Folk)
-        org_ct = ContentType.objects.get_for_model(Organization)
 
         # Target place
         target_place = Place.objects.create(
-            content_type=org_ct, object_id=str(org.id), organization=org,
+            campus=campus, organization=org,
             address=addr_target, display_name="Center Place"
         )
 
         # 1. Non-person place (Organization place) should be ignored
         Place.objects.create(
-            content_type=org_ct, object_id=str(org.id), organization=org,
+            campus=campus, organization=org,
             address=addr_neighbor, display_name="Org Bldg"
         )
 
         # 2. Soft-deleted Place should be ignored
         active_attendee = Attendee.objects.create(first_name="Active", last_name="User", division=div, gender="unspecified")
         Place.objects.create(
-            content_type=attendee_ct, object_id=str(active_attendee.id), organization=org,
+            attendee=active_attendee, organization=org,
             address=addr_neighbor, display_name="Deleted Place", is_removed=True
         )
 
         # 3. Place pointing to soft-deleted Attendee should be ignored
         deleted_attendee = Attendee.objects.create(first_name="Deleted", last_name="Person", division=div, gender="unspecified", is_removed=True)
         Place.objects.create(
-            content_type=attendee_ct, object_id=str(deleted_attendee.id), organization=org,
+            attendee=deleted_attendee, organization=org,
             address=addr_neighbor, display_name="Deleted Attendee Place", is_removed=False
         )
 
@@ -508,7 +504,7 @@ class TestCoordinatesService:
         past_date = datetime.date.today() - datetime.timedelta(days=30)
         FolkAttendee.objects.create(folk=expired_folk, attendee=expired_attendee, role_id=0, finish=past_date)
         Place.objects.create(
-            content_type=folk_ct, object_id=str(expired_folk.id), organization=org,
+            folk=expired_folk, organization=org,
             address=addr_neighbor, display_name="Expired Folk Place"
         )
 
@@ -517,7 +513,7 @@ class TestCoordinatesService:
         valid_attendee = Attendee.objects.create(first_name="Valid", last_name="Person", division=div, gender="unspecified", infos={"names": {"original": "Valid Person"}})
         FolkAttendee.objects.create(folk=valid_folk, attendee=valid_attendee, role_id=0, finish=None)
         valid_place = Place.objects.create(
-            content_type=folk_ct, object_id=str(valid_folk.id), organization=org,
+            folk=valid_folk, organization=org,
             address=addr_neighbor, display_name="Valid Folk Place"
         )
 
@@ -544,14 +540,13 @@ class TestCoordinatesService:
             display_name="Org Default Member",
             infos={"settings": {"default_member_meet": "default-mem-meet"}}
         )
+        campus = Campus.objects.create(organization=org, display_name="Campus", slug=f"campus-{org.slug}")
         auth_group = Group.objects.create(name="grp-def-mem")
         div = Division.objects.create(organization=org, slug="div-def-mem", display_name="Div Def Mem", audience_auth_group=auth_group, infos={"acronym": "DM"})
         assembly = Assembly.objects.create(division=div, slug="asm-def-mem", display_name="Asm Def Mem", category=assembly_category)
         character = Character.objects.create(assembly=assembly, slug="char-def-mem", display_name="Char Def Mem")
 
-        org_ct = ContentType.objects.get_for_model(Organization)
-        attendee_ct = ContentType.objects.get_for_model(Attendee)
-        mem_meet = Meet.objects.create(assembly=assembly, slug="default-mem-meet", display_name="Default Member Meet", start=now, finish=now + datetime.timedelta(days=365), site_type=org_ct, site_id=org.id)
+        mem_meet = Meet.objects.create(assembly=assembly, slug="default-mem-meet", display_name="Default Member Meet", start=now, finish=now + datetime.timedelta(days=365), site_type=ContentType.objects.get_for_model(Organization), site_id=org.id)
 
         addr_target = address_setup['address1']
         addr_target.latitude = 37.7749
@@ -564,31 +559,31 @@ class TestCoordinatesService:
         addr_neighbor.save()
 
         target_place = Place.objects.create(
-            content_type=org_ct, object_id=str(org.id), organization=org,
+            campus=campus, organization=org,
             address=addr_target, display_name="Target HQ"
         )
 
         # 1. Deceased attendee (should be excluded)
         att_deceased = Attendee.objects.create(first_name="Deceased", last_name="Person", division=div, gender="unspecified", deathday=datetime.date(2020, 1, 1))
-        Place.objects.create(content_type=attendee_ct, object_id=str(att_deceased.id), organization=org, address=addr_neighbor, display_name="Deceased Residence")
+        Place.objects.create(attendee=att_deceased, organization=org, address=addr_neighbor, display_name="Deceased Residence")
 
         # 2. Paused member in default_member_meet (should be excluded)
         att_paused = Attendee.objects.create(first_name="Paused", last_name="Member", division=div, gender="unspecified")
         attending_paused = Attending.objects.create(attendee=att_paused, category=attending_category)
         AttendingMeet.objects.create(attending=attending_paused, meet=mem_meet, character=character, category=paused_category, start=now, finish=now + datetime.timedelta(days=30))
-        Place.objects.create(content_type=attendee_ct, object_id=str(att_paused.id), organization=org, address=addr_neighbor, display_name="Paused Residence")
+        Place.objects.create(attendee=att_paused, organization=org, address=addr_neighbor, display_name="Paused Residence")
 
         # 3. Expired member in default_member_meet (should be excluded)
         att_expired = Attendee.objects.create(first_name="Expired", last_name="Member", division=div, gender="unspecified")
         attending_expired = Attending.objects.create(attendee=att_expired, category=attending_category)
         AttendingMeet.objects.create(attending=attending_expired, meet=mem_meet, character=character, category=attending_category, start=now - datetime.timedelta(days=60), finish=now - datetime.timedelta(days=10))
-        Place.objects.create(content_type=attendee_ct, object_id=str(att_expired.id), organization=org, address=addr_neighbor, display_name="Expired Residence")
+        Place.objects.create(attendee=att_expired, organization=org, address=addr_neighbor, display_name="Expired Residence")
 
         # 4. Valid active member (should be returned!)
         att_valid = Attendee.objects.create(first_name="Valid", last_name="Member", division=div, gender="unspecified", infos={"names": {"original": "Valid Member"}})
         attending_valid = Attending.objects.create(attendee=att_valid, category=attending_category)
         AttendingMeet.objects.create(attending=attending_valid, meet=mem_meet, character=character, category=attending_category, start=now, finish=now + datetime.timedelta(days=30))
-        valid_place = Place.objects.create(content_type=attendee_ct, object_id=str(att_valid.id), organization=org, address=addr_neighbor, display_name="Valid Residence")
+        valid_place = Place.objects.create(attendee=att_valid, organization=org, address=addr_neighbor, display_name="Valid Residence")
 
         _, neighbors = CoordinatesService.get_nearest_neighbors(target_place.id, org, meets=[])
         assert len(neighbors) == 1

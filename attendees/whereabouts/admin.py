@@ -14,6 +14,7 @@ class PlaceAdmin(PgHistoryPage, admin.ModelAdmin):
     list_display_links = ("id",)
     readonly_fields = ["id", "created", "modified"]
     list_display = ("id", "display_name", "subject", "address")
+    autocomplete_fields = ("attendee", "folk")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)

@@ -4,10 +4,10 @@ from attendees.persons.models import Relation, GenderEnum
 @pytest.mark.django_db
 class TestRelation:
     def test_create_relation(self):
+        child = Relation.objects.create(title="Child", gender=GenderEnum.UNSPECIFIED.value)
         relation = Relation.objects.create(
             title="Parent",
             gender=GenderEnum.UNSPECIFIED.value,
-            reciprocal_ids=[1, 2],
             display_order=1,
             emergency_contact=True,
             scheduler=False,
@@ -17,7 +17,8 @@ class TestRelation:
         assert relation.id is not None
         assert relation.title == "Parent"
         assert relation.gender == GenderEnum.UNSPECIFIED.value
-        assert relation.reciprocal_ids == [1, 2]
+        relation.reciprocals.add(child)
+        assert list(relation.reciprocals.all()) == [child]
         assert relation.display_order == 1
         assert relation.emergency_contact is True
         assert relation.scheduler is False
@@ -37,7 +38,7 @@ class TestRelation:
             gender=GenderEnum.UNSPECIFIED.value
         )
         # assert relation.gender == GenderEnum.UNSPECIFIED.value
-        assert relation.reciprocal_ids == []
+        assert list(relation.reciprocals.all()) == []
         assert relation.display_order == 0
         assert relation.emergency_contact is False
         assert relation.scheduler is False

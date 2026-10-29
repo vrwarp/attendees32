@@ -1,32 +1,11 @@
 import pghistory
-from django.contrib.contenttypes.fields import GenericRelation
 from uuid import uuid4
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 import django.utils.timezone
 import model_utils.fields
-from django.db.models.functions import Cast
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
 from attendees.persons.models import Utility
-
-
-class CustomGenericRelation(GenericRelation):
-    """
-    https://code.djangoproject.com/ticket/16055#comment:14   Should be fixed in Django 5
-    """
-    def get_joining_columns(self, reverse_join=False):
-        return ()
-
-    def get_extra_restriction(self, alias, remote_alias):
-        cond = super().get_extra_restriction(alias, remote_alias)
-        from_field = self.model._meta.pk
-        to_field = self.remote_field.model._meta.get_field(self.object_id_field_name)
-        lookup = from_field.get_lookup('exact')(
-            Cast(from_field.get_col(alias), output_field=models.CharField()),  # UUIDField won't work
-            to_field.get_col(remote_alias))
-        cond.add(lookup, 'AND')
-        return cond
 
 
 class Folk(TimeStampedModel, SoftDeletableModel):
@@ -36,7 +15,6 @@ class Folk(TimeStampedModel, SoftDeletableModel):
     For other relationship, primary attendee needs to be "hidden" role
     """
     id = models.UUIDField(default=uuid4, primary_key=True, editable=False, serialize=False)
-    places = CustomGenericRelation("whereabouts.Place")
     division = models.ForeignKey(
         "whereabouts.Division",
         default=0,
@@ -72,12 +50,6 @@ class Folk(TimeStampedModel, SoftDeletableModel):
     class Meta:
         db_table = "persons_folks"
         ordering = ("division", "category", "display_order", "display_name", "-modified")
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="folk_infos_gin",
-            ),
-        ]
 
 
 class FolksHistory(pghistory.get_event_model(

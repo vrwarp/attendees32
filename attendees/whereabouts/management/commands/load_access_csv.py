@@ -8,7 +8,7 @@ from django.core.files import File
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
 
-from address.models import Locality, State, Address
+from address.models import Locality, State
 
 from attendees.occasions.models import Assembly, Meet, Gathering, Attendance, Team, Character
 from attendees.persons.models import Utility, GenderEnum, Folk, Relation, Attendee, FolkAttendee, \
@@ -101,7 +101,7 @@ class Command(BaseCommand):
                 self.stdout.write(f'Number of households successfully imported/updated: {upserted_household_id_count}')
                 self.stdout.write(f'Initial family count: {initial_family_count}. final family count: {Folk.objects.filter(category=Attendee.FAMILY_CATEGORY).count()}', ending="\n\n")
 
-                place_with_family_count = Place.objects.filter(content_type=ContentType.objects.get_for_model(Folk)).count()
+                place_with_family_count = Place.objects.filter(folk__isnull=False).count()
                 self.stdout.write(f'Number of place(address) successfully associated with family (originally 0): {place_with_family_count}')
 
                 self.stdout.write(f'Number of people successfully imported/updated: {upserted_attendee_count}')
@@ -145,8 +145,10 @@ class Command(BaseCommand):
 
         self.stdout.write("\n\nRunning import_addresses:\n")
         successfully_processed_count = 0  # addresses.line_num always advances despite of processing success
-        address_content_type = ContentType.objects.get_for_model(Address)  # ContentType.objects.get(model='address')
         organization = Division.objects.get(slug=division1_slug).organization
+        # Addresses with no place yet wait here for the household that lives at them: a place
+        # must name its subject, so none is written until the household is known.
+        self.staged_places = {}
         for address_dict in addresses:
             try:
                 self.stdout.write('.', ending='')
@@ -199,14 +201,7 @@ class Command(BaseCommand):
                             address.save()
                             place.save()
                     else:
-                        Place.objects.update_or_create(
-                            infos__access_address_id=address_id,  # str
-                            defaults={
-                                **contact_values,
-                                'content_type': address_content_type,
-                                'object_id': str(address_id),  # will update later.  Remember some address are duplicated
-                            }
-                        )
+                        self.staged_places[address_id] = contact_values  # some addresses are shared by households
 
                 else:
                     self.stdout.write(f'Is the address completed or in California? address not good for processing: {address_dict}')
@@ -232,7 +227,6 @@ class Command(BaseCommand):
             'CH': division1,
             'EN': division2,
         }
-        folk_content_type = ContentType.objects.get_for_model(Folk)
         self.stdout.write("\n\nRunning import_households:\n")
         successfully_processed_count = 0  # households.line_num always advances despite of processing success
         pdt = pytz.timezone('America/Los_Angeles')
@@ -278,15 +272,16 @@ class Command(BaseCommand):
                         # old_contact = Place.objects.filter(infos__access_address_id=address_id).first()
                         # address = old_contact.address if old_contact else None
                         saved_place = folk.places.first() or Place.objects.filter(infos__access_address_id=address_id).first()
+                        staged = getattr(self, 'staged_places', {}).get(address_id)
 
-                        if saved_place:
+                        if saved_place or staged:
                             potential_new_place_id = None
 
-                            if saved_place.subject == folk or saved_place.content_type != folk_content_type:
+                            if saved_place and saved_place.folk_id == folk.id:
                                 potential_new_place_id = saved_place.id
-                            address = saved_place.address
+                            address = saved_place.address if saved_place else staged['address']
 
-                            if address and not address.name:
+                            if address and not isinstance(address, dict) and not address.name:
                                 full_address_name = display_name + ' family: ' + address.raw
                                 address.name = display_name
                                 # address.raw = str(folk.id)  # Todo 20220902 double check if folk id needed
@@ -299,8 +294,8 @@ class Command(BaseCommand):
                                 defaults={
                                     'address': address,
                                     'display_name':  display_name,
-                                    'content_type': folk_content_type,
-                                    'object_id': folk.id,
+                                    'folk': folk,
+                                    'organization': folk.division.organization,
                                     'infos': {
                                         'access_address_id': address_id,  # str
                                         'contacts': {

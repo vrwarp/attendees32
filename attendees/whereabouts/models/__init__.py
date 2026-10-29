@@ -1,3 +1,4 @@
+from .content_type_extra import ContentTypeExtra
 from .organization import Organization
 from .division import Division
 from .place import Place

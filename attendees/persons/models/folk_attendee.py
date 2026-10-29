@@ -1,6 +1,4 @@
-# from django.contrib.postgres.fields.jsonb import JSONField
 import pghistory
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 import django.utils.timezone
 import model_utils.fields
@@ -64,12 +62,6 @@ class FolkAttendee(Confidential, TimeStampedModel, SoftDeletableModel):
                 condition=models.Q(is_removed=False),
                 name="folk_attendee",
             )
-        ]
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="folkattendee_infos_gin",
-            ),
         ]
 
 

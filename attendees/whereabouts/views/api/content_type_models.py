@@ -18,18 +18,16 @@ class ApiContentTypeListAPIView(LoginRequiredMixin, ListAPIView):
 
     def get_queryset(self):
         if self.request.user.organization:
+            genre = self.request.query_params.get("query")
+            if not genre:
+                return ContentType.objects.none()
+            types = (
+                ContentType.objects.select_related("extra")
+                .filter(extra__genres=genre)
+                .order_by("extra__display_order")
+            )
             content_type_id = self.kwargs.get("pk")
-            query = self.request.query_params.get("query")
-            if content_type_id:
-                return ContentType.objects.raw(
-                    f"SELECT * FROM {ContentType.objects.model._meta.db_table} WHERE id = %s AND genres LIKE %s",
-                    [content_type_id, query],
-                )
-            else:
-                return ContentType.objects.raw(
-                    f"SELECT * FROM {ContentType.objects.model._meta.db_table} WHERE genres LIKE %s ORDER BY display_order",
-                    [query],
-                )
+            return types.filter(pk=content_type_id) if content_type_id else types
         else:
             time.sleep(2)
             raise AuthenticationFailed(

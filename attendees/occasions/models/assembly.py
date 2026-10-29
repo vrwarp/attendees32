@@ -1,7 +1,5 @@
 import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
-# from django.contrib.postgres.fields import JSONField
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 import django.utils.timezone
 import model_utils.fields
@@ -12,7 +10,6 @@ from attendees.persons.models import Note, Utility
 
 
 class Assembly(TimeStampedModel, SoftDeletableModel, Utility):
-    places = GenericRelation("whereabouts.Place")
     notes = GenericRelation(Note)
     id = models.BigAutoField(
         auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
@@ -61,12 +58,6 @@ class Assembly(TimeStampedModel, SoftDeletableModel, Utility):
             "division",
             "display_order",
         )
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="assembly_infos_gin",
-            ),
-        ]
 
     def __str__(self):
         return "%s" % self.display_name

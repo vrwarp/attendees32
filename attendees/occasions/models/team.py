@@ -1,10 +1,8 @@
-# from django.contrib.postgres.fields.jsonb import JSONField
 import pghistory
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from model_utils.models import SoftDeletableModel, TimeStampedModel
-from django.contrib.postgres.indexes import GinIndex
 import django.utils.timezone
 import model_utils.fields
 from attendees.persons.models import Note, Utility
@@ -41,10 +39,6 @@ class Team(TimeStampedModel, SoftDeletableModel, Utility):
                 fields=["site_type", "site_id"],
                 condition=models.Q(is_removed=False),
                 name="team_sites",
-            ),
-            GinIndex(
-                fields=["infos"],
-                name="team_infos_gin",
             ),
         ]
 

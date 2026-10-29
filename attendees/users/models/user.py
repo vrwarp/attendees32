@@ -1,7 +1,6 @@
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import CharField
@@ -52,14 +51,6 @@ class User(AbstractUser):
         blank=True,
         help_text="please keep {} here even there's no data",
     )
-
-    class Meta:
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="user_infos_gin",
-            ),
-        ]
 
     def save(self, *args, **kwargs):
         self.email = self.email.strip()

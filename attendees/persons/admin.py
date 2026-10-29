@@ -172,15 +172,20 @@ class FolkAttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
 class RelationAdmin(PgHistoryPage, admin.ModelAdmin):
     readonly_fields = ["id", "created", "modified"]
     list_display_links = ("title",)
+    filter_horizontal = ("reciprocals",)
     list_display = (
         "id",
         "title",
-        "reciprocal_ids",
+        "reciprocal_titles",
         "emergency_contact",
         "scheduler",
         "relative",
         "display_order",
     )
+
+    @admin.display(description="corresponding relations")
+    def reciprocal_titles(self, obj):
+        return ", ".join(obj.reciprocals.values_list("title", flat=True))
 
 
 class AttendeeAdmin(PgHistoryPage, admin.ModelAdmin):

@@ -2,8 +2,10 @@ from rest_framework import serializers
 
 from attendees.whereabouts.models import Place
 
+from .place_subject import PlaceSubjectSerializerMixin
 
-class PlaceMinimalSerializer(serializers.ModelSerializer):
+
+class PlaceMinimalSerializer(PlaceSubjectSerializerMixin, serializers.ModelSerializer):
     street = serializers.CharField(read_only=True)
 
     class Meta:

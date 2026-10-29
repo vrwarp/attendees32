@@ -1,6 +1,5 @@
 import pghistory
 from django.core.exceptions import ValidationError
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 import django.utils.timezone
 import model_utils.fields
@@ -77,12 +76,6 @@ class AttendingMeet(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
                 condition=models.Q(is_removed=False),
                 name="attending_meet_uniq",
             )
-        ]
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="attendingmeet_infos_gin",
-            ),
         ]
 
     def __str__(self):

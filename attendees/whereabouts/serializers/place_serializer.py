@@ -6,11 +6,11 @@ from attendees.persons.models import Attendee, FolkAttendee, Utility
 from attendees.whereabouts.models import Place
 from attendees.whereabouts.serializers import AddressSerializer
 
+from .place_subject import PlaceSubjectSerializerMixin
 
-class PlaceSerializer(serializers.ModelSerializer):
-    """
-    Generic relation: https://www.django-rest-framework.org/api-guide/relations/#generic-relationships
-    """
+
+class PlaceSerializer(PlaceSubjectSerializerMixin, serializers.ModelSerializer):
+    """A place with its address and, when it is a person's or a household's, whose it is."""
 
     street = serializers.CharField(read_only=True)
     address = AddressSerializer(required=False)
@@ -47,14 +47,14 @@ class PlaceSerializer(serializers.ModelSerializer):
         target_id = getattr(obj, '__dict__', {}).get('target_attendee_id')
         if target_id is not None:
             return str(target_id)
-        if obj.content_type.model == 'attendee':
-            return str(obj.object_id)
-        elif obj.content_type.model == 'folk':
+        if obj.attendee_id:
+            return str(obj.attendee_id)
+        elif obj.folk_id:
             now_date = Utility.now_with_timezone().date()
             try:
                 fa = FolkAttendee.objects.filter(
                     Q(finish__isnull=True) | Q(finish__gte=now_date),
-                    folk_id=obj.object_id,
+                    folk_id=obj.folk_id,
                     is_removed=False,
                     attendee__is_removed=False,
                 ).order_by('display_order').first()
@@ -67,9 +67,9 @@ class PlaceSerializer(serializers.ModelSerializer):
         target_name = getattr(obj, '__dict__', {}).get('target_attendee_name')
         if target_name is not None:
             return target_name
-        if obj.content_type.model == 'attendee':
+        if obj.attendee_id:
             try:
-                att = Attendee.objects.select_related('division').filter(pk=obj.object_id, is_removed=False).first()
+                att = Attendee.objects.select_related('division').filter(pk=obj.attendee_id, is_removed=False).first()
             except Exception:
                 return None
             if not att:
@@ -77,12 +77,12 @@ class PlaceSerializer(serializers.ModelSerializer):
             acronym = att.division.infos.get('acronym', '') if att.division and isinstance(att.division.infos, dict) else ''
             name_orig = att.infos.get('names', {}).get('original', '') if isinstance(att.infos, dict) else ''
             return f"{acronym} {name_orig}".strip()
-        elif obj.content_type.model == 'folk':
+        elif obj.folk_id:
             now_date = Utility.now_with_timezone().date()
             try:
                 fa = FolkAttendee.objects.select_related('attendee', 'attendee__division').filter(
                     Q(finish__isnull=True) | Q(finish__gte=now_date),
-                    folk_id=obj.object_id,
+                    folk_id=obj.folk_id,
                     is_removed=False,
                     attendee__is_removed=False,
                 ).order_by('display_order').first()
@@ -97,28 +97,19 @@ class PlaceSerializer(serializers.ModelSerializer):
         return None
 
     def _get_subject_name(self, validated_data, instance=None):
-        ct = validated_data.get('content_type')
-        if not ct and instance:
-            ct = instance.content_type
-
-        obj_id = validated_data.get('object_id')
-        if not obj_id and instance:
-            obj_id = instance.object_id
-
-        if not ct or not obj_id:
-            return ""
-
-        if ct.model == 'attendee':
-            from attendees.persons.models import Attendee
-            attendee = Attendee.objects.filter(pk=obj_id).first()
-            if attendee and attendee.infos and 'names' in attendee.infos and 'original' in attendee.infos['names']:
-                return attendee.infos['names']['original']
-        elif ct.model == 'folk':
+        """The person's or household's name, for naming the address; the validated data names the
+        subject by its typed key once validate() has run, else the instance does."""
+        attendee_id = validated_data.get('attendee_id') or (instance.attendee_id if instance else None)
+        folk_id = validated_data.get('folk_id') or (instance.folk_id if instance else None)
+        if attendee_id:
+            attendee = Attendee.objects.filter(pk=attendee_id).first()
+            if attendee:
+                return attendee.full_name
+        elif folk_id:
             from attendees.persons.models import Folk
-            folk = Folk.objects.filter(pk=obj_id).first()
+            folk = Folk.objects.filter(pk=folk_id).first()
             if folk:
                 return folk.display_name
-
         return ""
 
     def _handle_address_update_or_fork(self, place_data, validated_data, instance=None, is_update=False):

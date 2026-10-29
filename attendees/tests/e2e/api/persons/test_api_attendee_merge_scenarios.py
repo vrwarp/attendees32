@@ -156,7 +156,7 @@ class Records:
         )
 
     def _place(self, attendee, address, display_name):
-        return self._linked(Place, attendee, address=address, display_name=display_name)
+        return Place.objects.create(attendee=attendee, organization=self.organization, address=address, display_name=display_name)
 
     def _note(self, attendee, body):
         return self._linked(Note, attendee, category=Note.objects.first().category, body=body)
@@ -175,7 +175,7 @@ class Records:
         return sorted(FolkAttendee.objects.filter(attendee=attendee).exclude(role_id=Relations.HIDDEN).values_list("folk__display_name", flat=True))
 
     def places(self, attendee):
-        return sorted(Place.objects.filter(content_type=self.attendee_type, object_id=str(attendee.id)).values_list("display_name", flat=True))
+        return sorted(Place.objects.filter(attendee=attendee).values_list("display_name", flat=True))
 
     def linked(self, model, attendee):
         return model.objects.filter(content_type=self.attendee_type, object_id=str(attendee.id)).count()

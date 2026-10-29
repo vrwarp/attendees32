@@ -1,7 +1,5 @@
 import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
-# from django.contrib.postgres.fields import JSONField
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 import django.utils.timezone
 import model_utils.fields
@@ -39,12 +37,6 @@ class Character(TimeStampedModel, SoftDeletableModel, Utility):
     class Meta:
         db_table = "occasions_characters"
         ordering = ["assembly", "display_order"]
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="character_infos_gin",
-            ),
-        ]
 
     def __str__(self):
         return "%s %s %s" % (self.assembly, self.display_name, self.type)

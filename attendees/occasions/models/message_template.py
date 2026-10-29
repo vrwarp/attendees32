@@ -72,7 +72,6 @@ class MessageTemplatesHistory(pghistory.get_event_model(
         db_table = 'occasions_message_templateshistory'
 
 # from django.db import models
-# from django.contrib.postgres.fields.jsonb import JSONField
 # from model_utils.models import TimeStampedModel, SoftDeletableModel
 #
 # from attendees.persons.models import Utility

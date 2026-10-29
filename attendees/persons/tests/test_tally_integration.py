@@ -59,13 +59,13 @@ def vocabulary():
     # a hidden non-family folk with Relation pk 0.
     Relation.objects.get_or_create(
         pk=Attendee.HIDDEN_ROLE,
-        defaults={"title": "hidden", "gender": "UNSPECIFIED", "reciprocal_ids": []},
+        defaults={"title": "hidden", "gender": "UNSPECIFIED"},
     )
     Relation.objects.get_or_create(
-        title="child", defaults={"gender": "UNSPECIFIED", "emergency_contact": True, "reciprocal_ids": []}
+        title="child", defaults={"gender": "UNSPECIFIED", "emergency_contact": True}
     )
     Relation.objects.get_or_create(
-        title="parent", defaults={"gender": "UNSPECIFIED", "emergency_contact": True, "reciprocal_ids": []}
+        title="parent", defaults={"gender": "UNSPECIFIED", "emergency_contact": True}
     )
     # Rows made with an explicit pk leave the id sequence behind them, and the
     # command's own creates would then collide. loaddata resets sequences the

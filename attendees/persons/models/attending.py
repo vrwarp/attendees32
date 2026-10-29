@@ -1,7 +1,5 @@
 import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
-# from django.contrib.postgres.fields.jsonb import JSONField
-from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 import django.utils.timezone
@@ -75,12 +73,6 @@ class Attending(TimeStampedModel, SoftDeletableModel, Utility):
                 condition=models.Q(is_removed=False),
                 name="attending_attendee_registration",
             )
-        ]
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="attending_infos_gin",
-            ),
         ]
 
     @property

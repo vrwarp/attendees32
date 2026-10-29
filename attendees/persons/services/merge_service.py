@@ -341,7 +341,7 @@ class AttendeeMergeService:
             "memberships": FolkAttendee.objects.filter(attendee=duplicate)
             .exclude(role_id=Attendee.HIDDEN_ROLE)
             .count(),
-            "addresses": Place.objects.filter(**linked).count(),
+            "addresses": Place.objects.filter(attendee=duplicate).count(),
             "notes": Note.objects.filter(**linked).count(),
             "statuses": Past.objects.filter(**linked).count(),
             "registrations": Registration.objects.filter(registrant=duplicate).count(),
@@ -427,7 +427,7 @@ class AttendeeMergeService:
         mine = str(duplicate.pk)
         Past.all_objects.filter(pk__in=moved["pasts"]).update(object_id=mine)
         Note.all_objects.filter(pk__in=moved["notes"]).update(object_id=mine)
-        Place.all_objects.filter(pk__in=moved["places"]["moved"]).update(object_id=mine)
+        Place.all_objects.filter(pk__in=moved["places"]["moved"]).update(attendee=duplicate)
         Place.all_objects.filter(pk__in=moved["places"]["retired"]).update(is_removed=False)
 
         memberships = moved["memberships"]
@@ -636,12 +636,9 @@ class AttendeeMergeService:
     def _move_places(duplicate, primary):
         """Moved unless the primary already has that address (unique while live)."""
         record = {"moved": [], "retired": []}
-        for place in Place.objects.filter(
-            content_type=_attendee_type(), object_id=str(duplicate.pk)
-        ):
+        for place in Place.objects.filter(attendee=duplicate):
             clash = place.address_id is not None and Place.objects.filter(
-                content_type=_attendee_type(),
-                object_id=str(primary.pk),
+                attendee=primary,
                 organization_id=place.organization_id,
                 address_id=place.address_id,
             ).exists()
@@ -650,8 +647,8 @@ class AttendeeMergeService:
                 place.save(update_fields=["is_removed"])
                 record["retired"].append(str(place.pk))
             else:
-                place.object_id = str(primary.pk)
-                place.save(update_fields=["object_id"])
+                place.attendee = primary
+                place.save(update_fields=["attendee"])
                 record["moved"].append(str(place.pk))
         return record
 

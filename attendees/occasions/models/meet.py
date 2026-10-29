@@ -1,7 +1,6 @@
 import pghistory, pytz
 from datetime import datetime
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
-from django.contrib.postgres.indexes import GinIndex
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
@@ -154,10 +153,6 @@ class Meet(TimeStampedModel, SoftDeletableModel, Utility):
                 fields=["site_type", "site_id"],
                 condition=models.Q(is_removed=False),
                 name="meet_sites",
-            ),
-            GinIndex(
-                fields=["infos"],
-                name="meet_infos_gin",
             ),
         ]
 

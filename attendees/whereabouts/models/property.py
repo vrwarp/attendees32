@@ -1,7 +1,5 @@
 import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
-# from django.contrib.postgres.fields.jsonb import JSONField
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 import django.utils.timezone
 from django.urls import reverse
@@ -16,7 +14,6 @@ from attendees.persons.models import Note, Utility
 class Property(TimeStampedModel, SoftDeletableModel, Utility):
     notes = GenericRelation(Note)
     calendar_relations = GenericRelation(CalendarRelation)
-    places = GenericRelation("whereabouts.Place")
     gathering = GenericRelation(
         Gathering,
         object_id_field="site_id",
@@ -41,12 +38,6 @@ class Property(TimeStampedModel, SoftDeletableModel, Utility):
     class Meta:
         db_table = "whereabouts_properties"
         verbose_name_plural = "Properties"
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="property_infos_gin",
-            ),
-        ]
 
     def get_absolute_url(self):
         return reverse("property_detail", args=[str(self.id)])

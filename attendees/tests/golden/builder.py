@@ -36,6 +36,7 @@ from allauth.account.models import EmailAddress
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
+from django.db.models import Q
 from partial_date import PartialDate
 
 from address.models import Address, Locality, State
@@ -322,7 +323,6 @@ class GoldenBuilder:
         self.divisions = {d.pk: d for d in Division.objects.filter(
             organization=self.organization)}
         self.attendee_ct = ContentType.objects.get_for_model(Attendee)
-        self.folk_ct = ContentType.objects.get_for_model(Folk)
         self.room_ct = ContentType.objects.get_for_model(Room)
         self._relations = {r.pk: r for r in Relation.objects.all()}
         self._categories = {c.pk: c for c in Category.objects.all()}
@@ -584,8 +584,7 @@ class GoldenBuilder:
             )
             Place.objects.create(
                 id=golden_uuid("place", folk_spec.key),
-                content_type=self.folk_ct,
-                object_id=str(self.data.folks[folk_spec.key].id),
+                folk=self.data.folks[folk_spec.key],
                 organization=self.organization,
                 address=address,
                 display_name="main",
@@ -610,8 +609,7 @@ class GoldenBuilder:
             )
             Place.objects.create(
                 id=golden_uuid("place-personal", key),
-                content_type=self.attendee_ct,
-                object_id=str(self.data.attendees[key].id),
+                attendee=self.data.attendees[key],
                 organization=self.organization,
                 address=address,
                 display_name=label,
@@ -1197,7 +1195,6 @@ def purge_seed_people():
     from schedule.models import Occurrence
 
     attendee_ct = ContentType.objects.get_for_model(Attendee)
-    folk_ct = ContentType.objects.get_for_model(Folk)
     Attendance.all_objects.all().delete()
     # Gatherings too, so the eight weeks of history are exactly the ones this
     # builder wrote — and so a second run does not collide with the first on
@@ -1210,7 +1207,7 @@ def purge_seed_people():
     Registration.all_objects.all().delete()
     Past.all_objects.filter(content_type=attendee_ct).delete()
     Note.all_objects.filter(content_type=attendee_ct).delete()
-    Place.all_objects.filter(content_type__in=[attendee_ct, folk_ct]).delete()
+    Place.all_objects.filter(Q(attendee__isnull=False) | Q(folk__isnull=False)).delete()
     FolkAttendee.all_objects.all().delete()
     Folk.all_objects.all().delete()
     Attendee.all_objects.all().delete()
@@ -1237,9 +1234,9 @@ def build_golden_dataset(load_seed: bool = False) -> GoldenDataset:
         MeetAllowedModel.objects.all().delete()
         Meet.allowed_groups.through.objects.all().delete()
         call_command("loaddata", "fixtures/db_seed.json", verbosity=0)
-        # django_content_type carries two extra columns in this project
-        # (genres, display_order); the site-picker API reads them by raw SQL
-        # and they are populated by a management command, not a migration.
+        # The site picker's content type extras (genre, order, endpoint,
+        # hint) are filled by a management command once the content types
+        # exist, not by a migration.
         call_command("update_content_types", verbosity=0)
     purge_seed_people()
     return GoldenBuilder().run()

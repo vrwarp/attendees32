@@ -1,14 +1,14 @@
 import pytest
 from address.models import Address, Locality, State, Country
-from attendees.whereabouts.models import Organization, Place
+from attendees.whereabouts.models import Campus, Organization, Place
 from attendees.whereabouts.services import PlaceService
-from django.contrib.contenttypes.models import ContentType
 
 @pytest.mark.django_db
 class TestPlaceService:
     def setup_method(self):
         self.org = Organization.objects.create(slug="test-org", display_name="Test Organization")
-        self.ct = ContentType.objects.get_for_model(Organization)
+        self.campus = Campus.objects.create(organization=self.org, display_name="Main campus", slug="main-campus")
+        self.other_campus = Campus.objects.create(organization=self.org, display_name="Other campus", slug="other-campus")
         
         country = Country.objects.create(name="USA", code="US")
         state = State.objects.create(name="California", code="CA", country=country)
@@ -18,16 +18,16 @@ class TestPlaceService:
         self.address2 = Address.objects.create(raw="456 Shared St", locality=self.locality)
         
         self.place_unique = Place.objects.create(
-            content_type=self.ct, object_id=str(self.org.id), organization=self.org,
+            campus=self.campus, organization=self.org,
             address=self.address1, display_name="Unique Place"
         )
         
         self.place_shared1 = Place.objects.create(
-            content_type=self.ct, object_id=str(self.org.id), organization=self.org,
+            campus=self.campus, organization=self.org,
             address=self.address2, display_name="Shared Place 1"
         )
         self.place_shared2 = Place.objects.create(
-            content_type=self.ct, object_id="different_id", organization=self.org,
+            campus=self.other_campus, organization=self.org,
             address=self.address2, display_name="Shared Place 2"
         )
 

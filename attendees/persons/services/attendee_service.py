@@ -233,8 +233,7 @@ class AttendeeService:
             folks_of[attendee_id].add(folk_id)
         places = (
             Place.objects.filter(
-                content_type=ContentType.objects.get_for_model(Folk),
-                object_id__in=[str(folk_id) for folk_ids in folks_of.values() for folk_id in folk_ids],
+                folk_id__in={folk_id for folk_ids in folks_of.values() for folk_id in folk_ids},
                 is_removed=False,
             )
             .filter(Q(finish__isnull=True) | Q(finish__gte=localdate(now)))
@@ -243,7 +242,7 @@ class AttendeeService:
         cities = defaultdict(list)
         for place in places:
             address = place.address
-            cities[place.object_id].append(
+            cities[place.folk_id].append(
                 {
                     "locality__name": address.locality.name if address and address.locality_id else None,
                     "address__raw": address.raw if address else None,
@@ -254,7 +253,7 @@ class AttendeeService:
         for attendee in attendees:
             attendee.attendingmeets = enrollments[attendee.pk]
             attendee.folkcities = sorted(
-                {row["places__id"]: row for folk_id in folks_of[attendee.pk] for row in cities[str(folk_id)]}.values(),
+                {row["places__id"]: row for folk_id in folks_of[attendee.pk] for row in cities[folk_id]}.values(),
                 key=lambda row: (row["locality__name"] or "", row["address__raw"] or "", row["places__id"]),
             )
             attendee.visitor_since = ", ".join(sorted(visits[attendee.pk])) or None
@@ -424,22 +423,15 @@ class AttendeeService:
     @staticmethod
     def folkcities_filter(term):
         """The grid's folkcities column, searched: the attendees whose folks have a current address
-        in a city containing the term. The folks are found through their places first, so no SQL
-        joins a UUID key to the places' text object_id."""
+        in a city containing the term."""
         term = str(term).strip()
         if not term:
             return Q()
         today = localdate(datetime.now(timezone.utc))
-        folk_ids = (
-            Place.objects.filter(
-                content_type=ContentType.objects.get_for_model(Folk),
-                is_removed=False,
-                address__locality__name__icontains=term,
-            )
-            .filter(Q(finish__isnull=True) | Q(finish__gte=today))
-            .values_list("object_id", flat=True)
-        )
-        return Q(folks__in=list(folk_ids))
+        return Q(
+            folks__places__address__locality__name__icontains=term,
+            folks__places__is_removed=False,
+        ) & (Q(folks__places__finish__isnull=True) | Q(folks__places__finish__gte=today))
 
     @staticmethod
     def field_convert(query_field, meets, current_user):

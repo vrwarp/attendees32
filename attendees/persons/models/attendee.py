@@ -10,7 +10,6 @@ import model_utils.fields
 import partial_date.fields
 # import private_storage.fields
 from private_storage.storage.files import PrivateFileSystemStorage
-from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -38,7 +37,6 @@ class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
     # AS_PARENT_KEYWORDS = ['notifier', 'caregiver']
     # BE_LISTED_KEYWORDS = ['care receiver']  # let the attendee's attendance showed in their parent/caregiver account
     pasts = GenericRelation("persons.Past")
-    places = GenericRelation("whereabouts.Place")
     notes = GenericRelation(Note)
     # related_ones = models.ManyToManyField('self',through='Relationship',symmetrical=False,related_name='related_to')
     id = models.UUIDField(default=uuid4, primary_key=True, editable=False, serialize=False)
@@ -312,13 +310,6 @@ class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
     class Meta:
         db_table = "persons_attendees"
         ordering = ["last_name", "first_name"]
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="attendee_infos_gin",
-            ),
-            # GinIndex(fields=['progressions'], name='attendee_progressions_gin', ),
-        ]
 
     def name1(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip()

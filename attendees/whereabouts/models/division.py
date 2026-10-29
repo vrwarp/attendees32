@@ -1,6 +1,5 @@
 import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 import django.utils.timezone
 import model_utils.fields
@@ -47,12 +46,6 @@ class Division(TimeStampedModel, SoftDeletableModel, Utility):
 
     class Meta:
         db_table = "whereabouts_divisions"
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="division_infos_gin",
-            ),
-        ]
 
     def __str__(self):
         return "%s" % self.display_name

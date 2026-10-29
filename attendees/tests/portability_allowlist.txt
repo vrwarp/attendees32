@@ -2,36 +2,6 @@
 # Checked by attendees/tests/test_portability_lint.py. Each entry is removed by the phase of
 # the portability plan named beside it; an entry that no longer matches fails the suite.
 
-# GIN indexes on JSON columns, removed in Phase 4 after Phases 1 and 2 stop querying JSON.
-attendees/occasions/models/assembly.py:postgres-import
-attendees/occasions/models/attendance.py:postgres-import
-attendees/occasions/models/character.py:postgres-import
-attendees/occasions/models/gathering.py:postgres-import
-attendees/occasions/models/meet.py:postgres-import
-attendees/occasions/models/team.py:postgres-import
-attendees/persons/models/attendee.py:postgres-import
-attendees/persons/models/attending.py:postgres-import
-attendees/persons/models/attending_meet.py:postgres-import
-attendees/persons/models/category.py:postgres-import
-attendees/persons/models/folk.py:postgres-import
-attendees/persons/models/folk_attendee.py:postgres-import
-attendees/persons/models/note.py:postgres-import
-attendees/persons/models/past.py:postgres-import
-attendees/persons/models/registration.py:postgres-import
-attendees/users/models/user.py:postgres-import
-attendees/whereabouts/models/campus.py:postgres-import
-attendees/whereabouts/models/division.py:postgres-import
-attendees/whereabouts/models/organization.py:postgres-import
-attendees/whereabouts/models/place.py:postgres-import
-attendees/whereabouts/models/property.py:postgres-import
-attendees/whereabouts/models/room.py:postgres-import
-
-# ArrayField on Relation.reciprocal_ids, a many-to-many after Phase 4.
-attendees/persons/models/relation.py:postgres-import
-
 # PostGIS distance and bearing, computed in Python after Phase 7.
 attendees/whereabouts/services/coordinates_service.py:RawSQL
 
-# Extra columns on django_content_type, a ContentTypeExtra model after Phase 4.
-attendees/whereabouts/management/commands/update_content_types.py:cursor
-attendees/whereabouts/views/api/content_type_models.py:.raw(

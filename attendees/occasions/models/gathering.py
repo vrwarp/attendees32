@@ -4,8 +4,6 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse
-# from django.contrib.postgres.fields.jsonb import JSONField
-from django.contrib.postgres.indexes import GinIndex
 import django.utils.timezone
 import model_utils.fields
 from model_utils.models import SoftDeletableModel, TimeStampedModel
@@ -88,10 +86,6 @@ class Gathering(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
                 fields=["site_type", "site_id"],
                 condition=models.Q(is_removed=False),
                 name="gathering_sites",
-            ),
-            GinIndex(
-                fields=["infos"],
-                name="gathering_infos_gin",
             ),
         ]
 

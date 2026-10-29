@@ -118,6 +118,9 @@ class TestAttendeeMergeService:
             **fields,
         )
 
+    def _place(self, attendee, **fields):
+        return Place.objects.create(attendee=attendee, organization=self.organization, **fields)
+
     def test_moves_attendance_to_the_primary(self):
         # Every attendee gets one registration-less attending at creation.
         ours = self.duplicate.attendings.get()
@@ -285,15 +288,15 @@ class TestAttendeeMergeService:
         note = self._linked(Note, self.duplicate, category=self.category, body="peanut allergy")
         home = Address.objects.create(raw="1 Main St")
         shared = Address.objects.create(raw="2 Oak Ave")
-        moved = self._linked(Place, self.duplicate, address=home, display_name="home")
-        same = self._linked(Place, self.duplicate, address=shared, display_name="work")
-        self._linked(Place, self.primary, address=shared, display_name="work")
+        moved = self._place(self.duplicate, address=home, display_name="home")
+        same = self._place(self.duplicate, address=shared, display_name="work")
+        self._place(self.primary, address=shared, display_name="work")
 
         AttendeeMergeService.merge(self.duplicate, self.primary)
 
         for row in (past, note, moved):
             row.refresh_from_db()
-            assert row.object_id == str(self.primary.id)
+            assert row.object_id == str(self.primary.id)  # a place answers with its attendee key
         same.refresh_from_db()
         assert same.is_removed
 

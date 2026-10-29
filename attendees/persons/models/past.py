@@ -4,7 +4,6 @@ import partial_date.fields
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
 from partial_date import PartialDateField
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 import django.utils.timezone
 import model_utils.fields
@@ -67,10 +66,6 @@ class Past(Confidential, TimeStampedModel, SoftDeletableModel, Utility):
                 fields=["content_type", "object_id"],
                 condition=models.Q(is_removed=False),
                 name="past_subjects",
-            ),
-            GinIndex(
-                fields=["infos"],
-                name="past_infos_gin",
             ),
         ]
 

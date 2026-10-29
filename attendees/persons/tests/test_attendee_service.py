@@ -129,11 +129,9 @@ class TestAttendeeService:
         state = State.objects.create(name="California", code="CA", country=country)
         locality = Locality.objects.create(name="Fremont", postal_code="94536", state=state)
         address = Address.objects.create(raw="1 Main St, Fremont, CA 94536", locality=locality)
-        place = Place.objects.create(content_type=ContentType.objects.get_for_model(Folk), object_id=str(folk.id),
-                                     address=address, organization=self.organization)
+        place = Place.objects.create(folk=folk, address=address, organization=self.organization)
         former = Address.objects.create(raw="9 Old Rd, Hayward, CA 94541", locality=Locality.objects.create(name="Hayward", postal_code="94541", state=state))
-        Place.objects.create(content_type=ContentType.objects.get_for_model(Folk), object_id=str(folk.id),
-                             address=former, organization=self.organization, finish=(self.now - timedelta(days=30)).date())
+        Place.objects.create(folk=folk, address=former, organization=self.organization, finish=(self.now - timedelta(days=30)).date())
         self.organization.infos = {"settings": {"default_visitor_meet": self.meet.id}}
         self.organization.save()
         self.user.organization.refresh_from_db()

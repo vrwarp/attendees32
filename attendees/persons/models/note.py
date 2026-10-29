@@ -2,8 +2,6 @@ from uuid import uuid4
 import pghistory
 from django.contrib.contenttypes.fields import GenericForeignKey
 from django.contrib.contenttypes.models import ContentType
-# from django.contrib.postgres.fields.jsonb import JSONField
-from django.contrib.postgres.indexes import GinIndex
 import django.utils.timezone
 import model_utils.fields
 from django.db import models
@@ -56,10 +54,6 @@ class Note(Confidential, TimeStampedModel, SoftDeletableModel):
                 fields=["content_type", "object_id"],
                 condition=models.Q(is_removed=False),
                 name="note_content_objects",
-            ),
-            GinIndex(
-                fields=["infos"],
-                name="note_infos_gin",
             ),
         ]
 

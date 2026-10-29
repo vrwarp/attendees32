@@ -1,6 +1,5 @@
 import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
-from django.contrib.postgres.indexes import GinIndex
 from django.db import models
 import django.utils.timezone
 from django.urls import reverse
@@ -39,7 +38,6 @@ class Room(TimeStampedModel, SoftDeletableModel, Utility):
 
     class Meta:
         db_table = "whereabouts_rooms"
-        indexes = [GinIndex(fields=["infos"], name="room_infos_gin", ),]
 
     def get_absolute_url(self):
         return reverse("room_detail", args=[str(self.id)])

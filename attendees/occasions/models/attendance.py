@@ -1,7 +1,5 @@
 import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
-# from django.contrib.postgres.fields.jsonb import JSONField
-from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
@@ -106,12 +104,6 @@ class Attendance(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
                 condition=models.Q(is_removed=False),
                 name="gathering_attending_character_team_start",
             )
-        ]
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="attendance_infos_gin",
-            ),
         ]
 
     def __str__(self):

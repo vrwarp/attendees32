@@ -49,9 +49,7 @@ class ApiAttendeeFolksViewsSet(viewsets.ModelViewSet):
 
         places_prefetch = Prefetch(
             "places",
-            queryset=Place.objects.filter(is_removed=False).select_related(
-                "content_type", "address__locality__state"
-            ),
+            queryset=Place.objects.filter(is_removed=False).select_related("address__locality__state"),
         )
 
         if current_user.privileged_to_edit(attendee and attendee.id):
