@@ -124,6 +124,34 @@ class TestFolkService:
         self.folk.refresh_from_db()
         assert self.folk.display_name is not None
 
+    def test_participation_report_carries_each_attendees_enrollment_notes(self):
+        now = datetime.datetime.now(datetime.timezone.utc)
+        fam_category, _ = Category.objects.get_or_create(id=0, defaults={"display_name": "FamilyCat"})
+        assembly = Assembly.objects.create(display_name="Test Assembly 3", slug="test-assembly-3", division=self.division, category=fam_category)
+        meet = Meet.objects.create(assembly=assembly, display_name="Noted Meet", slug="noted-meet", site_type_id=1, site_id=1,
+                                   start=now, finish=now + datetime.timedelta(days=365))
+        character = Character.objects.create(assembly=assembly, display_name="Noted Character", slug="noted-char")
+        noted = Attendee.objects.create(first_name="Noted", last_name="Fam", division=self.division, gender="female")
+        quiet = Attendee.objects.create(first_name="Quiet", last_name="Fam", division=self.division, gender="male")
+        for who, notes in ((noted, ["needs a ride", "allergic to nuts"]), (quiet, [None])):
+            attending = Attending.objects.create(attendee=who, category=fam_category)
+            for note in notes:
+                AttendingMeet.objects.create(attending=attending, meet=meet, character=character, category=self.category,
+                                             start=now, finish=now + datetime.timedelta(days=365), infos={"note": note} if note else {})
+        folk = Folk.objects.create(division=self.division, category=fam_category, display_name="Noted family")
+        for who in (noted, quiet):
+            FolkAttendee.objects.create(folk=folk, attendee=who, role=self.relation, display_order=1)
+
+        families = list(FolkService.families_in_participations(
+            meet_slug="noted-meet", user_organization=self.organization, show_paused=True, division_slugs=[self.division.slug],
+        ))
+
+        assert len(families) == 1
+        members = families[0]["families"]
+        assert members[noted.id]["attendingmeet_note"] == "allergic to nutsneeds a ride", "distinct notes, alphabetically, joined as before"
+        assert members[quiet.id]["attendingmeet_note"] == ""
+        assert FolkService.enrollment_notes(meet, {noted.id, quiet.id}) == {noted.id: ["allergic to nuts", "needs a ride"]}
+
     def test_families_in_participations_with_removed_folkattendee(self):
 
         now = datetime.datetime.now(datetime.timezone.utc)

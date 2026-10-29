@@ -29,12 +29,6 @@ attendees/whereabouts/models/room.py:postgres-import
 # ArrayField on Relation.reciprocal_ids, a many-to-many after Phase 4.
 attendees/persons/models/relation.py:postgres-import
 
-# Postgres aggregates building datagrid rows, plain queries and serializers after Phase 3.
-attendees/occasions/services/attendance_service.py:postgres-import
-attendees/persons/services/attendee_service.py:postgres-import
-attendees/persons/services/folk_service.py:postgres-import
-attendees/persons/views/api/datagrid_data_attendee.py:postgres-import
-
 # PostGIS distance and bearing, computed in Python after Phase 7.
 attendees/whereabouts/services/coordinates_service.py:RawSQL
 

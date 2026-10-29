@@ -1,9 +1,5 @@
 import time, pytz
 from django.conf import settings
-from django.contrib.postgres.aggregates.general import JSONBAgg
-from django.db.models import Func, Value
-from django.db.models.expressions import F
-from django.db.models.functions import Concat, Trim
 from django.shortcuts import get_object_or_404
 from rest_framework import status
 from rest_framework.decorators import action
@@ -63,22 +59,6 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
     serializer_class = AttendeeMinimalSerializer
     # queryset = Attendee.objects.all()
 
-    # def retrieve(self, request, *args, **kwargs):
-    #     attendee_id = self.kwargs.get('pk')
-    #     attendee =  Attendee.objects.annotate(
-    #                 attendingmeets=JSONBAgg(
-    #                     Func(
-    #                         Value('attendingmeet_id'), 'attendings__attendingmeet__id',
-    #                         Value('attending_finish'), 'attendings__attendingmeet__finish',
-    #                         Value('attending_start'), 'attendings__attendingmeet__start',
-    #                         Value('meet_name'), 'attendings__meets__display_name',
-    #                         function='jsonb_build_object'
-    #                     ),
-    #                 ),
-    #                 # contacts=ArrayAgg('attendings__meets__slug', distinct=True),
-    #            ).filter(pk=attendee_id)
-    #     serializer = AttendeeMinimalSerializer(attendee)
-    #     return Response(serializer.data)
 
     def retrieve(self, request, *args, **kwargs):
         """A merge tombstone answers 410; everything else, a plain deletion
@@ -182,10 +162,15 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
 
         return Response({"restored": str(duplicate.pk)}, status=status.HTTP_200_OK)
 
+    def get_object(self):
+        """The attendee with the two columns the attendee page reads beside its fields: the
+        organization's slug and its attendings, built by AttendeeService.attach_attendings()."""
+        attendee = super().get_object()
+        attendee.organization_slug = attendee.division.organization.slug
+        return AttendeeService.attach_attendings(attendee)
+
     def get_queryset(self):
         """
-        attendingmeets annotation is used by datagrid_assembly_data_attendees.js & datagrid_attendee_update_view.js
-
         Todo 20210704 rewrite following in DRF nested serializer to avoid manual screening of is_removed
         :return:
         """
@@ -196,40 +181,7 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
         querying_term = self.request.query_params.get("searchValue")
 
         if querying_attendee_id:
-            qs = Attendee.all_objects.annotate(
-                organization_slug=F("division__organization__slug"),
-                attendingmeets=JSONBAgg(
-                    Func(
-                        Value("attending_id"),
-                        "attendings__id",
-                        Value("attending_is_removed"),
-                        "attendings__is_removed",
-                        Value("registration_assembly"),
-                        "attendings__registration__assembly__display_name",
-                        Value("registrant"),
-                        Trim(
-                            Concat(
-                                Trim(
-                                    Concat(
-                                        "attendings__registration__registrant__first_name",
-                                        Value(" "),
-                                        "attendings__registration__registrant__last_name",
-                                    )
-                                ),
-                                Value(" "),
-                                Trim(
-                                    Concat(
-                                        "attendings__registration__registrant__last_name2",
-                                        "attendings__registration__registrant__first_name2",
-                                    )
-                                ),
-                            )
-                        ),
-                        function="jsonb_build_object",
-                    ),
-                ),
-                # contacts=ArrayAgg('attendings__meets__slug', distinct=True),
-            ).filter(
+            qs = Attendee.all_objects.select_related("division__organization").filter(
                 division__organization=current_user.organization,
                 pk=querying_attendee_id,
             )

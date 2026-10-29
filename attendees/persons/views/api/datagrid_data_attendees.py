@@ -2,6 +2,7 @@ import json
 
 from django.contrib.auth.decorators import login_required
 from django.utils.decorators import method_decorator
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet
 
 from attendees.persons.serializers import AttendeeMinimalSerializer
@@ -37,6 +38,18 @@ class ApiDatagridDataAttendeesViewSet(ModelViewSet):  # from GenericAPIView
             filters_list=json.loads(filters_list_string),
             include_dead=include_dead,
         )  # Datagrid can't send array in standard url params since filters can be dynamic nested arrays
+
+    def list(self, request, *args, **kwargs):
+        """The page's attendingmeets, folkcities and visitor_since columns are built in Python
+        once the page is known, so a page costs three queries however it is sorted."""
+        queryset = self.filter_queryset(self.get_queryset())
+        page = self.paginate_queryset(queryset)
+        rows = page if page is not None else list(queryset)
+        AttendeeService.attach_grid_columns(rows, request.user)
+        serializer = self.get_serializer(rows, many=True)
+        if page is not None:
+            return self.get_paginated_response(serializer.data)
+        return Response(serializer.data)
 
 
 api_datagrid_data_attendees_viewset = ApiDatagridDataAttendeesViewSet
