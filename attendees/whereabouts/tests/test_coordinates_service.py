@@ -228,7 +228,7 @@ class TestCoordinatesService:
         assert list(neighbors) == []
 
     def test_get_nearest_neighbors_success(self, address_setup):
-        """Test get_nearest_neighbors successfully calculates distance and orders results using real PostGIS queries."""
+        """Test get_nearest_neighbors computes distances in Python and orders the results by them."""
         folk_category, _ = Category.objects.get_or_create(id=0, defaults={"type": "folk", "display_name": "folk"})
         attending_category, _ = Category.objects.get_or_create(id=25, defaults={"type": "attending", "display_name": "attending"})
         Relation.objects.get_or_create(id=0, defaults={"title": "self", "gender": "unspecified"})
@@ -283,7 +283,7 @@ class TestCoordinatesService:
         assert target == target_place
         assert len(neighbors) == 2
         
-        # Because we're using real PostGIS calculations now, Oakland should be index 0, San Jose index 1
+        # Oakland is nearer than San Jose
         assert neighbors[0].id == neighbor_oakland.id
         assert neighbors[1].id == neighbor_sj.id
         

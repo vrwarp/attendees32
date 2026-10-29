@@ -7,8 +7,8 @@ from address.models import Address
 from attendees.persons.models import Attendee, AttendingMeet, FolkAttendee, Utility
 from django.db.models import Q
 
-from django.db.models.expressions import RawSQL
 from attendees.whereabouts.models import Place
+from attendees.whereabouts.services import geo
 
 logger = logging.getLogger(__name__)
 
@@ -44,27 +44,10 @@ class CoordinatesService:
         target_lat = target_place.address.latitude
         target_lon = target_place.address.longitude
 
-        distance_sql = """
-            ST_DistanceSphere(
-                ST_MakePoint(address_address.longitude, address_address.latitude),
-                ST_MakePoint(%s, %s)
-            ) * 0.000621371
-        """
-
-        azimuth_sql = """
-            ST_Azimuth(
-                ST_MakePoint(%s, %s),
-                ST_MakePoint(address_address.longitude, address_address.latitude)
-            )
-        """
-
         neighbors = Place.objects.select_related('address').filter(
             organization=user_organization,
             address__latitude__isnull=False,
             address__longitude__isnull=False,
-        ).annotate(
-            distance_miles=RawSQL(distance_sql, (target_lon, target_lat)),
-            azimuth=RawSQL(azimuth_sql, (target_lon, target_lat))
         ).exclude(
             id=target_place.id
         )
@@ -122,69 +105,109 @@ class CoordinatesService:
 
             neighbors = neighbors.filter(Q(attendee_id__in=active_attendee_ids) | Q(folk_id__in=valid_folk_ids))
 
-        ordered_places = list(neighbors.order_by('distance_miles'))
+        def expand(ordered_places):
+            """The places as rows of the answer: a household's place once per member who counts."""
+            attendee_object_ids = [str(p.attendee_id) for p in ordered_places if p.attendee_id]
+            folk_object_ids = [str(p.folk_id) for p in ordered_places if p.folk_id]
 
-        attendee_object_ids = [str(p.attendee_id) for p in ordered_places if p.attendee_id]
-        folk_object_ids = [str(p.folk_id) for p in ordered_places if p.folk_id]
+            attendees_map = {}
+            if attendee_object_ids:
+                att_qs = Attendee.objects.select_related('division').filter(
+                    id__in=attendee_object_ids,
+                    is_removed=False,
+                    deathday__isnull=True,
+                )
+                if excluded_attendee_ids:
+                    att_qs = att_qs.exclude(id__in=excluded_attendee_ids)
 
-        attendees_map = {}
-        if attendee_object_ids:
-            att_qs = Attendee.objects.select_related('division').filter(
-                id__in=attendee_object_ids,
-                is_removed=False,
-                deathday__isnull=True,
-            )
-            if excluded_attendee_ids:
-                att_qs = att_qs.exclude(id__in=excluded_attendee_ids)
+                for att in att_qs:
+                    acronym = att.division.infos.get('acronym', '') if att.division and isinstance(att.division.infos, dict) else ''
+                    name_orig = att.infos.get('names', {}).get('original', '') if isinstance(att.infos, dict) else ''
+                    attendees_map[str(att.id)] = f"{acronym} {name_orig}".strip()
 
-            for att in att_qs:
-                acronym = att.division.infos.get('acronym', '') if att.division and isinstance(att.division.infos, dict) else ''
-                name_orig = att.infos.get('names', {}).get('original', '') if isinstance(att.infos, dict) else ''
-                attendees_map[str(att.id)] = f"{acronym} {name_orig}".strip()
+            folk_attendees_map = {}
+            if folk_object_ids:
+                fa_query = FolkAttendee.objects.select_related('attendee', 'attendee__division').filter(
+                    Q(finish__isnull=True) | Q(finish__gte=now_date),
+                    folk_id__in=folk_object_ids,
+                    is_removed=False,
+                    folk__is_removed=False,
+                    attendee__is_removed=False,
+                    attendee__deathday__isnull=True,
+                ).order_by('display_order')
 
-        folk_attendees_map = {}
-        if folk_object_ids:
-            fa_query = FolkAttendee.objects.select_related('attendee', 'attendee__division').filter(
-                Q(finish__isnull=True) | Q(finish__gte=now_date),
-                folk_id__in=folk_object_ids,
-                is_removed=False,
-                folk__is_removed=False,
-                attendee__is_removed=False,
-                attendee__deathday__isnull=True,
-            ).order_by('display_order')
+                if active_attendee_ids is not None:
+                    fa_query = fa_query.filter(attendee_id__in=active_attendee_ids)
+                elif excluded_attendee_ids:
+                    fa_query = fa_query.exclude(attendee_id__in=excluded_attendee_ids)
 
-            if active_attendee_ids is not None:
-                fa_query = fa_query.filter(attendee_id__in=active_attendee_ids)
-            elif excluded_attendee_ids:
-                fa_query = fa_query.exclude(attendee_id__in=excluded_attendee_ids)
+                for fa in fa_query:
+                    att = fa.attendee
+                    acronym = att.division.infos.get('acronym', '') if att.division and isinstance(att.division.infos, dict) else ''
+                    name_orig = att.infos.get('names', {}).get('original', '') if isinstance(att.infos, dict) else ''
+                    display_name = f"{acronym} {name_orig}".strip()
+                    folk_attendees_map.setdefault(str(fa.folk_id), []).append((str(att.id), display_name))
 
-            for fa in fa_query:
-                att = fa.attendee
-                acronym = att.division.infos.get('acronym', '') if att.division and isinstance(att.division.infos, dict) else ''
-                name_orig = att.infos.get('names', {}).get('original', '') if isinstance(att.infos, dict) else ''
-                display_name = f"{acronym} {name_orig}".strip()
-                folk_attendees_map.setdefault(str(fa.folk_id), []).append((str(att.id), display_name))
+            expanded_list = []
+            active_attendee_str_ids = {str(aid) for aid in active_attendee_ids} if active_attendee_ids is not None else None
 
-        expanded_list = []
-        active_attendee_str_ids = {str(aid) for aid in active_attendee_ids} if active_attendee_ids is not None else None
+            for p in ordered_places:
+                if p.attendee_id:
+                    obj_id_str = str(p.attendee_id)
+                    if obj_id_str in attendees_map:
+                        if active_attendee_str_ids is None or obj_id_str in active_attendee_str_ids:
+                            p.target_attendee_id = obj_id_str
+                            p.target_attendee_name = attendees_map[obj_id_str]
+                            expanded_list.append(p)
+                elif p.folk_id:
+                    fa_list = folk_attendees_map.get(str(p.folk_id), [])
+                    for att_id_str, att_name in fa_list:
+                        cloned_p = copy.copy(p)
+                        cloned_p.target_attendee_id = att_id_str
+                        cloned_p.target_attendee_name = att_name
+                        expanded_list.append(cloned_p)
 
-        for p in ordered_places:
-            if p.attendee_id:
-                obj_id_str = str(p.attendee_id)
-                if obj_id_str in attendees_map:
-                    if active_attendee_str_ids is None or obj_id_str in active_attendee_str_ids:
-                        p.target_attendee_id = obj_id_str
-                        p.target_attendee_name = attendees_map[obj_id_str]
-                        expanded_list.append(p)
-            elif p.folk_id:
-                fa_list = folk_attendees_map.get(str(p.folk_id), [])
-                for att_id_str, att_name in fa_list:
-                    cloned_p = copy.copy(p)
-                    cloned_p.target_attendee_id = att_id_str
-                    cloned_p.target_attendee_name = att_name
-                    expanded_list.append(cloned_p)
+            return expanded_list
 
+        wanted = skip + take
+        candidates, complete = CoordinatesService.nearest(neighbors, target_lat, target_lon, wanted)
+        expanded_list = expand(candidates)
+        if len(expanded_list) < wanted and not complete:
+            # The box held fewer rows that count than a page asks for: take every place.
+            expanded_list = expand(CoordinatesService.nearest(neighbors, target_lat, target_lon, None)[0])
         return target_place, expanded_list[skip : skip + take]
+
+    FIRST_RADIUS_MILES = 10
+    LAST_RADIUS_MILES = 2500
+
+    @staticmethod
+    def nearest(places, latitude, longitude, wanted):
+        """``places`` with ``distance_miles`` and ``azimuth`` set, nearest first.
+
+        Candidates come from a bounding box on the indexed coordinates,
+        widened until it holds ``wanted`` places whose distance is within
+        the box's radius (so nothing nearer was left outside it), or until
+        it is the whole table; ``wanted`` of ``None`` takes every place.
+        Returns the list and whether it is every place there is.
+        """
+        radius = CoordinatesService.FIRST_RADIUS_MILES if wanted else None
+        while True:
+            box = geo.bounding_box(latitude, longitude, radius) if radius else None
+            if box is None:
+                candidates = list(places)
+            else:
+                candidates = list(
+                    places.filter(address__latitude__range=(box.south, box.north), address__longitude__range=(box.west, box.east))
+                )
+            for place in candidates:
+                place.distance_miles = geo.haversine_miles(latitude, longitude, place.address.latitude, place.address.longitude)
+                place.azimuth = geo.bearing_radians(latitude, longitude, place.address.latitude, place.address.longitude)
+            candidates.sort(key=lambda place: (place.distance_miles, str(place.pk)))
+            if box is None:
+                return candidates, True
+            if len(candidates) >= wanted and candidates[wanted - 1].distance_miles <= radius:
+                return candidates, False
+            radius = radius * 4 if radius < CoordinatesService.LAST_RADIUS_MILES else None
 
     @staticmethod
     def geocode_address(address_id, return_details=False):

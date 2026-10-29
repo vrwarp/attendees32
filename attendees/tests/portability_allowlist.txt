@@ -1,7 +1,5 @@
 # Vendor-specific database code that application code still contains, as path:construct.
 # Checked by attendees/tests/test_portability_lint.py. Each entry is removed by the phase of
 # the portability plan named beside it; an entry that no longer matches fails the suite.
-
-# PostGIS distance and bearing, computed in Python after Phase 7.
-attendees/whereabouts/services/coordinates_service.py:RawSQL
-
+#
+# Nothing remains: Phase 7 moved the last one, the PostGIS distance and bearing, into Python.
