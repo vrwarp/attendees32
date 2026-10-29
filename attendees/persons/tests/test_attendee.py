@@ -83,8 +83,8 @@ class TestAttendee:
         attendee.refresh_from_db()
         assert attendee.infos["fixed"] == {"grade": 9}
         assert attendee.infos["names"]["original"] == "Jane Doe"
-        assert attendee.infos["schedulers"] == {}
-        assert attendee.infos["emergency_contacts"] == {}
+        assert attendee.infos["contacts"] == {}
+        assert attendee.infos["updating_attendees"] == {}
 
     def test_a_null_infos_becomes_the_default(self):
         attendee = Attendee.objects.create(

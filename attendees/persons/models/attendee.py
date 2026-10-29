@@ -23,6 +23,7 @@ from unidecode import unidecode
 from attendees.utils.search_text import ATTENDEE_SEARCHED_SECTIONS, attendee_full_name
 
 from . import GenderEnum, Note, Searchable, Utility
+from .attendee_links import AttendeeScheduler
 
 
 class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
@@ -100,6 +101,24 @@ class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
         default=Utility.attendee_infos,
         help_text='Example: {"fixed": {"food_pref": "peanut allergy", "nick_name": "John"}}.'
                   'Please keep {} here even no data',
+    )
+    schedulers = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        through="persons.AttendeeScheduler",
+        through_fields=("attendee", "scheduler"),
+        related_name="scheduling",
+        blank=True,
+        help_text="who may see and change this person's activities: a parent for a child, a guardian for a ward",
+    )
+    emergency_contacts = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        through="persons.AttendeeEmergencyContact",
+        through_fields=("attendee", "contact"),
+        related_name="emergency_contact_for",
+        blank=True,
+        help_text="who to call about this person in an emergency",
     )
 
     @property
@@ -217,16 +236,7 @@ class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
         )
 
     def get_relative_emergency_contacts(self):
-        return self.__class__.objects.filter(
-            pk__in=[
-                k for (k, v) in self.infos.get("emergency_contacts", {}).items() if v
-            ]
-        )
-        # self.related_ones.filter(
-        #     to_attendee__relation__relative=True,
-        #     to_attendee__relation__emergency_contact=True,
-        #     to_attendee__finish__gte=datetime.now(timezone.utc),
-        # )
+        return self.emergency_contacts.all()
 
     def under_same_org_with(self, other_attendee_id):
         if other_attendee_id:
@@ -236,48 +246,24 @@ class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
         return False
 
     def can_be_scheduled_by(self, other_attendee_id):
-        if str(self.id) == other_attendee_id:
+        if str(self.id) == str(other_attendee_id):
             return True
-        return Attendee.objects.filter(
-            pk=self.id, infos__schedulers__contains={other_attendee_id: True}
-        ).exists()
+        return self.schedulers.filter(pk=other_attendee_id).exists()
 
     def can_schedule_attendee(self, other_attendee_id):
-        if str(self.id) == other_attendee_id:
+        if str(self.id) == str(other_attendee_id):
             return True
-        return Attendee.objects.filter(
-            pk=other_attendee_id, infos__schedulers__contains={str(self.id): True}
-        ).exists()
-        # self.__class__.objects.filter(
-        #     (Q(from_attendee__finish__isnull=True) | Q(from_attendee__finish__gt=Utility.now_with_timezone())),
-        #     from_attendee__to_attendee__id=self.id,
-        #     from_attendee__from_attendee__id=other_attendee_id,
-        #     from_attendee__scheduler=True,
-        #     from_attendee__is_removed=False,
-        # ).exists()
+        return self.scheduling.filter(pk=other_attendee_id).exists()
 
     def scheduling_attendees(self, include_self=True):
-        """
-        :return: all attendees that can be scheduled by the attendee. For example, if a kid specified its
-        parent by "scheduler" is true in its infos__schedulers, when calling parent_attendee.scheduling_attendees(),
-        the kid will be returned, means the parent can change/see schedule of the kid.
-        """
-        filters = Q(infos__schedulers__contains={str(self.id): True})
-
+        """The attendees this one may see and change the schedule of: those who list this
+        attendee as a scheduler (a child its parent), and the attendee itself unless told not to.
+        A subquery rather than a join, so nobody comes out twice."""
+        scheduled = AttendeeScheduler.objects.filter(scheduler=self).values("attendee_id")
+        filters = Q(pk__in=scheduled)
         if include_self:
-            filters.add(Q(id=self.id), Q.OR)
-
+            filters |= Q(pk=self.pk)
         return self.__class__.objects.filter(filters)
-        # self.__class__.objects.filter(
-        #     Q(id=self.id)
-        #     |
-        #     Q(
-        #         (Q(from_attendee__finish__isnull=True) | Q(from_attendee__finish__gt=Utility.now_with_timezone())),
-        #         from_attendee__to_attendee__id=self.id,
-        #         from_attendee__scheduler=True,
-        #         from_attendee__is_removed=False,
-        #     )
-        # ).distinct()
 
     @cached_property
     def parents_notifiers_names(self):
@@ -342,10 +328,10 @@ class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
 
     def save(self, *args, **kwargs):
         self.estimated_birthday = Utility.presence(self.estimated_birthday)
-        # Every section of infos is read somewhere (names below, schedulers and
-        # emergency_contacts in AttendeeService), so an infos that arrived
-        # without some of them, or as null, is completed here rather than
-        # failing in each of those places.
+        # Every section of infos is read somewhere (names below, contacts and
+        # fixed by the search text), so an infos that arrived without some of
+        # them, or as null, is completed here rather than failing in each of
+        # those places.
         infos = self.infos if self.infos is not None else {}
         for section, default in Utility.attendee_infos().items():
             infos.setdefault(section, default)

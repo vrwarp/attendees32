@@ -10,23 +10,19 @@ import django.utils.timezone
 import model_utils.fields
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
-from . import Utility  # , Note
+from . import Confidential, Utility  # , Note
 
 
-class Past(TimeStampedModel, SoftDeletableModel, Utility):
-    """
-    Model to store Note/Status/Education, etc. Need to implement audience permissions. For example,
-    coworker A wrote some notes of user B, however these notes may/should not be shared with user B.
-    One potential way is to have infos similar to infos__show_secret__all_counselors_: True
-    infos__show_secret__ATTENDEE: True so whoever can access to attendee, including user B, can see it
-    infos__show_secret__COWORKER or ORGANIZER: True so only coworker/organizer, not user B, can see it
+class Past(Confidential, TimeStampedModel, SoftDeletableModel, Utility):
+    """A note, status or education entry about a subject, usually an attendee.
+
+    Who may read one is decided twice: by its category (a counseling note is for counselors, a
+    coworker note for coworkers and counselors, the rest for anyone who may open the subject) and,
+    within that, by ``Confidential``: a past with viewers is seen by those viewers only.
     """
 
     COUNSELING = "counseling"  # for private data, and only assigned counselors
     COWORKER = "coworker"  # for data of limited access for coworker & counselors
-    ALL_COUNSELORS = (
-        "all_counselors_"  # for private data, but accessible to all counselors
-    )
     # notes = GenericRelation(Note)
     id = models.UUIDField(default=uuid4, editable=False, primary_key=True, serialize=False)
     content_type = models.ForeignKey(
@@ -54,9 +50,8 @@ class Past(TimeStampedModel, SoftDeletableModel, Utility):
         null=True,
         blank=True,
         default=Utility.relationship_infos,
-        help_text=('Example: {"show_secret": {"attendee1id": true, "attendee2id": false}}.'
-                   'Please keep {} here even no data',)
-    )  # compare to NoteAdmin
+        help_text='Example: {"comment": "..."}. Please keep {} here even no data',
+    )
 
     class Meta:
         db_table = "persons_pasts"
@@ -100,7 +95,7 @@ class PastsHistory(pghistory.get_event_model(
     id = models.UUIDField(db_index=True, default=uuid4, editable=False, serialize=False)
     object_id = models.CharField(max_length=36)
     display_order = models.SmallIntegerField(default=30000)
-    infos = models.JSONField(blank=True, default=Utility.relationship_infos, help_text=('Example: {"show_secret": {"attendee1id": true, "attendee2id": false}}.Please keep {} here even no data',), null=True)
+    infos = models.JSONField(blank=True, default=Utility.relationship_infos, help_text='Example: {"comment": "..."}. Please keep {} here even no data', null=True)
     category = models.ForeignKey(db_constraint=False, help_text="subtype: for education it's primary/high/college sub-types etc", on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.category')
     content_type = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='contenttypes.contenttype')
     organization = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.organization')

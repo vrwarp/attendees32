@@ -9,14 +9,11 @@ import model_utils.fields
 from django.db import models
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
-from attendees.persons.models import Utility
+from attendees.persons.models import Confidential, Utility
 
 
-class Note(TimeStampedModel, SoftDeletableModel):
+class Note(Confidential, TimeStampedModel, SoftDeletableModel):
     COUNSELING = "counseling"  # for private data, and only assigned counselors
-    ALL_COUNSELORS = (
-        "all_counselors_"  # for private data, but accessible to all counselors
-    )
 
     id = models.UUIDField(default=uuid4, editable=False, primary_key=True, serialize=False)
     content_type = models.ForeignKey(ContentType, on_delete=models.SET(0))

@@ -177,9 +177,7 @@ class Utility:
                 "mobility": 2,
             },  # also for food_pref and grade, etc
             "contacts": {},
-            "emergency_contacts": {},
             "progressions": {},
-            "schedulers": {},
             "updating_attendees": {},
         }
 
@@ -192,8 +190,6 @@ class Utility:
     @staticmethod
     def meet_infos():
         return {
-            'allowed_models': ['gathering', 'attendingmeet', 'attendance', 'eventrelation'],  # suppress believe/baptize meets shows up in attendances, etc.
-            'allowed_groups': [],
             'default_attendingmeet_in_weeks': 99999,  # 1886 years, for setting new attendingmeet's finish
             "automatic_creation": {
               "Gathering": True,
@@ -207,7 +203,6 @@ class Utility:
     @staticmethod
     def relationship_infos():
         return {
-            "show_secret": {},
             "updating_attendees": {},
             "comment": None,
             "body": None,

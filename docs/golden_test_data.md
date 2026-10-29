@@ -84,10 +84,10 @@ Names (romanised, Han, and the derived `infos.names` in both scripts, because
 year-and-month and unknown birthdays · death dates · grade and insurer for
 minors · food preferences, medical notes, mobility, nicknames · one or two
 phone numbers and email addresses, or none at all · emergency contacts and
-schedulers, by attendee id · baptism, believer, member, visitor, catechumen,
-interested, disbeliever, coworker and deacon statuses as `Past` rows ·
-education history · public, coworker and counseling notes, the confidential
-ones addressed to one reader through `infos.show_secret`.
+schedulers, as links to other attendees · baptism, believer, member, visitor,
+catechumen, interested, disbeliever, coworker and deacon statuses as `Past`
+rows · education history · public, coworker and counseling notes, the
+confidential ones addressed to one reader as that note's only viewer.
 
 Participations cover Sunday worship in both languages, the choir by section,
 adult Sunday school, all twelve Chinese fellowships, the children's programme

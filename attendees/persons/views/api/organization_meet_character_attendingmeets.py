@@ -120,7 +120,9 @@ class ApiOrganizationMeetCharacterAttendingMeetsViewSet(viewsets.ModelViewSet):
         instance.attending.attendee.save(update_fields=['modified'])
 
     def perform_destroy(self, instance):
-        allowed_groups = [group for group in instance.meet.infos.get('allowed_groups', []) if group != "organization_participant"]  # intentionally forbid user to delete him/herself
+        allowed_groups = list(
+            instance.meet.allowed_groups.exclude(name="organization_participant").values_list("name", flat=True)
+        )  # intentionally forbid user to delete him/herself
         if self.request.user.belongs_to_groups_of(allowed_groups):
             Attendance.objects.filter(
                 gathering__meet=instance.meet,

@@ -6,8 +6,6 @@ Attendees.datagridUpdate = {
       fixed: {mobility: 2},
       progressions: {},
       contacts: {},
-      emergency_contacts: {},
-      schedulers: {},
       updating_attendees: {}
     }
   },
@@ -799,7 +797,7 @@ Attendees.datagridUpdate = {
                 dataFieldAndOpts: {
                   category: {},
                   display_name: {},
-                  'infos.show_secret': {},
+                  'secret': {},
                   'infos.comment': {},
                   when: {caption: 'Start'},
                   finish: {},
@@ -831,7 +829,7 @@ Attendees.datagridUpdate = {
                 dataFieldAndOpts: {
                   category: {},
                   display_name: {},
-                  'infos.show_secret': {},
+                  'secret': {},
                   'infos.comment': {},
                   when: {},
                 },
@@ -862,7 +860,7 @@ Attendees.datagridUpdate = {
                 dataFieldAndOpts: {
                   category: {},
                   display_name: {caption: 'Title'},
-                  'infos.show_secret': {},
+                  'secret': {},
                   'infos.comment': {},
                   when: {},
                 },
@@ -2848,8 +2846,8 @@ Attendees.datagridUpdate = {
 
   getFolkAttendeeDatagridConfig: (categoryId, displayName) => {
     const columnsToShow = {
-      0: new Set(['folk.id', 'role', 'attendee', 'display_order', 'schedulers', 'emergency_contacts', 'infos.show_secret', 'start', 'finish', 'infos.comment']),
-      25: new Set(['folk.id', 'attendee', 'role', 'display_order', 'infos.show_secret', 'start', 'finish', 'infos.comment', 'file', 'file_path']),
+      0: new Set(['folk.id', 'role', 'attendee', 'display_order', 'schedulers', 'emergency_contacts', 'secret', 'start', 'finish', 'infos.comment']),
+      25: new Set(['folk.id', 'attendee', 'role', 'display_order', 'secret', 'start', 'finish', 'infos.comment', 'file', 'file_path']),
     };
 
     const originalColumns = [
@@ -2993,44 +2991,20 @@ Attendees.datagridUpdate = {
         dataHtmlTitle: "Who can see/update main attendee's activities",
         dataField: 'schedulers',
         caption: 'Scheduler',
-        calculateCellValue: (rowData) => {
-          const attendeeData = Attendees.datagridUpdate.attendeeFormConfigs && Attendees.datagridUpdate.attendeeFormConfigs.formData;
-          if (attendeeData && attendeeData.infos) {
-            const schedulers = attendeeData.infos.schedulers;
-            return !!(schedulers && schedulers[rowData.attendee]);
-          } else {
-            return false;
-          }
-        },
+        calculateCellValue: (rowData) => Attendees.datagridUpdate.mainAttendeeLinks('schedulers').includes(rowData.attendee),
       },
       {
         dataField: 'emergency_contacts',
         dataHtmlTitle: 'Who should be notified if main attendee is in emergency',
         caption: 'Emergency contact',
-        calculateCellValue: (rowData) => {
-          const attendeeData = Attendees.datagridUpdate.attendeeFormConfigs && Attendees.datagridUpdate.attendeeFormConfigs.formData;
-          if (attendeeData && attendeeData.infos) {
-            const emergency_contacts = attendeeData.infos.emergency_contacts;
-            return !!(emergency_contacts && emergency_contacts[rowData.attendee]);
-          } else {
-            return false;
-          }
-        },
+        calculateCellValue: (rowData) => Attendees.datagridUpdate.mainAttendeeLinks('emergency_contacts').includes(rowData.attendee),
       },
       {
         apiUrlName: 'api_attendee_folkattendee_secret_column',
         dataHtmlTitle: 'Only you, not other users, can see this relationship',
         caption: 'Secret?',
         dataType: 'boolean',
-        dataField: 'infos.show_secret',
-        calculateCellValue: (rowData) => {
-          if (rowData.infos) {
-            const showSecret = rowData.infos.show_secret;
-            return !!(showSecret && showSecret[Attendees.utilities.userAttendeeId]);
-          } else {
-            return false;
-          }
-        },
+        dataField: 'secret',  // true when the reader is among the row's viewers; the server keeps the list
       },
       {
         dataField: 'infos.comment',
@@ -3339,42 +3313,21 @@ Attendees.datagridUpdate = {
              Attendees.datagridUpdate.folkAttendeeInfos['comment'] = args.value;
           };  // Somehow update works but create doesn't work unless set specifically.
         }
-        if (e.parentType === 'dataRow' && e.dataField === 'infos.show_secret') {
-          const defaultValueChangeHandler = e.editorOptions.onValueChanged;
-          e.editorOptions.onValueChanged = (args) => {
-             e.setValue(args.value);
-             Attendees.datagridUpdate.folkAttendeeInfos['show_secret'] = args.value;
-          };  // Somehow update works but create doesn't work unless set specifically.
-        }
       },
       onRowInserted: (e) => {
         e.component.refresh();  // for attendee names to show instead of attendee id.
       },  // because api/datagrid_data_familyattendees doesn't have rowData.displayValue for calculateDisplayValue of new attendee
       onRowInserting: (rowData) => {
-        const infos = {show_secret: {}, updating_attendees: {}, comment: Attendees.datagridUpdate.folkAttendeeInfos.comment, body: null};
-        if (rowData.data.infos && Attendees.datagridUpdate.folkAttendeeInfos.show_secret) {
-          infos.show_secret[Attendees.utilities.userAttendeeId] = true;
-        }
-        rowData.data.infos = infos;
+        rowData.data.infos = {updating_attendees: {}, comment: Attendees.datagridUpdate.folkAttendeeInfos.comment, body: null};
         Attendees.datagridUpdate.alterSchedulersAndEmergencyContacts(rowData.data.attendee, rowData.data, false);
       },
       onRowRemoving: (rowData) => {
-        Attendees.datagridUpdate.alterSchedulersAndEmergencyContacts(rowData.data.attendee, Attendees.datagridUpdate.attendeeMainDxForm.option('formData.infos'), true);
+        Attendees.datagridUpdate.alterSchedulersAndEmergencyContacts(rowData.data.attendee, {schedulers: false, emergency_contacts: false}, true);
       },
       onRowUpdating: (rowData) => { // Todo 20221128: now value arrives at the same time from popup editor!!  Before: checking box will arrive one at a time, never multiple fields simultaneously
         if (rowData.newData.infos) {
-          if ('show_secret' in rowData.newData.infos) { // value could be intentionally false to prevent someone seeing it
-            const showSecret = rowData.oldData.infos.show_secret || {};
-            const isItSecretWithCurrentUser = rowData.newData.infos.show_secret;
-            if (isItSecretWithCurrentUser) {
-              showSecret[Attendees.utilities.userAttendeeId] = true;
-            } else {
-              delete showSecret[Attendees.utilities.userAttendeeId];
-            }
-            rowData.newData.infos.show_secret = showSecret;
-          }
           Attendees.utilities.merge2dObjects(rowData.newData.infos, rowData.oldData.infos);
-        } // Todo 20211126 If user save datagrid with showSecret unchecked, don't let it save as false.  Only save false if previously labelled true.
+        }
         Attendees.datagridUpdate.alterSchedulersAndEmergencyContacts(rowData.oldData.attendee, rowData.newData, false); // changing fields are only available upon onRowUpdating, not after
       },
       columns: originalColumns.filter(item => {
@@ -3411,7 +3364,7 @@ Attendees.datagridUpdate = {
         helpText: "If the main attendee is in emergency, should the subject be notified?",
       },
       {
-        dataField: 'infos.show_secret',
+        dataField: 'secret',
         apiUrlName: 'api_attendee_folkattendee_secret_column',
         helpText: 'Is this secret between you and the main attendee? Others cannot see if checked',
       },
@@ -3467,7 +3420,7 @@ Attendees.datagridUpdate = {
         helpText: 'For sorting display',
       },
       {
-        dataField: 'infos.show_secret',
+        dataField: 'secret',
         apiUrlName: 'api_attendee_folkattendee_secret_column',
         helpText: 'Is this secret? Others cannot see if checked',
       },
@@ -3519,38 +3472,37 @@ Attendees.datagridUpdate = {
     }
   },
 
-  alterSchedulersAndEmergencyContacts: (attendeeId, newData, deleting) => {  // updating target attendee from other objects such as folkattendee
+  // The main attendee's schedulers and emergency contacts: lists of attendee ids on the attendee itself.
+  mainAttendeeLinks: (key) => {
+    const attendeeData = Attendees.datagridUpdate.attendeeFormConfigs && Attendees.datagridUpdate.attendeeFormConfigs.formData;
+    return (attendeeData && attendeeData[key]) || [];
+  },
+
+  alterSchedulersAndEmergencyContacts: (attendeeId, newData, deleting) => {  // the family grid's Scheduler and Emergency contact boxes edit the main attendee
     if (newData && ('schedulers' in newData || 'emergency_contacts' in newData) ) {  // user is changing scheduler or emergency_contact
       const attendeeData = Attendees.datagridUpdate.attendeeFormConfigs && Attendees.datagridUpdate.attendeeFormConfigs.formData;
-      const previousInfos = Attendees.datagridUpdate.attendeeMainDxForm.option('formData.infos');
-      if (attendeeData && attendeeData.infos) {
-        Object.entries(newData).forEach(([key, value]) => {
-          if (['schedulers', 'emergency_contacts'].includes(key)) {
-            attendeeData.infos[key][attendeeId] = value;
-            previousInfos[key][attendeeId] = value;
-            if (deleting) {
-              if (attendeeId in attendeeData.infos[key]) {
-                attendeeData.infos[key][attendeeId] = false
-              }
-              if (attendeeId in previousInfos[key]) {
-                previousInfos[key][attendeeId] = false
-              }
-            }
+      if (attendeeData) {
+        const changes = {};
+        ['schedulers', 'emergency_contacts'].forEach((key) => {
+          if (key in newData) {
+            const linked = new Set(attendeeData[key] || []);
+            if (newData[key] && !deleting) { linked.add(attendeeId); } else { linked.delete(attendeeId); }
+            changes[key] = [...linked];
           }
         });
 
         $.ajax({
           url: Attendees.datagridUpdate.attendeeAjaxUrl,
-          data: JSON.stringify({infos: attendeeData.infos}),
+          data: JSON.stringify(changes),
           dataType: 'json',
           contentType: 'application/json; charset=utf-8',
           method: 'PATCH',
           success: (response) => {
-            Attendees.datagridUpdate.attendeeMainDxForm.option('formData.infos', previousInfos);
-            Attendees.datagridUpdate.attendeeFormConfigs.formData = attendeeData;
+            Object.assign(attendeeData, changes);
+            Object.entries(changes).forEach(([key, value]) => Attendees.datagridUpdate.attendeeMainDxForm.option(`formData.${key}`, value));
           },
           error: (response) => {
-            console.log('Failed to save data for scheduler or emergency contacts, response and infos data: ', response, Attendees.datagridUpdate.attendeeMainDxForm.option('formData').infos);
+            console.log('Failed to save data for scheduler or emergency contacts, response and changes: ', response, changes);
             // rowData.cancel = true;
             DevExpress.ui.notify(
               {
@@ -3895,16 +3847,8 @@ Attendees.datagridUpdate = {
       {
         apiUrlName: 'api_attendee_folkattendee_secret_column',
         caption: 'Secret?',
-        dataField: 'infos.show_secret',
+        dataField: 'secret',  // true when the reader is among the row's viewers; the server keeps the list
         width: '18%',
-        calculateCellValue: (rowData) => {
-          if (rowData.infos) {
-            const showSecret = rowData.infos.show_secret;
-            return !!(showSecret && showSecret[Attendees.utilities.userAttendeeId]);
-          } else {
-            return false;
-          }
-        },
         dataType: 'boolean',
       },
       {
@@ -4038,18 +3982,14 @@ Attendees.datagridUpdate = {
         }
       },
       onRowInserting: (rowData) => {
-        const infos = {show_secret: {}, comment: rowData.data.infos && rowData.data.infos.comment};
-        if (rowData.data.infos && rowData.data.infos.show_secret) {
-          infos.show_secret[Attendees.utilities.userAttendeeId] = true;
-        }
-        rowData.data.infos = infos;
+        rowData.data.infos = {comment: rowData.data.infos && rowData.data.infos.comment};
       },
       onRowInserted: (event) => {
         if (args.type === 'status' && Attendees.datagridUpdate.pastsCategories.has(event.data.category)) {
           $(`div#for-past-category-${event.data.category}`).dxButton('instance').option('visible', false);
         }
       },
-      onInitNewRow: (e) => {  // don't assign e.data or show_secret somehow messed up
+      onInitNewRow: (e) => {  // don't assign e.data here
         DevExpress.ui.notify(
           {
             message: "Let's create a " + args.type + ", click away or hit Enter to save. Hit Esc to quit without save",
@@ -4080,17 +4020,8 @@ Attendees.datagridUpdate = {
         autoExpandAll: true,
       },
       onRowUpdating: (rowData) => {
-        if (rowData.newData.infos) { // could be comment or show_secret or both
+        if (rowData.newData.infos) { // the comment; the whole infos is sent so nothing else in it is lost
           const updatingInfos = rowData.oldData.infos || {};
-          if ('show_secret' in rowData.newData.infos) {  // infos.show_secret could be false or true
-            let updatingShowSecret = typeof (updatingInfos.show_secret) === 'object' && updatingInfos.show_secret || {};  // could show_secret to others
-            if (rowData.newData.infos.show_secret) {  // boolean from UI but db needs to store attendee
-              updatingShowSecret[Attendees.utilities.userAttendeeId] = true;
-            } else {
-              delete updatingShowSecret[Attendees.utilities.userAttendeeId];
-            }
-            updatingInfos.show_secret = updatingShowSecret;
-          }
           if ('comment' in rowData.newData.infos) {  // UI may send this or not
             updatingInfos.comment = rowData.newData.infos.comment;
           }
@@ -4125,7 +4056,7 @@ Attendees.datagridUpdate = {
           dataField: 'display_name',
         },
         {
-          dataField: 'infos.show_secret',
+          dataField: 'secret',
           apiUrlName: 'api_attendee_folkattendee_secret_column',
         },
         {

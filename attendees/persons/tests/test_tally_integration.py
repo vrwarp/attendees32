@@ -93,7 +93,7 @@ def meet(organization, vocabulary):
     assembly = Assembly.objects.create(division=division, slug="testorg_youth", display_name="Youth", category=category, infos={})
     character = Character.objects.create(assembly=assembly, slug="testorg_student", display_name="Student", type="normal", infos={})
     now = timezone.now()
-    return Meet.objects.create(
+    meet = Meet.objects.create(
         assembly=assembly,
         major_character=character,
         slug="testorg_friday",
@@ -102,10 +102,12 @@ def meet(organization, vocabulary):
         finish=now + timedelta(days=365),
         shown_audience=True,
         audience_editable=False,
-        infos={**Utility.meet_infos(), "allowed_groups": ["data_organizer"]},
+        infos=Utility.meet_infos(),
         site_type=ContentType.objects.get_for_model(Organization),
         site_id=str(organization.id),
     )
+    meet.allowed_groups.add(Group.objects.get_or_create(name="data_organizer")[0])
+    return meet
 
 
 @pytest.fixture
@@ -143,13 +145,11 @@ class TestSetupCommand:
 
     def test_grants_the_group_on_a_readable_meet(self, provisioned):
         meet = provisioned["meet"]
-        meet.refresh_from_db()
-        assert meet.infos["allowed_groups"] == ["data_organizer", "tally_integration"]
+        assert sorted(meet.allowed_groups.values_list("name", flat=True)) == ["data_organizer", "tally_integration"]
 
     def test_a_meet_not_named_is_left_alone(self, organization, vocabulary, meet):
         call_command("setup_tally_integration", "--organization-slug", "testorg")
-        meet.refresh_from_db()
-        assert meet.infos["allowed_groups"] == ["data_organizer"]
+        assert list(meet.allowed_groups.values_list("name", flat=True)) == ["data_organizer"]
 
     def test_refuses_a_readable_meet_it_cannot_find(self, organization, vocabulary):
         from django.core.management.base import CommandError

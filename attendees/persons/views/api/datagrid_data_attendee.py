@@ -241,7 +241,9 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
         else:  # a bare list: the whole organization, ordered so pages are stable
             qs = Attendee.objects.order_by("id")
 
-        return qs.filter(division__organization=current_user.organization)
+        return qs.filter(division__organization=current_user.organization).prefetch_related(
+            "schedulers", "emergency_contacts"
+        )
 
     def perform_create(self, serializer):
         """

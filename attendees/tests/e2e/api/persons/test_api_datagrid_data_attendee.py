@@ -123,7 +123,7 @@ class TestDatagridDataAttendee:
         created = Attendee.objects.get(pk=response.json()["id"])
         assert created.infos["names"]["original"] == "Visitor Lam"
         assert created.infos["fixed"] == {"grade": 15}
-        assert set(created.infos) >= {"names", "fixed", "contacts", "emergency_contacts", "progressions", "schedulers", "updating_attendees"}
+        assert set(created.infos) >= {"names", "fixed", "contacts", "progressions", "updating_attendees"}
 
     def test_updating_an_attendee_rewrites_the_derived_names(self, golden, api_login):
         """A partial edit must still refresh the searchable name.

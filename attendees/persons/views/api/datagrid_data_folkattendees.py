@@ -66,6 +66,8 @@ class ApiDatagridDataFolkAttendeesViewsSet(viewsets.ModelViewSet
                 folk__in=target_attendee_in_others_other_folks,
                ).select_related(  # the serializer nests each row's folk
                 "folk",
+               ).prefetch_related(  # and says whether the reader is among the viewers
+                "viewers",
                ).order_by(
                 "folk",
                 "folk__display_order",

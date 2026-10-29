@@ -22,7 +22,7 @@ class ApiAssemblyMeetAttendeesSet(viewsets.ModelViewSet):
             return AttendeeService.by_assembly_meets(
                 assembly_slug=self.kwargs["assembly_slug"],
                 meet_slugs=self.request.query_params.getlist("meets[]", []),
-            )
+            ).prefetch_related("schedulers", "emergency_contacts")
 
         else:
             time.sleep(2)

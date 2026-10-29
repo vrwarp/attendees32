@@ -8,7 +8,8 @@ from django_json_widget.widgets import JSONEditorWidget
 from schedule.admin import CalendarAdmin, CalendarRelationAdmin, EventAdmin, EventRelationAdmin, RuleAdmin
 from schedule.models import Calendar, CalendarRelation, Event, EventRelation, Rule
 
-from attendees.occasions.models import Attendance, MessageTemplate, Assembly, Price, Character, Meet, Gathering, Team
+from attendees.occasions.models import Attendance, MessageTemplate, Assembly, Price, Character, Meet, Gathering, Team, \
+    MeetAllowedModel
 from django.conf import settings
 from attendees.persons.models import PgHistoryPage, Category
 from attendees.whereabouts.models import Organization, Division
@@ -321,11 +322,20 @@ class TeamAdmin(PgHistoryPage, admin.ModelAdmin):
             return qs.filter(meet__assembly__division__organization=request.user.organization)
 
 
+class MeetAllowedModelInline(admin.TabularInline):
+    model = MeetAllowedModel
+    extra = 0
+    verbose_name = "page the meet is listed on"
+    verbose_name_plural = "pages the meet is listed on"
+
+
 class MeetAdmin(PgHistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
     prepopulated_fields = {"slug": ("display_name",)}
+    filter_horizontal = ("allowed_groups",)
+    inlines = (MeetAllowedModelInline,)
     search_fields = ("display_name",)
     list_filter = ("assembly",)
     list_display_links = ("display_name",)
@@ -346,6 +356,7 @@ class MeetAdmin(PgHistoryPage, admin.ModelAdmin):
                             "audience_editable",
                         ]
                     ),
+                    tuple(["allowed_groups"]),
                     tuple(["site_type", "assembly", "site_id"]),
                     tuple(["id", "created", "modified"]),
                     tuple(["schedule_text"]),

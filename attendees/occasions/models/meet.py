@@ -4,6 +4,7 @@ from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelatio
 from django.contrib.postgres.indexes import GinIndex
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from django.db.models import Q
 import django.utils.timezone
 import model_utils.fields
 from django.urls import reverse
@@ -12,6 +13,8 @@ from model_utils.models import SoftDeletableModel, TimeStampedModel
 from schedule.models import EventRelation
 
 from attendees.persons.models import Note, Utility
+
+from .meet_allowed_model import MeetAllowedModel
 
 
 class Meet(TimeStampedModel, SoftDeletableModel, Utility):
@@ -73,6 +76,13 @@ class Meet(TimeStampedModel, SoftDeletableModel, Utility):
         default=Utility.meet_infos,
         help_text='Example: {"info": "...", "url": "https://..."}. Please keep {} here even no data',
     )
+    allowed_groups = models.ManyToManyField(
+        "auth.Group",
+        blank=True,
+        related_name="meets",
+        help_text="the auth groups whose members may see this meet and work on it; "
+        "organization_participant lets its own participants see it",
+    )
     site_type = models.ForeignKey(
         ContentType,
         on_delete=models.SET(0),
@@ -119,6 +129,23 @@ class Meet(TimeStampedModel, SoftDeletableModel, Utility):
             for er in self.event_relations.all()
         ]
         return ", ".join(schedules)
+
+    @staticmethod
+    def allowed_to_any_of(group_names):
+        """A ``Q`` for the meets whose allowed groups include any of these auth group names. A
+        subquery rather than a join, so a meet allowed to several of a user's groups comes out once."""
+        allowed = Meet.allowed_groups.through.objects.filter(group__name__in=list(group_names))
+        return Q(pk__in=allowed.values("meet_id"))
+
+    @staticmethod
+    def listed_on(model):
+        """A ``Q`` for the meets listed on the page of ``model``, one of ``MeetAllowedModel.MODELS``."""
+        return Q(pk__in=MeetAllowedModel.objects.filter(model=model).values("meet_id"))
+
+    def list_on(self, *models):
+        """Have the meet listed on these pages, the default ones when none are given."""
+        for model in models or MeetAllowedModel.DEFAULT:
+            MeetAllowedModel.objects.get_or_create(meet=self, model=model)
 
     class Meta:
         db_table = "occasions_meets"

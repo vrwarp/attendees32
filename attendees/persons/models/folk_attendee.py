@@ -8,10 +8,13 @@ from model_utils.models import SoftDeletableModel, TimeStampedModel
 from private_storage.fields import PrivateFileField
 from private_storage.storage.files import PrivateFileSystemStorage
 
-from . import Utility
+from . import Confidential, Utility
 
 
-class FolkAttendee(TimeStampedModel, SoftDeletableModel):
+class FolkAttendee(Confidential, TimeStampedModel, SoftDeletableModel):
+    """An attendee's membership of a folk (a family or another circle) in a role. A membership
+    with viewers, see ``Confidential``, is one the people listed keep to themselves."""
+
     id = models.BigAutoField(
         auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
     )
@@ -46,9 +49,8 @@ class FolkAttendee(TimeStampedModel, SoftDeletableModel):
         null=True,
         blank=True,
         default=Utility.relationship_infos,
-        help_text='Example: {"show_secret": {"attendee1id": true, "attendee2id": false}}. Please keep {} here even no '
-        "data",
-    )  # compare to NoteAdmin
+        help_text='Example: {"comment": "..."}. Please keep {} here even no data',
+    )
 
     def __str__(self):
         return "%s %s %s" % (self.folk, self.role, self.attendee)
@@ -93,7 +95,7 @@ class FolkAttendeesHistory(pghistory.get_event_model(
     file = PrivateFileField(blank=True, null=True, storage=PrivateFileSystemStorage(), upload_to='folk_attendee_file', verbose_name='file')
     start = models.DateField(blank=True, help_text='date joining folk', null=True)
     finish = models.DateField(blank=True, help_text='date leaving folk', null=True)
-    infos = models.JSONField(blank=True, default=Utility.relationship_infos, help_text='Example: {"show_secret": {"attendee1id": true, "attendee2id": false}}. Please keep {} here even no data', null=True)
+    infos = models.JSONField(blank=True, default=Utility.relationship_infos, help_text='Example: {"comment": "..."}. Please keep {} here even no data', null=True)
     pgh_context = models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')
 
     class Meta:

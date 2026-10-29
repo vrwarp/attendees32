@@ -44,33 +44,24 @@ class ApiCategorizedPastsViewSet(SpyGuard, viewsets.ModelViewSet):
             Attendee, pk=self.request.META.get("HTTP_X_TARGET_ATTENDEE_ID")
         )
         past_id = self.kwargs.get("pk")
-        requester_permission = {
-            "infos__show_secret__" + self.request.user.attendee_uuid_str(): True
-        }
+        visible = Past.visible_to(self.request.user.attendee_uuid_str())
 
         if past_id:
             qs = target_attendee.pasts.filter(
-                Q(organization=self.request.user.organization),
-                Q(pk=past_id),
-                Q(category__type=category__type),
-                (
-                    Q(infos__show_secret={})
-                    | Q(infos__show_secret__isnull=True)
-                    | Q(**requester_permission)
-                ),
+                visible,
+                organization=self.request.user.organization,
+                pk=past_id,
+                category__type=category__type,
             )
         else:
             qs = target_attendee.pasts.filter(
-                Q(organization=self.request.user.organization),
-                Q(category__type=category__type),
-                Q(is_removed=False),
-                (
-                    Q(infos__show_secret={})
-                    | Q(infos__show_secret__isnull=True)
-                    | Q(**requester_permission)
-                ),
+                visible,
+                organization=self.request.user.organization,
+                category__type=category__type,
+                is_removed=False,
             )
 
+        qs = qs.prefetch_related("viewers")  # the serializer says whether the reader is among them
         if self.request.user.is_counselor():
             return qs
         elif self.request.user.is_a(Past.COWORKER):

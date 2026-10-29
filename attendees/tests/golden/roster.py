@@ -297,6 +297,7 @@ class MembershipSpec:
     start_years_ago: Optional[float] = None
     #: years ago the person left; ``None`` means still in it
     finish_years_ago: Optional[float] = None
+    #: person keys of the viewers; a membership with viewers is kept from everyone else
     show_secret_to: Tuple[str, ...] = ()
 
 

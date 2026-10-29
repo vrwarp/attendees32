@@ -449,7 +449,7 @@ class Command(BaseCommand):
                             'contacts': contacts,
                             'names': {},
                             'progressions': {attendee_header: Utility.boolean_or_datetext_or_original(people.get(access_header)) for (access_header, attendee_header) in progression_converter.items() if Utility.presence(people.get(access_header)) is not None},
-                            'emergency_contacts': {}, 'schedulers': {}, 'updating_attendees': {},
+                            'updating_attendees': {},
                             'created_reason': 'CFCCH member/directory registration from importer',  # the word "importer" can skip signal
                         }
                     }
@@ -561,9 +561,7 @@ class Command(BaseCommand):
                                 'fixed': {**attendee.infos.get('fixed', {}), **some_household_values},
                                 'contacts': contacts,
                                 'names': attendee.infos.get('names', {}),
-                                'emergency_contacts': attendee.infos.get('emergency_contacts', {}),
                                 'progressions': attendee.infos.get('progressions', {}),
-                                'schedulers': attendee.infos.get('schedulers', {}),
                                 'updating_attendees': attendee.infos.get('updating_attendees', {}),
                             }
 
@@ -714,9 +712,9 @@ class Command(BaseCommand):
                     if not husband:
                         self.stdout.write(f"715, no husband found, here is potential_primary_phone: {potential_primary_phone}")
 
-                    if husband and wife:  # depend on save by save_two_phones()
-                        husband.infos['emergency_contacts'][str(wife.id)] = True
-                        wife.infos['emergency_contacts'][str(husband.id)] = True
+                    if husband and wife:
+                        husband.emergency_contacts.add(wife)
+                        wife.emergency_contacts.add(husband)
 
                     self.save_two_phones(husband, potential_primary_phone or potential_secondary_phone)
                     self.save_two_phones(wife, potential_secondary_phone or potential_primary_phone)
@@ -805,10 +803,10 @@ class Command(BaseCommand):
                 #     )
                 for child in children:
                     for parent in parents:
-                        child.infos['emergency_contacts'][str(parent.id)] = True
-    
+                        child.emergency_contacts.add(parent)
+
                         if child.age() and child.age() < 18:
-                            child.infos['schedulers'][str(parent.id)] = True
+                            child.schedulers.add(parent)
 
                     people_note = child.infos.get('fixed', {}).get('access_people_values', {}).get('PeopleNote')
                     character_id = child.infos.get('fixed', {}).get('access_people_values', {}).get('CharacterId')
@@ -861,10 +859,12 @@ class Command(BaseCommand):
                             title__in=['child', 'son', 'daughter'],
                             gender=child.gender,
                         )
-                        parent.infos['emergency_contacts'][str(child.id)] = child_role.emergency_contact
-                        child.infos['emergency_contacts'][str(parent.id)] = parent_role.emergency_contact
-                        if child.age() and child.age() < 18:
-                            child.infos['schedulers'][str(parent.id)] = parent_role.scheduler
+                        if child_role.emergency_contact:
+                            parent.emergency_contacts.add(child)
+                        if parent_role.emergency_contact:
+                            child.emergency_contacts.add(parent)
+                        if child.age() and child.age() < 18 and parent_role.scheduler:
+                            child.schedulers.add(parent)
                         # Relationship.objects.update_or_create(
                         #     from_attendee=parent,
                         #     to_attendee=child,

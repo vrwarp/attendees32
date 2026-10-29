@@ -183,11 +183,9 @@ class Command(BaseCommand):
         # organization_meets lists a meet only to callers whose group is in
         # its allowed_groups; that is what lets the history import see it.
         for meet in readable_meets:
-            allowed_groups = meet.infos.get("allowed_groups") or []
-            meet_granted = group.name not in allowed_groups
+            meet_granted = not meet.allowed_groups.filter(pk=group.pk).exists()
             if meet_granted:
-                meet.infos = {**meet.infos, "allowed_groups": [*allowed_groups, group.name]}
-                meet.save(update_fields=["infos"])
+                meet.allowed_groups.add(group)
             self.note("readable meet", meet.slug, meet_granted)
 
         token, token_created = Token.objects.get_or_create(user=user)

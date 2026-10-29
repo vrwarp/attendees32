@@ -45,6 +45,7 @@ from attendees.occasions.models import (
     Character,
     Gathering,
     Meet,
+    MeetAllowedModel,
     Price,
     Team,
 )
@@ -191,13 +192,19 @@ PERSONAS = (
 
 PERSONA_PASSWORD = "golden-password-1"
 
-#: Who a confidential note is addressed to.  ``infos["show_secret"]`` is keyed
-#: by attendee id, so a "counseling" note names the counselor persona's own
-#: attendee and nobody else can read it — including the data admin.
+#: Who a confidential note is addressed to.  A note's ``viewers`` are attendees,
+#: so a "counseling" note names the counselor persona's own attendee and nobody
+#: else can read it — including the data admin.
 SECRET_READER_BY_ROLE = {
     "counselor": "xu_jianguo",  # golden_counselor
     "coworker": "lee_jonathan",  # golden_children_organizer
 }
+
+#: The auth groups every golden meet is open to.
+MEET_GROUPS = (
+    Groups.PARTICIPANT, Groups.DATA_ORGANIZER, Groups.DATA_COUNSELOR,
+    Groups.CHILDREN_ORGANIZER, Groups.CONFERENCE_ORGANIZER,
+)
 
 
 # ---------------------------------------------------------------------- result
@@ -408,13 +415,6 @@ class GoldenBuilder:
                     "site_type": self.room_ct,
                     "site_id": str(site.pk),
                     "infos": {
-                        "allowed_models": ["gathering", "attendingmeet", "attendance",
-                                           "eventrelation"],
-                        "allowed_groups": [
-                            Groups.PARTICIPANT, Groups.DATA_ORGANIZER,
-                            Groups.DATA_COUNSELOR, Groups.CHILDREN_ORGANIZER,
-                            Groups.CONFERENCE_ORGANIZER,
-                        ],
                         "default_attendingmeet_in_weeks": 53,
                         "automatic_creation": {"Past": None, "Gathering": True,
                                                "Attendance": True},
@@ -425,6 +425,8 @@ class GoldenBuilder:
                 },
             )
             self.data.meets[key] = meet
+            meet.allowed_groups.set(Group.objects.filter(name__in=MEET_GROUPS))
+            meet.list_on()
 
         team_specs = (
             ("youth_middle_school", "youth_group", "Middle School 6-8"),
@@ -520,11 +522,7 @@ class GoldenBuilder:
 
             for member in folk_spec.members:
                 attendee = self.data.attendees[member.person_key]
-                show_secret = {
-                    str(self.data.attendees[key].id): True
-                    for key in member.show_secret_to
-                }
-                FolkAttendee.objects.create(
+                membership = FolkAttendee.objects.create(
                     folk=folk,
                     attendee=attendee,
                     role=self._relations[member.role],
@@ -541,26 +539,24 @@ class GoldenBuilder:
                     ),
                     infos={
                         **Utility.relationship_infos(),
-                        "show_secret": show_secret,
                         "comment": folk_spec.note or None,
                     },
                     is_removed=folk_spec.is_removed,
+                )
+                membership.viewers.set(
+                    [self.data.attendees[key] for key in member.show_secret_to]
                 )
 
     # -- 4. emergency contacts and schedulers -----------------------------
     def build_contacts_and_schedulers(self):
         for person_key, contact_keys in self.roster.emergency_contacts.items():
-            attendee = self.data.attendees[person_key]
-            attendee.infos["emergency_contacts"] = {
-                str(self.data.attendees[key].id): True for key in contact_keys
-            }
-            attendee.save()
+            self.data.attendees[person_key].emergency_contacts.set(
+                [self.data.attendees[key] for key in contact_keys]
+            )
         for person_key, scheduler_keys in self.roster.schedulers.items():
-            attendee = self.data.attendees[person_key]
-            attendee.infos["schedulers"] = {
-                str(self.data.attendees[key].id): True for key in scheduler_keys
-            }
-            attendee.save()
+            self.data.attendees[person_key].schedulers.set(
+                [self.data.attendees[key] for key in scheduler_keys]
+            )
 
     # -- 5. addresses -----------------------------------------------------
     def build_places(self):
@@ -666,18 +662,15 @@ class GoldenBuilder:
                     "counseling": NoteCategory.COUNSELING,
                 }[category_tag]
                 infos = {**Utility.relationship_infos(), "body": body}
-                # show_secret is keyed by the attendee id of the person allowed
-                # to read it — that is what ApiCategorizedPastsViewSet filters
-                # on — so point it at the persona who plays that role.
+                # The viewers are the attendees allowed to read it — that is
+                # what ApiCategorizedPastsViewSet filters on — so name the
+                # persona who plays that role.
                 confidant_key = SECRET_READER_BY_ROLE.get(secret_to)
-                if confidant_key:
-                    infos["show_secret"] = {
-                        str(self.data.attendees[confidant_key].id): True
-                    }
+                viewers = [self.data.attendees[confidant_key]] if confidant_key else []
                 # The attendee page's "note" tab reads Pasts whose category is
                 # of type note, not the Note model — so write both, the way the
                 # application itself does.
-                Past.objects.create(
+                past = Past.objects.create(
                     id=golden_uuid("past-note", f"{spec.key}:{category_tag}"),
                     content_type=self.attendee_ct,
                     object_id=str(attendee.id),
@@ -687,7 +680,8 @@ class GoldenBuilder:
                     display_name=body[:50],
                     infos=infos,
                 )
-                Note.objects.create(
+                past.viewers.set(viewers)
+                note = Note.objects.create(
                     id=golden_uuid("note", f"{spec.key}:{category_tag}:{body[:16]}"),
                     content_type=self.attendee_ct,
                     object_id=str(attendee.id),
@@ -696,6 +690,7 @@ class GoldenBuilder:
                     body=body,
                     infos=infos,
                 )
+                note.viewers.set(viewers)
 
     def _baptism_when(self, spec, index):
         if spec.age is None:
@@ -1235,6 +1230,12 @@ def build_golden_dataset(load_seed: bool = False) -> GoldenDataset:
     """Build the whole dataset, optionally loading ``fixtures/db_seed.json`` first."""
     if load_seed:
         create_seed_users()
+        # The seed defines every meet's groups and pages, as rows of their own
+        # since the move out of infos; a database that already holds some
+        # (migrated from older JSON, or a previous load) would clash with the
+        # fixture's rows on the unique keys, so they are rewritten from scratch.
+        MeetAllowedModel.objects.all().delete()
+        Meet.allowed_groups.through.objects.all().delete()
         call_command("loaddata", "fixtures/db_seed.json", verbosity=0)
         # django_content_type carries two extra columns in this project
         # (genres, display_order); the site-picker API reads them by raw SQL

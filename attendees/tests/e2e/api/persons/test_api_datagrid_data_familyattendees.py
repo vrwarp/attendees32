@@ -99,12 +99,39 @@ class TestDatagridDataFamilyattendees:
                 "attendee": str(kevin.id),
                 "role": Relations.FRIEND,
                 "display_order": 9,
-                "infos": json.dumps({"show_secret": {}, "updating_attendees": {}, "comment": None, "body": None}),
+                "infos": json.dumps({"updating_attendees": {}, "comment": None, "body": None}),
             },
             format="multipart",
         )
         assert response.status_code == 201, response.content
         assert response.json()["folk"]["category"] == FolkCategory.FAMILY
+
+    def test_secret_marks_a_membership_as_the_readers_to_keep(self, golden, api_login):
+        """The "Secret?" box: true puts the reader on the membership's viewers, which only
+        they then see as ticked; false takes them off again."""
+        grace = golden.attendee("chen_grace")
+        membership = FolkAttendee.objects.get(attendee=grace, folk__category=FolkCategory.FAMILY)
+        organizer = target(api_login("golden_data_organizer"), grace)
+        organizer_attendee = golden.attendee("zhang_zhongxin")
+
+        response = organizer.patch(
+            f"/persons/api/datagrid_data_familyattendees/{membership.id}/", {"secret": "true"}, format="multipart"
+        )
+        assert response.status_code == 200, response.content
+        assert response.json()["secret"] is True
+        assert list(membership.viewers.all()) == [organizer_attendee]
+
+        rows = organizer.get("/persons/api/datagrid_data_familyattendees/", {"categoryId": FolkCategory.FAMILY}).json()["data"]
+        assert next(row for row in rows if row["id"] == membership.id)["secret"] is True
+        counselor = target(api_login("golden_counselor"), grace)
+        rows = counselor.get("/persons/api/datagrid_data_familyattendees/", {"categoryId": FolkCategory.FAMILY}).json()["data"]
+        assert next(row for row in rows if row["id"] == membership.id)["secret"] is False
+
+        response = organizer.patch(
+            f"/persons/api/datagrid_data_familyattendees/{membership.id}/", {"secret": "false"}, format="multipart"
+        )
+        assert response.status_code == 200, response.content
+        assert list(membership.viewers.all()) == []
 
     def test_a_membership_is_moved_by_patching_the_folk_id(self, golden, api_login):
         grace = golden.attendee("chen_grace")

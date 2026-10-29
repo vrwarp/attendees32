@@ -4877,11 +4877,11 @@
     "display_name": "secret to hagar(if user#2 created)",
     "organization": 1,
     "infos": {
-      "comment": null,
-      "show_secret": {
-        "22c29cd5-a5ab-46a3-afe6-d5a600c33fc9": true
-      }
-    }
+      "comment": null
+    },
+    "viewers": [
+      "22c29cd5-a5ab-46a3-afe6-d5a600c33fc9"
+    ]
   }
 },
 {
@@ -4903,9 +4903,9 @@
     "display_name": "where and major",
     "organization": 1,
     "infos": {
-      "comment": null,
-      "show_secret": {}
-    }
+      "comment": null
+    },
+    "viewers": []
   }
 },
 {
@@ -4929,9 +4929,9 @@
     "infos": {
       "body": null,
       "comment": "Auto created by AttendingMeet signal (not importer)",
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -4955,9 +4955,9 @@
     "infos": {
       "body": null,
       "comment": "Auto created by AttendingMeet signal (not importer)",
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -4978,9 +4978,8 @@
     "display_order": 30000,
     "display_name": "become member",
     "organization": 1,
-    "infos": {
-      "show_secret": {}
-    }
+    "infos": {},
+    "viewers": []
   }
 },
 {
@@ -5002,9 +5001,9 @@
     "display_name": "baptized at where by whom hhh",
     "organization": 1,
     "infos": {
-      "comment": null,
-      "show_secret": {}
-    }
+      "comment": null
+    },
+    "viewers": []
   }
 },
 {
@@ -5025,9 +5024,8 @@
     "display_order": 30000,
     "display_name": "become member",
     "organization": 1,
-    "infos": {
-      "show_secret": {}
-    }
+    "infos": {},
+    "viewers": []
   }
 },
 {
@@ -5051,9 +5049,9 @@
     "infos": {
       "body": null,
       "comment": "Auto created by AttendingMeet signal (not importer)",
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5077,9 +5075,9 @@
     "infos": {
       "body": null,
       "comment": "Auto created by AttendingMeet signal (not importer)",
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5101,9 +5099,9 @@
     "display_name": "accept at where by whom",
     "organization": 1,
     "infos": {
-      "comment": null,
-      "show_secret": {}
-    }
+      "comment": null
+    },
+    "viewers": []
   }
 },
 {
@@ -5127,9 +5125,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5150,9 +5148,8 @@
     "display_order": 30000,
     "display_name": "become member",
     "organization": 1,
-    "infos": {
-      "show_secret": {}
-    }
+    "infos": {},
+    "viewers": []
   }
 },
 {
@@ -5176,9 +5173,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5200,9 +5197,9 @@
     "display_name": "believe at where by whom",
     "organization": 1,
     "infos": {
-      "comment": null,
-      "show_secret": {}
-    }
+      "comment": null
+    },
+    "viewers": []
   }
 },
 {
@@ -5638,9 +5635,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5660,9 +5657,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5682,9 +5679,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5704,9 +5701,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5726,9 +5723,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5748,9 +5745,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5770,9 +5767,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5792,9 +5789,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5814,9 +5811,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5836,9 +5833,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5858,9 +5855,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5880,9 +5877,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendee": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5902,9 +5899,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5924,9 +5921,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5946,9 +5943,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5968,9 +5965,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -5990,9 +5987,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6012,9 +6009,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6034,9 +6031,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6056,9 +6053,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6078,9 +6075,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6100,9 +6097,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6122,9 +6119,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6144,9 +6141,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6166,9 +6163,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6188,9 +6185,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6210,9 +6207,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6232,9 +6229,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6254,9 +6251,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6276,9 +6273,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6298,9 +6295,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6320,11 +6317,11 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {
         "a48e4375-1a64-4c4f-beb3-8f088bf77340": "2023-05-28T00:53:13.645454+00:00"
       }
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6344,9 +6341,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6366,9 +6363,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -6388,9 +6385,9 @@
     "infos": {
       "body": null,
       "comment": null,
-      "show_secret": {},
       "updating_attendees": {}
-    }
+    },
+    "viewers": []
   }
 },
 {
@@ -10702,16 +10699,6 @@
     "slug": "d7c8Fd_cfcch_congregation_archived",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "notice": "the finish date of attending_meets of 'archived' is always forever to show all attendees."
       },
@@ -10727,7 +10714,15 @@
       "whereabouts",
       "place"
     ],
-    "site_id": "680656f5-a475-439e-9844-1129bd5aa5a4"
+    "site_id": "680656f5-a475-439e-9844-1129bd5aa5a4",
+    "allowed_groups": [
+      [
+        "data_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -10747,19 +10742,6 @@
     "slug": "d7c8Fd_cfcch_congregation_visitor",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "children_organizer",
-        "children_coworker",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "notice": "the finish date of attending_meets of visitor is always forever to show all attendees."
       },
@@ -10775,7 +10757,24 @@
       "whereabouts",
       "place"
     ],
-    "site_id": "680656f5-a475-439e-9844-1129bd5aa5a4"
+    "site_id": "680656f5-a475-439e-9844-1129bd5aa5a4",
+    "allowed_groups": [
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -10795,21 +10794,6 @@
     "slug": "d7c8Fd_cfcch_junior_regular_the_rock",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "children_organizer",
-        "children_coworker",
-        "roster_equipments",
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -10825,7 +10809,30 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "1"
+    "site_id": "1",
+    "allowed_groups": [
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "roster_equipments"
+      ],
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -10845,21 +10852,6 @@
     "slug": "d7c8Fd_cfcch_junior_regular_little_foot",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "children_organizer",
-        "children_coworker",
-        "roster_equipments",
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -10875,7 +10867,30 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "22"
+    "site_id": "22",
+    "allowed_groups": [
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "roster_equipments"
+      ],
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -10895,18 +10910,6 @@
     "slug": "d7c8Fd_cfcch_chinese_choir",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "worship_organizer",
-        "roster_equipments",
-        "data_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -10922,7 +10925,18 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "7"
+    "site_id": "7",
+    "allowed_groups": [
+      [
+        "roster_equipments"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -10942,18 +10956,6 @@
     "slug": "d7c8Fd_cfcch_congregation_english_worship_roster",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "data_organizer",
-        "children_organizer",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -10968,7 +10970,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "19"
+    "site_id": "19",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -10988,20 +11004,6 @@
     "slug": "d7c8Fd_cfcch_junior_shining_star",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "children_organizer",
-        "children_coworker",
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -11017,7 +11019,27 @@
       "whereabouts",
       "property"
     ],
-    "site_id": "1"
+    "site_id": "1",
+    "allowed_groups": [
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11037,20 +11059,6 @@
     "slug": "d7c8Fd_cfcch_junior_retreat",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "children_organizer",
-        "children_coworker",
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11064,7 +11072,27 @@
       "address",
       "address"
     ],
-    "site_id": "10"
+    "site_id": "10",
+    "allowed_groups": [
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11084,18 +11112,6 @@
     "slug": "d7c8Fd_cfcch_congregation_chinese_worship_roster",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "data_organizer",
-        "children_organizer",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11110,7 +11126,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "19"
+    "site_id": "19",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11132,17 +11162,6 @@
       "attendance": {},
       "show_in_all_families": true,
       "preview_url": "/persons/directory_preview/",
-      "allowed_groups": [
-        "data_counselor",
-        "data_organizer",
-        "children_organizer",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11159,7 +11178,21 @@
       "whereabouts",
       "organization"
     ],
-    "site_id": "1"
+    "site_id": "1",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11179,17 +11212,6 @@
     "slug": "d7c8Fd_cfcch_congregation_member",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "data_organizer",
-        "children_organizer",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance"
-      ],
       "active_category": 6,
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
@@ -11204,7 +11226,21 @@
       "whereabouts",
       "organization"
     ],
-    "site_id": "1"
+    "site_id": "1",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11224,17 +11260,6 @@
     "slug": "d7c8Fd_cfcch_summer_retreat_2025_accommodation",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "children_organizer",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11248,7 +11273,18 @@
       "whereabouts",
       "campus"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11268,17 +11304,6 @@
     "slug": "d7c8Fd_cfcch_summer_retreat_2025_transportation",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "children_organizer",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11292,7 +11317,18 @@
       "whereabouts",
       "campus"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11312,16 +11348,6 @@
     "slug": "d7c8Fd_cfcch_summer_retreat_2025_panel",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11335,7 +11361,15 @@
       "whereabouts",
       "campus"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11355,17 +11389,6 @@
     "slug": "d7c8Fd_cfcch_summer_retreat_2025_chinese_program",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "children_organizer",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11379,7 +11402,18 @@
       "whereabouts",
       "campus"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11399,17 +11433,6 @@
     "slug": "d7c8Fd_cfcch_summer_retreat_2025_junior_program",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "children_organizer",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11423,7 +11446,18 @@
       "whereabouts",
       "campus"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11443,17 +11477,6 @@
     "slug": "d7c8Fd_cfcch_summer_retreat_2025_english_program",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "children_organizer",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11467,7 +11490,18 @@
       "whereabouts",
       "campus"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11487,16 +11521,6 @@
     "slug": "d7c8Fd_cfcch_congregation_baptized",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "data_organizer",
-        "children_organizer",
-        "children_coworker",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "attendingmeet"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11510,7 +11534,24 @@
       "whereabouts",
       "organization"
     ],
-    "site_id": "1"
+    "site_id": "1",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11530,16 +11571,6 @@
     "slug": "d7c8Fd_cfcch_congregation_believer",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "data_organizer",
-        "children_organizer",
-        "children_coworker",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "attendingmeet"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -11553,7 +11584,24 @@
       "whereabouts",
       "organization"
     ],
-    "site_id": "1"
+    "site_id": "1",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -11573,15 +11621,6 @@
     "slug": "faBd6C_heaven_sea_of_glass_angel_choir",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "worship_organizer"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {},
       "default_time_zone": "UTC",
       "automatic_creation": {
@@ -11595,7 +11634,8 @@
       "whereabouts",
       "campus"
     ],
-    "site_id": "2"
+    "site_id": "2",
+    "allowed_groups": []
   }
 },
 {
@@ -11615,18 +11655,6 @@
     "slug": "d7c8Fd_cfcch_adult_chinese_sunday_school",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -11642,7 +11670,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11662,21 +11704,6 @@
     "slug": "d7c8Fd_cfcch_junior_regular_after_school_club",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "children_organizer",
-        "children_coworker",
-        "roster_equipments",
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -11692,7 +11719,30 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "21"
+    "site_id": "21",
+    "allowed_groups": [
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "roster_equipments"
+      ],
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11712,18 +11762,6 @@
     "slug": "d7c8Fd_cfcch_fellowship_ezra",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -11739,7 +11777,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "7"
+    "site_id": "7",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11759,18 +11811,6 @@
     "slug": "d7c8Fd_cfcch_chinese_bible_study",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -11786,7 +11826,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11806,18 +11860,6 @@
     "slug": "d7c8Fd_cfcch_chinese_timothy_fellowship",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -11833,7 +11875,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "19"
+    "site_id": "19",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11853,18 +11909,6 @@
     "slug": "d7c8Fd_cfcch_chinese_RestaurantMinistry_fellowship",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -11880,7 +11924,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11900,18 +11958,6 @@
     "slug": "d7c8Fd_cfcch_chinese_sister_fellowship",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -11927,7 +11973,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11947,17 +12007,6 @@
     "slug": "d7c8Fd_cfcch_library_circulation",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "children_organizer",
-        "children_coworker",
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": false
       },
@@ -11969,7 +12018,27 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "1"
+    "site_id": "1",
+    "allowed_groups": [
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -11989,16 +12058,6 @@
     "slug": "d7c8Fd_cfcch_congregation_catechumen",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "data_counselor",
-        "data_organizer",
-        "children_organizer",
-        "children_coworker",
-        "conference_organizer"
-      ],
-      "allowed_models": [
-        "attendingmeet"
-      ],
       "gathering_infos": {},
       "default_time_zone": "America/Los_Angeles",
       "automatic_creation": {
@@ -12012,7 +12071,24 @@
       "whereabouts",
       "organization"
     ],
-    "site_id": "1"
+    "site_id": "1",
+    "allowed_groups": [
+      [
+        "data_counselor"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "children_organizer"
+      ],
+      [
+        "children_coworker"
+      ],
+      [
+        "conference_organizer"
+      ]
+    ]
   }
 },
 {
@@ -12032,18 +12108,6 @@
     "slug": "d7c8Fd_cfcch_chinese_youngster_family_fellowship",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -12059,7 +12123,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "21"
+    "site_id": "21",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -12079,18 +12157,6 @@
     "slug": "d7c8Fd_cfcch_chinese_caleb_fellowship",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -12106,7 +12172,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "3"
+    "site_id": "3",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -12126,18 +12206,6 @@
     "slug": "d7c8Fd_cfcch_chinese_hayward_joy_group",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -12153,7 +12221,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "21"
+    "site_id": "21",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -12173,18 +12255,6 @@
     "slug": "d7c8Fd_cfcch_chinese_oakland_renew_group",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -12200,7 +12270,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "23"
+    "site_id": "23",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -12220,18 +12304,6 @@
     "slug": "d7c8Fd_cfcch_chinese_castro_valley_kind_group",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -12247,7 +12319,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "16"
+    "site_id": "16",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -12267,18 +12353,6 @@
     "slug": "d7c8Fd_cfcch_chinese_pleasanton_faithful_group",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -12294,7 +12368,21 @@
       "whereabouts",
       "room"
     ],
-    "site_id": "23"
+    "site_id": "23",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -12314,18 +12402,6 @@
     "slug": "d7c8Fd_cfcch_chinese_fremont_confident_group",
     "infos": {
       "attendance": {},
-      "allowed_groups": [
-        "organization_participant",
-        "data_organizer",
-        "conference_organizer",
-        "data_counselor"
-      ],
-      "allowed_models": [
-        "gathering",
-        "attendingmeet",
-        "attendance",
-        "eventrelation"
-      ],
       "gathering_infos": {
         "generate_attendance": true
       },
@@ -12341,7 +12417,21 @@
       "whereabouts",
       "organization"
     ],
-    "site_id": "1"
+    "site_id": "1",
+    "allowed_groups": [
+      [
+        "organization_participant"
+      ],
+      [
+        "data_organizer"
+      ],
+      [
+        "conference_organizer"
+      ],
+      [
+        "data_counselor"
+      ]
+    ]
   }
 },
 {
@@ -23697,8 +23787,6 @@
         "romanization": "David HaMelech Da Wei"
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -23734,8 +23822,6 @@
         "romanization": "Hagar Xia Jia "
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -23770,8 +23856,6 @@
         "romanization": "Samson Can Sun "
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -23807,8 +23891,6 @@
         "phone1": null,
         "phone2": null
       },
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -23843,8 +23925,6 @@
         "romanization": "Abigail Abigail last name Ya Bi Gai"
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -23879,8 +23959,6 @@
         "romanization": "Deborah Dvora Di Bo La"
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -23914,8 +23992,6 @@
         "romanization": "Esau Yi Sao "
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -23949,8 +24025,6 @@
         "romanization": "Chileab Ji Li Ya"
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -23987,15 +24061,6 @@
         "romanization": "Ishmael Yi Shi Ma Li "
       },
       "contacts": {},
-      "schedulers": {
-        "22c29cd5-a5ab-46a3-afe6-d5a600c33fc9": true,
-        "a48e4375-1a64-4c4f-beb3-8f088bf77340": false
-      },
-      "emergency_contacts": {
-        "22c29cd5-a5ab-46a3-afe6-d5a600c33fc9": true,
-        "a48e4375-1a64-4c4f-beb3-8f088bf77340": false,
-        "aa24758f-cc70-4353-b1d7-9c616b3db425": true
-      },
       "updating_attendees": {}
     }
   }
@@ -24029,8 +24094,6 @@
         "romanization": "Rebecca Li Bai Jia "
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -24064,8 +24127,6 @@
         "romanization": "Nabal Nabal last name Na Ba"
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -24110,8 +24171,6 @@
         "phone2": "+6555555555"
       },
       "sms_email": "5551234567@txt.att.net",
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -24152,8 +24211,6 @@
         "phone2": "+86666666666",
         "phone3": "+8666666666"
       },
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -24187,8 +24244,6 @@
         "romanization": "James Ya Ge "
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -24223,8 +24278,6 @@
         "romanization": "Lydia Thyatira Lu Di Ya"
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -24259,8 +24312,6 @@
         "romanization": "John Yue Han "
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -24299,8 +24350,6 @@
         "phone1": "+60123456789",
         "phone2": "+85212345678"
       },
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -24335,8 +24384,6 @@
         "romanization": "Esther Yi Si Tie "
       },
       "contacts": {},
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -24375,8 +24422,6 @@
         "phone1": "+18888888888",
         "phone2": "+28888888888"
       },
-      "schedulers": {},
-      "emergency_contacts": {},
       "updating_attendees": {}
     }
   }
@@ -25196,6 +25241,1070 @@
     "end_recurring_period": null,
     "calendar": 1,
     "color_event": "#D85504"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 1,
+  "fields": {
+    "meet": -1,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 2,
+  "fields": {
+    "meet": -1,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 3,
+  "fields": {
+    "meet": -1,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 4,
+  "fields": {
+    "meet": -1,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 5,
+  "fields": {
+    "meet": 0,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 6,
+  "fields": {
+    "meet": 0,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 7,
+  "fields": {
+    "meet": 0,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 8,
+  "fields": {
+    "meet": 0,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 9,
+  "fields": {
+    "meet": 1,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 10,
+  "fields": {
+    "meet": 1,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 11,
+  "fields": {
+    "meet": 1,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 12,
+  "fields": {
+    "meet": 1,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 13,
+  "fields": {
+    "meet": 2,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 14,
+  "fields": {
+    "meet": 2,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 15,
+  "fields": {
+    "meet": 2,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 16,
+  "fields": {
+    "meet": 2,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 17,
+  "fields": {
+    "meet": 3,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 18,
+  "fields": {
+    "meet": 3,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 19,
+  "fields": {
+    "meet": 3,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 20,
+  "fields": {
+    "meet": 3,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 21,
+  "fields": {
+    "meet": 4,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 22,
+  "fields": {
+    "meet": 4,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 23,
+  "fields": {
+    "meet": 4,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 24,
+  "fields": {
+    "meet": 4,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 25,
+  "fields": {
+    "meet": 5,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 26,
+  "fields": {
+    "meet": 5,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 27,
+  "fields": {
+    "meet": 5,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 28,
+  "fields": {
+    "meet": 5,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 29,
+  "fields": {
+    "meet": 6,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 30,
+  "fields": {
+    "meet": 6,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 31,
+  "fields": {
+    "meet": 6,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 32,
+  "fields": {
+    "meet": 6,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 33,
+  "fields": {
+    "meet": 7,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 34,
+  "fields": {
+    "meet": 7,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 35,
+  "fields": {
+    "meet": 7,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 36,
+  "fields": {
+    "meet": 7,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 37,
+  "fields": {
+    "meet": 8,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 38,
+  "fields": {
+    "meet": 8,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 39,
+  "fields": {
+    "meet": 8,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 40,
+  "fields": {
+    "meet": 9,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 41,
+  "fields": {
+    "meet": 9,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 42,
+  "fields": {
+    "meet": 9,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 43,
+  "fields": {
+    "meet": 10,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 44,
+  "fields": {
+    "meet": 10,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 45,
+  "fields": {
+    "meet": 10,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 46,
+  "fields": {
+    "meet": 10,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 47,
+  "fields": {
+    "meet": 11,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 48,
+  "fields": {
+    "meet": 11,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 49,
+  "fields": {
+    "meet": 11,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 50,
+  "fields": {
+    "meet": 11,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 51,
+  "fields": {
+    "meet": 12,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 52,
+  "fields": {
+    "meet": 12,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 53,
+  "fields": {
+    "meet": 12,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 54,
+  "fields": {
+    "meet": 12,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 55,
+  "fields": {
+    "meet": 13,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 56,
+  "fields": {
+    "meet": 13,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 57,
+  "fields": {
+    "meet": 13,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 58,
+  "fields": {
+    "meet": 13,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 59,
+  "fields": {
+    "meet": 14,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 60,
+  "fields": {
+    "meet": 14,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 61,
+  "fields": {
+    "meet": 14,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 62,
+  "fields": {
+    "meet": 14,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 63,
+  "fields": {
+    "meet": 15,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 64,
+  "fields": {
+    "meet": 15,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 65,
+  "fields": {
+    "meet": 15,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 66,
+  "fields": {
+    "meet": 15,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 67,
+  "fields": {
+    "meet": 16,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 68,
+  "fields": {
+    "meet": 17,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 69,
+  "fields": {
+    "meet": 18,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 70,
+  "fields": {
+    "meet": 18,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 71,
+  "fields": {
+    "meet": 18,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 72,
+  "fields": {
+    "meet": 18,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 73,
+  "fields": {
+    "meet": 19,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 74,
+  "fields": {
+    "meet": 19,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 75,
+  "fields": {
+    "meet": 19,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 76,
+  "fields": {
+    "meet": 19,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 77,
+  "fields": {
+    "meet": 20,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 78,
+  "fields": {
+    "meet": 20,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 79,
+  "fields": {
+    "meet": 20,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 80,
+  "fields": {
+    "meet": 20,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 81,
+  "fields": {
+    "meet": 21,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 82,
+  "fields": {
+    "meet": 21,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 83,
+  "fields": {
+    "meet": 21,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 84,
+  "fields": {
+    "meet": 21,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 85,
+  "fields": {
+    "meet": 22,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 86,
+  "fields": {
+    "meet": 22,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 87,
+  "fields": {
+    "meet": 22,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 88,
+  "fields": {
+    "meet": 22,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 89,
+  "fields": {
+    "meet": 23,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 90,
+  "fields": {
+    "meet": 23,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 91,
+  "fields": {
+    "meet": 23,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 92,
+  "fields": {
+    "meet": 23,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 93,
+  "fields": {
+    "meet": 24,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 94,
+  "fields": {
+    "meet": 24,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 95,
+  "fields": {
+    "meet": 24,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 96,
+  "fields": {
+    "meet": 24,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 97,
+  "fields": {
+    "meet": 25,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 98,
+  "fields": {
+    "meet": 25,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 99,
+  "fields": {
+    "meet": 25,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 100,
+  "fields": {
+    "meet": 25,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 101,
+  "fields": {
+    "meet": 26,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 102,
+  "fields": {
+    "meet": 27,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 103,
+  "fields": {
+    "meet": 28,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 104,
+  "fields": {
+    "meet": 28,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 105,
+  "fields": {
+    "meet": 28,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 106,
+  "fields": {
+    "meet": 28,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 107,
+  "fields": {
+    "meet": 29,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 108,
+  "fields": {
+    "meet": 29,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 109,
+  "fields": {
+    "meet": 29,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 110,
+  "fields": {
+    "meet": 29,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 111,
+  "fields": {
+    "meet": 30,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 112,
+  "fields": {
+    "meet": 30,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 113,
+  "fields": {
+    "meet": 30,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 114,
+  "fields": {
+    "meet": 30,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 115,
+  "fields": {
+    "meet": 31,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 116,
+  "fields": {
+    "meet": 31,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 117,
+  "fields": {
+    "meet": 31,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 118,
+  "fields": {
+    "meet": 31,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 119,
+  "fields": {
+    "meet": 32,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 120,
+  "fields": {
+    "meet": 32,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 121,
+  "fields": {
+    "meet": 32,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 122,
+  "fields": {
+    "meet": 32,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 123,
+  "fields": {
+    "meet": 33,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 124,
+  "fields": {
+    "meet": 33,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 125,
+  "fields": {
+    "meet": 33,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 126,
+  "fields": {
+    "meet": 33,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 127,
+  "fields": {
+    "meet": 34,
+    "model": "gathering"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 128,
+  "fields": {
+    "meet": 34,
+    "model": "attendingmeet"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 129,
+  "fields": {
+    "meet": 34,
+    "model": "attendance"
+  }
+},
+{
+  "model": "occasions.meetallowedmodel",
+  "pk": 130,
+  "fields": {
+    "meet": 34,
+    "model": "eventrelation"
+  }
+},
+{
+  "model": "persons.attendeescheduler",
+  "pk": 1,
+  "fields": {
+    "attendee": "80f2e82f-0a72-49ea-b3e2-3fc892c49599",
+    "scheduler": "22c29cd5-a5ab-46a3-afe6-d5a600c33fc9"
+  }
+},
+{
+  "model": "persons.attendeeemergencycontact",
+  "pk": 1,
+  "fields": {
+    "attendee": "80f2e82f-0a72-49ea-b3e2-3fc892c49599",
+    "contact": "22c29cd5-a5ab-46a3-afe6-d5a600c33fc9"
+  }
+},
+{
+  "model": "persons.attendeeemergencycontact",
+  "pk": 2,
+  "fields": {
+    "attendee": "80f2e82f-0a72-49ea-b3e2-3fc892c49599",
+    "contact": "aa24758f-cc70-4353-b1d7-9c616b3db425"
   }
 }
 ]

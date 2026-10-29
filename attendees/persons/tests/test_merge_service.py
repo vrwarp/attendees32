@@ -315,16 +315,19 @@ class TestAttendeeMergeService:
 
     def test_rekeys_references_held_by_other_attendees(self):
         parent = self._attendee("Mei")
-        parent.infos["schedulers"] = {str(self.duplicate.id): True}
-        parent.infos["emergency_contacts"] = {str(self.duplicate.id): True, str(self.primary.id): False}
-        parent.save(update_fields=["infos"])
+        parent.schedulers.set([self.duplicate])
+        parent.emergency_contacts.set([self.duplicate, self.primary])
 
         AttendeeMergeService.merge(self.duplicate, self.primary)
 
-        parent.refresh_from_db()
-        assert parent.infos["schedulers"] == {str(self.primary.id): True}
-        # The primary's own entry wins over the duplicate's.
-        assert parent.infos["emergency_contacts"] == {str(self.primary.id): False}
+        assert list(parent.schedulers.all()) == [self.primary]
+        # The primary's own link stays; the duplicate's, now the same one, goes.
+        assert list(parent.emergency_contacts.all()) == [self.primary]
+
+        AttendeeMergeService.unmerge(self.duplicate)
+
+        assert list(parent.schedulers.all()) == [self.duplicate]
+        assert set(parent.emergency_contacts.all()) == {self.duplicate, self.primary}
 
     def test_moves_the_duplicates_hidden_folk_like_any_other(self):
         hidden = self.duplicate.folks.get(category_id=Attendee.NON_FAMILY_CATEGORY)
@@ -362,8 +365,7 @@ class TestAttendeeMergeService:
         self.duplicate.user = login
         self.duplicate.save(update_fields=["user"])
         parent = self._attendee("Mei")
-        parent.infos["schedulers"] = {str(self.duplicate.id): True}
-        parent.save(update_fields=["infos"])
+        parent.schedulers.set([self.duplicate])
         earlier = self._attendee("Ava")
         AttendeeMergeService.merge(earlier, self.duplicate)
 
@@ -384,7 +386,7 @@ class TestAttendeeMergeService:
         assert registration.registrant_id == self.duplicate.id
         self.primary.refresh_from_db()
         assert self.primary.user_id is None and restored.user_id == login.id
-        assert parent.infos["schedulers"] == {str(self.duplicate.id): True}
+        assert list(parent.schedulers.all()) == [self.duplicate]
         assert Attendee.all_objects.get(pk=earlier.pk).merged_into_id == self.duplicate.id
         assert self.primary.attendings.count() == 1
 
@@ -489,28 +491,20 @@ class TestAttendeeMergeService:
 
     def test_carries_the_duplicates_own_schedulers_and_emergency_contacts(self):
         parent, aunt = self._attendee("Mei"), self._attendee("Lin")
-        self.primary.infos["emergency_contacts"] = {str(parent.id): True}
-        self.primary.save()
-        self.duplicate.infos["emergency_contacts"] = {
-            str(parent.id): False,
-            str(aunt.id): True,
-            str(self.primary.id): True,
-        }
-        self.duplicate.infos["schedulers"] = {str(aunt.id): True}
-        self.duplicate.save()
+        self.primary.emergency_contacts.set([parent])
+        self.duplicate.emergency_contacts.set([parent, aunt, self.primary])
+        self.duplicate.schedulers.set([aunt])
 
         AttendeeMergeService.merge(self.duplicate, self.primary)
 
-        self.primary.refresh_from_db()
-        # The primary's own entry wins; one naming the primary itself is dropped.
-        assert self.primary.infos["emergency_contacts"] == {str(parent.id): True, str(aunt.id): True}
-        assert self.primary.infos["schedulers"] == {str(aunt.id): True}
+        # The primary's own link stays; one naming the primary itself is dropped.
+        assert set(self.primary.emergency_contacts.all()) == {parent, aunt}
+        assert list(self.primary.schedulers.all()) == [aunt]
 
         AttendeeMergeService.unmerge(self.duplicate)
 
-        self.primary.refresh_from_db()
-        assert self.primary.infos["emergency_contacts"] == {str(parent.id): True}
-        assert self.primary.infos["schedulers"] == {}
+        assert list(self.primary.emergency_contacts.all()) == [parent]
+        assert list(self.primary.schedulers.all()) == []
 
     def test_unmerge_is_refused_when_there_is_nothing_to_undo(self):
         with pytest.raises(MergeRefused, match="not merged"):

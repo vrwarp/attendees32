@@ -360,20 +360,22 @@ class TestChurchStatuses:
             assert Note.objects.filter(category_id=category_id).exists()
 
     def test_a_counseling_note_names_the_reader_allowed_to_open_it(self, golden):
-        """``show_secret`` is keyed by attendee id — that is what the API filters on."""
-        counselor_attendee_id = str(golden.attendee("xu_jianguo").id)
+        """The viewers are attendees — that is what the API filters on."""
+        counselor = golden.attendee("xu_jianguo")
         note = Note.objects.get(
             object_id=str(golden.attendee("liu_meiling").id),
             category_id=NoteCategory.COUNSELING,
         )
-        assert note.infos["show_secret"] == {counselor_attendee_id: True}
+        assert list(note.viewers.all()) == [counselor]
         # The same body is also filed as a Past, which is what the attendee
         # page's note tab reads.
         past = Past.objects.get(
             object_id=str(golden.attendee("liu_meiling").id),
             category_id=NoteCategory.COUNSELING,
         )
-        assert past.infos["show_secret"] == {counselor_attendee_id: True}
+        assert list(past.viewers.all()) == [counselor]
+        assert past.is_visible_to(counselor.id)
+        assert not past.is_visible_to(golden.attendee("chen_zhiming").id)
 
 
 # --------------------------------------------------------------- participation

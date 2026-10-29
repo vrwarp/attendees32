@@ -21,6 +21,8 @@ from partial_date import PartialDate
 from attendees.occasions.models import Attendance
 from attendees.persons.models import (
     Attendee,
+    AttendeeEmergencyContact,
+    AttendeeScheduler,
     Attending,
     AttendingMeet,
     FolkAttendee,
@@ -34,8 +36,13 @@ from attendees.whereabouts.models import Place
 #: Bounds the walk over hand-edited data; a cycle answers "gone".
 MAX_MERGE_HOPS = 5
 
-#: ``Attendee.infos`` sections keyed by other attendees' ids.
-REFERENCE_KEYS = ("schedulers", "emergency_contacts")
+#: The links one attendee holds to others, by the name the merge record keeps them under: the
+#: link table and its field naming the other person. (The names are those of the
+#: ``Attendee.infos`` maps these tables replaced, so older merge records still read.)
+LINKS = {
+    "schedulers": (AttendeeScheduler, "scheduler"),
+    "emergency_contacts": (AttendeeEmergencyContact, "contact"),
+}
 
 #: An attendee's own single-value details: these columns, and every key of
 #: ``infos["fixed"]`` as ``fixed.<key>``. Contacts are handled by kind below.
@@ -525,28 +532,24 @@ class AttendeeMergeService:
 
     @staticmethod
     def _merge_own_references(duplicate, primary):
-        """The people the duplicate's own schedulers and emergency_contacts
-        name are added to the primary's; an entry the primary already has,
-        or one naming either record, is left alone."""
+        """The duplicate's own schedulers and emergency contacts become the
+        primary's as well; one the primary already has, or one naming either
+        record, is left alone."""
         added = {}
-        for key in REFERENCE_KEYS:
-            ours = duplicate.infos.get(key) or {}
-            theirs = primary.infos.setdefault(key, {})
-            added[key] = [
-                other
-                for other in ours
-                if other not in theirs and other not in (str(duplicate.pk), str(primary.pk))
-            ]
-            for other in added[key]:
-                theirs[other] = ours[other]
-        primary.save(update_fields=["infos"])
+        for key, (model, other) in LINKS.items():
+            theirs = set(model.objects.filter(attendee=primary).values_list(f"{other}_id", flat=True))
+            ours = model.objects.filter(attendee=duplicate).exclude(
+                **{f"{other}__in": [duplicate.pk, primary.pk]}
+            )
+            added[key] = [str(pk) for pk in ours.values_list(f"{other}_id", flat=True) if pk not in theirs]
+            model.objects.bulk_create([model(attendee=primary, **{f"{other}_id": pk}) for pk in added[key]])
         return added
 
     @staticmethod
     def _restore_own_references(primary, added):
         for key, others in added.items():
-            for other in others:
-                (primary.infos.get(key) or {}).pop(other, None)
+            model, other = LINKS[key]
+            model.objects.filter(attendee=primary, **{f"{other}_id__in": others}).delete()
 
     @staticmethod
     def _fold_attendings(duplicate, primary):
@@ -703,41 +706,40 @@ class AttendeeMergeService:
 
     @staticmethod
     def _rekey_references(duplicate, primary):
-        """Other attendees naming the duplicate by id now name the primary;
-        an entry the primary already has, or a self-reference, wins."""
-        mine, theirs = str(duplicate.pk), str(primary.pk)
+        """Links other attendees hold to the duplicate now point at the
+        primary; one whose holder already has the primary, or that would
+        point the primary at itself, goes instead."""
         entries = []
-        for key in REFERENCE_KEYS:
-            holders = Attendee.all_objects.filter(
-                division__organization_id=duplicate.division.organization_id,
-                **{f"infos__{key}__has_key": mine},
-            ).exclude(pk=duplicate.pk)
-            for holder in holders:
-                section = dict(holder.infos.get(key) or {})
-                value = section.pop(mine)
-                set_primary = holder.pk != primary.pk and theirs not in section
+        for key, (model, other) in LINKS.items():
+            for link in model.objects.filter(**{other: duplicate}).exclude(attendee=duplicate):
+                holder_has_primary = model.objects.filter(
+                    attendee_id=link.attendee_id, **{other: primary}
+                ).exists()
+                set_primary = link.attendee_id != primary.pk and not holder_has_primary
                 if set_primary:
-                    section[theirs] = value
-                holder.infos[key] = section
-                holder.save(update_fields=["infos"])
+                    setattr(link, f"{other}_id", primary.pk)
+                    link.save(update_fields=[other])
+                else:
+                    link.delete()
                 entries.append(
-                    {"attendee": str(holder.pk), "key": key, "value": value, "set_primary": set_primary}
+                    {"attendee": str(link.attendee_id), "key": key, "value": True, "set_primary": set_primary}
                 )
         return entries
 
     @staticmethod
     def _restore_references(duplicate, record):
-        mine, theirs = str(duplicate.pk), record["into"]
+        theirs = record["into"]
         for entry in record["moved"]["references"]:
+            model, other = LINKS[entry["key"]]
             holder = Attendee.all_objects.filter(pk=entry["attendee"]).first()
             if holder is None:
                 continue
-            section = dict(holder.infos.get(entry["key"]) or {})
             if entry["set_primary"]:
-                section.pop(theirs, None)
-            section[mine] = entry["value"]
-            holder.infos[entry["key"]] = section
-            holder.save(update_fields=["infos"])
+                model.objects.filter(attendee=holder, **{f"{other}_id": theirs}).delete()
+            # A record from before the link tables may carry a false value: the
+            # map's way of saying the link was over, which is now no row.
+            if entry.get("value", True):
+                model.objects.get_or_create(attendee=holder, **{other: duplicate})
 
     @staticmethod
     def _repoint_tombstones(duplicate, primary):
