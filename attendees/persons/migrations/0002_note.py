@@ -4,8 +4,6 @@ from django.db import migrations, models
 from uuid import uuid4
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 from attendees.persons.models import Utility
 
 
@@ -44,42 +42,5 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='note',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='note_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='NotesHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('id', models.UUIDField(db_index=True, default=uuid4, editable=False, serialize=False)),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='history', to='persons.note')),
-                ('object_id', models.CharField(max_length=36)),
-                ('display_order', models.SmallIntegerField(default=0)),
-                ('body', models.TextField()),
-                ('category', models.ForeignKey(db_constraint=False, help_text="subtype: for note it's public/counseling sub-types etc", on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.category')),
-                ('content_type', models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='contenttypes.contenttype')),
-                ('organization', models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.organization')),
-                ('infos', models.JSONField(blank=True, default=Utility.relationship_infos, help_text='Example: {"owner": "John"}. Please keep {} here even no data', null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'persons_noteshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_noteshistory', original_model_table='persons_notes')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='note',
-            trigger=pgtrigger.compiler.Trigger(name='note_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_noteshistory" ("created", "modified", "is_removed", "id", "object_id", "display_order", "body", "infos", "category_id", "content_type_id", "organization_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."body", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NOW(), \'note.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='8fa82c65e4e71bdbc0fdb7efceae2f12a3afe8ea', operation='INSERT', pgid='pgtrigger_note_snapshot_insert_fcd72', table='persons_notes', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='note',
-            trigger=pgtrigger.compiler.Trigger(name='note_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."id" IS DISTINCT FROM NEW."id" OR OLD."object_id" IS DISTINCT FROM NEW."object_id" OR OLD."display_order" IS DISTINCT FROM NEW."display_order" OR OLD."body" IS DISTINCT FROM NEW."body" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."category_id" IS DISTINCT FROM NEW."category_id" OR OLD."content_type_id" IS DISTINCT FROM NEW."content_type_id" OR OLD."organization_id" IS DISTINCT FROM NEW."organization_id")', func='INSERT INTO "persons_noteshistory" ("created", "modified", "is_removed", "id", "object_id", "display_order", "body", "infos", "category_id", "content_type_id", "organization_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."body", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NOW(), \'note.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='d9f1b6494d1201616d39f475e8aeb270ab8b1200', operation='UPDATE', pgid='pgtrigger_note_snapshot_update_b2f19', table='persons_notes', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='note',
-            trigger=pgtrigger.compiler.Trigger(name='note_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_noteshistory" ("created", "modified", "is_removed", "id", "object_id", "display_order", "body", "infos", "category_id", "content_type_id", "organization_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."created", OLD."modified", OLD."is_removed", OLD."id", OLD."object_id", OLD."display_order", OLD."body", OLD."infos", OLD."category_id", OLD."content_type_id", OLD."organization_id", NOW(), \'note.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='228956279eeee5ce9334d3970e528f7d66d1f9e3', operation='DELETE', pgid='pgtrigger_note_before_delete_eab5f', table='persons_notes', when='AFTER')),
         ),
     ]

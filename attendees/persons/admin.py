@@ -4,8 +4,8 @@ from django.db.models import Q
 from django_json_widget.widgets import JSONEditorWidget
 
 from attendees.occasions.models import Attendance, Meet, Team, Character, Assembly
-from attendees.persons.models import AttendingMeet, FolkAttendee, Category, Past, Note, Folk, Attendee, Registration, \
-    Attending, Relation, PgHistoryPage
+from attendees.persons.models import AttendingMeet, FolkAttendee, Category, Past, Note, Folk, Attendee, Registration, Attending, Relation
+from attendees.history.admin import HistoryPage
 from attendees.persons.models.attendee_links import AttendeeEmergencyContact, AttendeeScheduler
 
 
@@ -58,7 +58,7 @@ class EmergencyContactInline(admin.TabularInline):
     verbose_name_plural = "emergency contacts"
 
 
-class CategoryAdmin(PgHistoryPage, admin.ModelAdmin):
+class CategoryAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -72,7 +72,7 @@ class CategoryAdmin(PgHistoryPage, admin.ModelAdmin):
         js = ["js/admin/list_filter_collapse.js"]
 
 
-class PastAdmin(PgHistoryPage, admin.ModelAdmin):
+class PastAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -107,7 +107,7 @@ class PastAdmin(PgHistoryPage, admin.ModelAdmin):
         ).exclude(category__display_name=Past.COUNSELING)
 
 
-class FolkAdmin(PgHistoryPage, admin.ModelAdmin):
+class FolkAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -143,7 +143,7 @@ class FolkAdmin(PgHistoryPage, admin.ModelAdmin):
         return qs.filter(division__organization=request.user.organization)
 
 
-class FolkAttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
+class FolkAttendeeAdmin(HistoryPage, admin.ModelAdmin):
     readonly_fields = ["display_folk_id", "is_removed", "id", "created", "modified"]
     list_display = ("id", "folk", "attendee", "role", "is_removed", "infos")
     search_fields = ("id", "attendee__id", "attendee__search_text", "folk__id")
@@ -169,7 +169,7 @@ class FolkAttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
         return qs.filter(folk__division__organization=request.user.organization).order_by(*ordering)
 
 
-class RelationAdmin(PgHistoryPage, admin.ModelAdmin):
+class RelationAdmin(HistoryPage, admin.ModelAdmin):
     readonly_fields = ["id", "created", "modified"]
     list_display_links = ("title",)
     filter_horizontal = ("reciprocals",)
@@ -188,7 +188,7 @@ class RelationAdmin(PgHistoryPage, admin.ModelAdmin):
         return ", ".join(obj.reciprocals.values_list("title", flat=True))
 
 
-class AttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
+class AttendeeAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -216,7 +216,7 @@ class AttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class RegistrationAdmin(PgHistoryPage, admin.ModelAdmin):
+class RegistrationAdmin(HistoryPage, admin.ModelAdmin):
     search_fields = (
         'registrant__first_name',
         'registrant__last_name',
@@ -250,7 +250,7 @@ class AttendanceInline(admin.StackedInline):
     extra = 0
 
 
-class AttendingAdmin(PgHistoryPage, admin.ModelAdmin):
+class AttendingAdmin(HistoryPage, admin.ModelAdmin):
     # list_per_page = 1000
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
@@ -285,7 +285,7 @@ class AttendingAdmin(PgHistoryPage, admin.ModelAdmin):
         js = ["js/admin/list_filter_collapse.js"]
 
 
-class NoteAdmin(PgHistoryPage, admin.ModelAdmin):
+class NoteAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -340,7 +340,7 @@ class NoteAdmin(PgHistoryPage, admin.ModelAdmin):
 #         )
 
 
-class AttendingMeetAdmin(PgHistoryPage, admin.ModelAdmin):
+class AttendingMeetAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }

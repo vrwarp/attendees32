@@ -12,14 +12,4 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.AlterField(
-            model_name='emailaddresshistory',
-            name='email',
-            field=models.EmailField(max_length=254, verbose_name='email address'),
-        ),
-        migrations.AlterField(
-            model_name='emailconfirmationhistory',
-            name='email_address',
-            field=models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='account.emailaddress', verbose_name='email address'),
-        ),
     ]

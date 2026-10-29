@@ -37,10 +37,10 @@ class TestModels:
             assert price.start < price.finish
 
     def test_a_change_is_recorded_in_the_history_the_admin_exposes(self, golden, login):
-        """pghistory is what answers "who changed this?" months later.
+        """The history is what answers "who changed this?" months later.
 
-        The trigger fires in the database, so this writes through the ORM and
-        then reads the event table the admin's history page is built on.
+        A write through the ORM lands as one event in the table the admin's
+        history page is built on, with the whole record in it.
         """
         attendee = golden.attendee("feng_ruian")
         before = attendee.history.count()
@@ -48,9 +48,10 @@ class TestModels:
         attendee.first_name2 = "瑞安改"
         attendee.save()
 
-        assert attendee.history.count() > before
-        latest = attendee.history.order_by("-pgh_created_at").first()
-        assert latest.first_name2 == "瑞安改"
+        assert attendee.history.count() == before + 1
+        latest = attendee.history.last()
+        assert latest.instance.first_name2 == "瑞安改"
+        assert latest.changes()["first_name2"] == ("瑞安", "瑞安改")
 
         attendee.first_name2 = "瑞安"
         attendee.save()

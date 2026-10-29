@@ -86,13 +86,10 @@ THIRD_PARTY_APPS = [
     # "django_readonly_field",
     "address",
     "django_db_comments",
-    "pgtrigger",
-    "pghistory",  # django-pghistory can version a superset of models
 ]
 
 LOCAL_APPS = [
-    # Must precede every app that tracks models with pghistory; see its models.py.
-    "attendees.utils.history_compat",
+    "attendees.history.apps.HistoryConfig",
     "attendees.users",
     # Your stuff: custom apps go here
     "attendees.whereabouts.apps.WhereaboutsConfig",
@@ -160,7 +157,7 @@ MIDDLEWARE = [
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "pghistory.middleware.HistoryMiddleware",
+    "attendees.history.middleware.HistoryContextMiddleware",
     "attendees.middleware.TimezoneMiddleware",
 ]
 
@@ -485,3 +482,14 @@ if SENTRY_DSN:
     )
 SENTRY_ARTIFICIAL_API_DEBUG = env.bool("SENTRY_ARTIFICIAL_API_DEBUG", default=False)
 SENTRY_FRONTEND_LIB = env("SENTRY_FRONTEND_LIB", default="")
+
+# HISTORY
+# ------------------------------------------------------------------------------
+# The audit history (attendees.history): every tracked write is an event sealed into a chain.
+# The chain key never leaves the server's environment file and the printed recovery sheet.
+HISTORY_CHAIN_KEY = env("DJANGO_HISTORY_CHAIN_KEY", default="")
+# Where the daily anchor (head of the chain) is appended, and who is mailed a copy of it.
+HISTORY_ANCHOR_FILE = env("DJANGO_HISTORY_ANCHOR_FILE", default="")
+HISTORY_ANCHOR_RECIPIENTS = env.list("DJANGO_HISTORY_ANCHOR_RECIPIENTS", default=[])
+# Who is mailed when the nightly verification fails.
+HISTORY_AUDIT_RECIPIENTS = env.list("DJANGO_HISTORY_AUDIT_RECIPIENTS", default=[email for _name, email in ADMINS])

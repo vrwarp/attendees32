@@ -2,8 +2,6 @@
 
 import attendees.persons.models.utility
 import django.db.models.deletion
-import pgtrigger.compiler
-import pgtrigger.migrations
 from django.db import migrations, models
 
 
@@ -48,42 +46,6 @@ class Migration(migrations.Migration):
                 "db_table": "persons_attendee_schedulers",
             },
         ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="folkattendee",
-            name="folkattendee_snapshot_insert",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="folkattendee",
-            name="folkattendee_before_delete",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="folkattendee",
-            name="folkattendee_snapshot_update",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="note",
-            name="note_snapshot_insert",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="note",
-            name="note_before_delete",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="note",
-            name="note_snapshot_update",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="past",
-            name="past_snapshot_insert",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="past",
-            name="past_before_delete",
-        ),
-        pgtrigger.migrations.RemoveTrigger(
-            model_name="past",
-            name="past_snapshot_update",
-        ),
         migrations.AddField(
             model_name="folkattendee",
             name="counselors_may_view",
@@ -100,14 +62,6 @@ class Migration(migrations.Migration):
                 help_text="who may see this record; nobody listed means everyone who may see its category",
                 related_name="+",
                 to="persons.attendee",
-            ),
-        ),
-        migrations.AddField(
-            model_name="folkattendeeshistory",
-            name="counselors_may_view",
-            field=models.BooleanField(
-                default=False,
-                help_text="a counseling record every counselor may see, not only the viewers listed",
             ),
         ),
         migrations.AddField(
@@ -129,14 +83,6 @@ class Migration(migrations.Migration):
             ),
         ),
         migrations.AddField(
-            model_name="noteshistory",
-            name="counselors_may_view",
-            field=models.BooleanField(
-                default=False,
-                help_text="a counseling record every counselor may see, not only the viewers listed",
-            ),
-        ),
-        migrations.AddField(
             model_name="past",
             name="counselors_may_view",
             field=models.BooleanField(
@@ -154,26 +100,8 @@ class Migration(migrations.Migration):
                 to="persons.attendee",
             ),
         ),
-        migrations.AddField(
-            model_name="pastshistory",
-            name="counselors_may_view",
-            field=models.BooleanField(
-                default=False,
-                help_text="a counseling record every counselor may see, not only the viewers listed",
-            ),
-        ),
         migrations.AlterField(
             model_name="folkattendee",
-            name="infos",
-            field=models.JSONField(
-                blank=True,
-                default=attendees.persons.models.utility.Utility.relationship_infos,
-                help_text='Example: {"comment": "..."}. Please keep {} here even no data',
-                null=True,
-            ),
-        ),
-        migrations.AlterField(
-            model_name="folkattendeeshistory",
             name="infos",
             field=models.JSONField(
                 blank=True,
@@ -190,145 +118,6 @@ class Migration(migrations.Migration):
                 default=attendees.persons.models.utility.Utility.relationship_infos,
                 help_text='Example: {"comment": "..."}. Please keep {} here even no data',
                 null=True,
-            ),
-        ),
-        migrations.AlterField(
-            model_name="pastshistory",
-            name="infos",
-            field=models.JSONField(
-                blank=True,
-                default=attendees.persons.models.utility.Utility.relationship_infos,
-                help_text='Example: {"comment": "..."}. Please keep {} here even no data',
-                null=True,
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="folkattendee",
-            trigger=pgtrigger.compiler.Trigger(
-                name="folkattendee_snapshot_insert",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "persons_folk_attendeeshistory" ("counselors_may_view", "id", "created", "modified", "is_removed", "display_order", "folk_id", "attendee_id", "role_id", "file", "start", "finish", "infos", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."counselors_may_view", NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."folk_id", NEW."attendee_id", NEW."role_id", NEW."file", NEW."start", NEW."finish", NEW."infos", NOW(), \'folkattendee.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;',
-                    hash="c31e253bd6a8e48c33bebda6751a1be7bcdafe16",
-                    operation="INSERT",
-                    pgid="pgtrigger_folkattendee_snapshot_insert_c56b5",
-                    table="persons_folk_attendees",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="folkattendee",
-            trigger=pgtrigger.compiler.Trigger(
-                name="folkattendee_snapshot_update",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    condition='WHEN (OLD."counselors_may_view" IS DISTINCT FROM (NEW."counselors_may_view") OR OLD."id" IS DISTINCT FROM (NEW."id") OR OLD."created" IS DISTINCT FROM (NEW."created") OR OLD."modified" IS DISTINCT FROM (NEW."modified") OR OLD."is_removed" IS DISTINCT FROM (NEW."is_removed") OR OLD."display_order" IS DISTINCT FROM (NEW."display_order") OR OLD."folk_id" IS DISTINCT FROM (NEW."folk_id") OR OLD."attendee_id" IS DISTINCT FROM (NEW."attendee_id") OR OLD."role_id" IS DISTINCT FROM (NEW."role_id") OR OLD."file" IS DISTINCT FROM (NEW."file") OR OLD."start" IS DISTINCT FROM (NEW."start") OR OLD."finish" IS DISTINCT FROM (NEW."finish") OR OLD."infos" IS DISTINCT FROM (NEW."infos"))',
-                    func='INSERT INTO "persons_folk_attendeeshistory" ("counselors_may_view", "id", "created", "modified", "is_removed", "display_order", "folk_id", "attendee_id", "role_id", "file", "start", "finish", "infos", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."counselors_may_view", NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."folk_id", NEW."attendee_id", NEW."role_id", NEW."file", NEW."start", NEW."finish", NEW."infos", NOW(), \'folkattendee.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;',
-                    hash="abdda6e264e72e50a91a9ecbdccd52eff6b872ca",
-                    operation="UPDATE",
-                    pgid="pgtrigger_folkattendee_snapshot_update_38722",
-                    table="persons_folk_attendees",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="folkattendee",
-            trigger=pgtrigger.compiler.Trigger(
-                name="folkattendee_before_delete",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "persons_folk_attendeeshistory" ("counselors_may_view", "id", "created", "modified", "is_removed", "display_order", "folk_id", "attendee_id", "role_id", "file", "start", "finish", "infos", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."counselors_may_view", OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."display_order", OLD."folk_id", OLD."attendee_id", OLD."role_id", OLD."file", OLD."start", OLD."finish", OLD."infos", NOW(), \'folkattendee.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;',
-                    hash="3ffe00eb2db31c82420500a005db4b2b48681154",
-                    operation="DELETE",
-                    pgid="pgtrigger_folkattendee_before_delete_64cf1",
-                    table="persons_folk_attendees",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="note",
-            trigger=pgtrigger.compiler.Trigger(
-                name="note_snapshot_insert",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "persons_noteshistory" ("counselors_may_view", "created", "modified", "is_removed", "id", "object_id", "display_order", "body", "infos", "category_id", "content_type_id", "organization_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."counselors_may_view", NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."body", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NOW(), \'note.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;',
-                    hash="3a0c10486a8f33b88c986713b3339a166326c7e0",
-                    operation="INSERT",
-                    pgid="pgtrigger_note_snapshot_insert_fcd72",
-                    table="persons_notes",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="note",
-            trigger=pgtrigger.compiler.Trigger(
-                name="note_snapshot_update",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    condition='WHEN (OLD."counselors_may_view" IS DISTINCT FROM (NEW."counselors_may_view") OR OLD."created" IS DISTINCT FROM (NEW."created") OR OLD."modified" IS DISTINCT FROM (NEW."modified") OR OLD."is_removed" IS DISTINCT FROM (NEW."is_removed") OR OLD."id" IS DISTINCT FROM (NEW."id") OR OLD."object_id" IS DISTINCT FROM (NEW."object_id") OR OLD."display_order" IS DISTINCT FROM (NEW."display_order") OR OLD."body" IS DISTINCT FROM (NEW."body") OR OLD."infos" IS DISTINCT FROM (NEW."infos") OR OLD."category_id" IS DISTINCT FROM (NEW."category_id") OR OLD."content_type_id" IS DISTINCT FROM (NEW."content_type_id") OR OLD."organization_id" IS DISTINCT FROM (NEW."organization_id"))',
-                    func='INSERT INTO "persons_noteshistory" ("counselors_may_view", "created", "modified", "is_removed", "id", "object_id", "display_order", "body", "infos", "category_id", "content_type_id", "organization_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."counselors_may_view", NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."body", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NOW(), \'note.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;',
-                    hash="11ac9ab65450fe02f20af43342c7088c747e0f52",
-                    operation="UPDATE",
-                    pgid="pgtrigger_note_snapshot_update_b2f19",
-                    table="persons_notes",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="note",
-            trigger=pgtrigger.compiler.Trigger(
-                name="note_before_delete",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "persons_noteshistory" ("counselors_may_view", "created", "modified", "is_removed", "id", "object_id", "display_order", "body", "infos", "category_id", "content_type_id", "organization_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."counselors_may_view", OLD."created", OLD."modified", OLD."is_removed", OLD."id", OLD."object_id", OLD."display_order", OLD."body", OLD."infos", OLD."category_id", OLD."content_type_id", OLD."organization_id", NOW(), \'note.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;',
-                    hash="f40d1a335baf1c1857ac57b79a41f484f529d76b",
-                    operation="DELETE",
-                    pgid="pgtrigger_note_before_delete_eab5f",
-                    table="persons_notes",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="past",
-            trigger=pgtrigger.compiler.Trigger(
-                name="past_snapshot_insert",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "persons_pastshistory" ("counselors_may_view", "created", "modified", "is_removed", "id", "object_id", "display_order", "infos", "category_id", "content_type_id", "organization_id", "when", "finish", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."counselors_may_view", NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NEW."when", NEW."finish", NEW."display_name", NOW(), \'past.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;',
-                    hash="d08fbf2b230cc50ce2e0bf985e056c78ac76dd06",
-                    operation="INSERT",
-                    pgid="pgtrigger_past_snapshot_insert_e6306",
-                    table="persons_pasts",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="past",
-            trigger=pgtrigger.compiler.Trigger(
-                name="past_snapshot_update",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    condition='WHEN (OLD."counselors_may_view" IS DISTINCT FROM (NEW."counselors_may_view") OR OLD."created" IS DISTINCT FROM (NEW."created") OR OLD."modified" IS DISTINCT FROM (NEW."modified") OR OLD."is_removed" IS DISTINCT FROM (NEW."is_removed") OR OLD."id" IS DISTINCT FROM (NEW."id") OR OLD."object_id" IS DISTINCT FROM (NEW."object_id") OR OLD."display_order" IS DISTINCT FROM (NEW."display_order") OR OLD."infos" IS DISTINCT FROM (NEW."infos") OR OLD."category_id" IS DISTINCT FROM (NEW."category_id") OR OLD."content_type_id" IS DISTINCT FROM (NEW."content_type_id") OR OLD."organization_id" IS DISTINCT FROM (NEW."organization_id") OR OLD."when" IS DISTINCT FROM (NEW."when") OR OLD."finish" IS DISTINCT FROM (NEW."finish") OR OLD."display_name" IS DISTINCT FROM (NEW."display_name"))',
-                    func='INSERT INTO "persons_pastshistory" ("counselors_may_view", "created", "modified", "is_removed", "id", "object_id", "display_order", "infos", "category_id", "content_type_id", "organization_id", "when", "finish", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."counselors_may_view", NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NEW."when", NEW."finish", NEW."display_name", NOW(), \'past.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;',
-                    hash="a6b456a55d1da77359ddbebf373dc951efe4ce3e",
-                    operation="UPDATE",
-                    pgid="pgtrigger_past_snapshot_update_9fb1c",
-                    table="persons_pasts",
-                    when="AFTER",
-                ),
-            ),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name="past",
-            trigger=pgtrigger.compiler.Trigger(
-                name="past_before_delete",
-                sql=pgtrigger.compiler.UpsertTriggerSql(
-                    func='INSERT INTO "persons_pastshistory" ("counselors_may_view", "created", "modified", "is_removed", "id", "object_id", "display_order", "infos", "category_id", "content_type_id", "organization_id", "when", "finish", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."counselors_may_view", OLD."created", OLD."modified", OLD."is_removed", OLD."id", OLD."object_id", OLD."display_order", OLD."infos", OLD."category_id", OLD."content_type_id", OLD."organization_id", OLD."when", OLD."finish", OLD."display_name", NOW(), \'past.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;',
-                    hash="860ea6fa432a08a5d361cbab212c8d834438f3b2",
-                    operation="DELETE",
-                    pgid="pgtrigger_past_before_delete_30eec",
-                    table="persons_pasts",
-                    when="AFTER",
-                ),
             ),
         ),
         migrations.AddField(

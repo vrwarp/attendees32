@@ -4,8 +4,6 @@ from django.db import migrations, models
 from attendees.persons.models import Utility
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -38,39 +36,5 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='category',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='category_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='CategoriesHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='persons.category')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('type', models.CharField(default='generic', help_text='main type', max_length=25)),
-                ('display_order', models.SmallIntegerField(default=0)),
-                ('display_name', models.CharField(max_length=50)),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"icon": "home", "style": "normal"}. Please keep {} here even no data', null=True)),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'persons_categorieshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_categorieshistory')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='category',
-            trigger=pgtrigger.compiler.Trigger(name='category_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_categorieshistory" ("created", "modified", "is_removed", "id", "display_order", "infos", "type", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."display_order", NEW."infos", NEW."type", NEW."display_name", NOW(), \'category.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='2c67612690a9b4a565d71e40d7b774edb7efb434', operation='INSERT', pgid='pgtrigger_category_snapshot_insert_47256', table='persons_categories', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='category',
-            trigger=pgtrigger.compiler.Trigger(name='category_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."id" IS DISTINCT FROM NEW."id" OR OLD."display_order" IS DISTINCT FROM NEW."display_order" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."type" IS DISTINCT FROM NEW."type" OR OLD."display_name" IS DISTINCT FROM NEW."display_name")', func='INSERT INTO "persons_categorieshistory" ("created", "modified", "is_removed", "id", "display_order", "infos", "type", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."display_order", NEW."infos", NEW."type", NEW."display_name", NOW(), \'category.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='2f87b411bed7793befd9adc31eed51d941ecf587', operation='UPDATE', pgid='pgtrigger_category_snapshot_update_d9211', table='persons_categories', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='category',
-            trigger=pgtrigger.compiler.Trigger(name='category_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_categorieshistory" ("created", "modified", "is_removed", "id", "display_order", "infos", "type", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."created", OLD."modified", OLD."is_removed", OLD."id", OLD."display_order", OLD."infos", OLD."type", OLD."display_name", NOW(), \'category.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='7b6106ee4d91bee20e04f6539f64a82342970552', operation='DELETE', pgid='pgtrigger_category_before_delete_7e746', table='persons_categories', when='AFTER')),
         ),
     ]

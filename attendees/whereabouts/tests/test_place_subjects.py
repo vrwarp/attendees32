@@ -103,19 +103,15 @@ class TestPlaceSubjects:
                 return iter(self.rows)
 
         good = Row("p1", folk_type.pk, str(self.family.id))
-        places, history = Frozen([good]), Frozen([Row("h1", folk_type.pk, str(self.family.id)), Row("h2", folk_type.pk, "gone")])
+        places = Frozen([good])
 
         class Apps:
             @staticmethod
             def get_model(app, name):
-                return {("whereabouts", "Place"): places, ("whereabouts", "PlacesHistory"): history}.get(
-                    (app, name), apps.get_model(app, name)
-                )
+                return places if (app, name) == ("whereabouts", "Place") else apps.get_model(app, name)
 
         migration.copy_place_subjects(Apps(), None)
         assert good.saved == {"folk": self.family.id}
-        assert history.rows[0].saved == {"folk": self.family.id}, "history rows get their key without checks"
-        assert history.rows[1].saved == {}, "a history row naming nothing that parses is left alone"
 
         dangling = Row("p2", folk_type.pk, "00000000-0000-0000-0000-000000000000")
         places.rows = [dangling]

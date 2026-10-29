@@ -1,5 +1,5 @@
 from .enum import GenderEnum
-from .utility import Utility, GatheringBatchCreateResult, PgHistoryPage
+from .utility import Utility, GatheringBatchCreateResult
 from .searchable import Searchable
 from .confidential import Confidential
 from .category import Category
@@ -14,4 +14,3 @@ from .relation import Relation
 from .registration import Registration
 from .attending import Attending
 from .attending_meet import AttendingMeet
-

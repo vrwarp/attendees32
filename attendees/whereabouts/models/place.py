@@ -1,20 +1,20 @@
-import pghistory
 from uuid import uuid4
 from address.models import AddressField
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.db.models import Q
-import django.utils.timezone
-import model_utils.fields
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
 from attendees.persons.models import Utility
+from attendees.history import track
+from attendees.history.querysets import TrackedSoftDeletable
 
 #: The subject keys of a place, one of which every place sets.
 SUBJECT_FIELDS = ("attendee", "folk", "assembly", "campus", "estate")
 
 
-class Place(TimeStampedModel, SoftDeletableModel, Utility):
+@track
+class Place(TrackedSoftDeletable, TimeStampedModel, SoftDeletableModel, Utility):
     """An address in use by one subject: an attendee, a folk, an assembly, a campus or a property.
 
     Exactly one of the subject keys is set; the database checks it. They replaced a generic
@@ -169,31 +169,3 @@ class Place(TimeStampedModel, SoftDeletableModel, Utility):
 
     def __str__(self):
         return "%s %s" % (self.address, self.subject)
-
-
-class PlacesHistory(pghistory.get_event_model(
-    Place,
-    pghistory.Snapshot('place.snapshot'),
-    pghistory.BeforeDelete('place.before_delete'),
-    name='PlacesHistory',
-    related_name='history',
-)):
-    pgh_id = models.BigAutoField(primary_key=True, serialize=False)
-    pgh_created_at = models.DateTimeField(auto_now_add=True)
-    pgh_label = models.TextField(help_text='The event label.')
-    pgh_obj = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='whereabouts.place')
-    created = model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')
-    id = models.UUIDField(db_index=True, default=uuid4, editable=False, serialize=False)
-    modified = model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')
-    is_removed = models.BooleanField(default=False)
-    organization = models.ForeignKey(db_constraint=False, default=0, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.organization')
-    infos = models.JSONField(blank=True, default=Utility.default_infos, help_text="please keep {} here even there's no data", null=True)
-    display_order = models.SmallIntegerField(default=0)
-    display_name = models.CharField(default='main', help_text='main, resident, etc (main will be displayed first)', max_length=50)
-    address = AddressField(blank=True, db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='address.address')
-    start = models.DateField(blank=True, help_text='optional, moved in date', null=True)
-    finish = models.DateField(blank=True, help_text='optional, moved out date', null=True)
-    pgh_context = models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')
-
-    class Meta:
-        db_table = 'whereabouts_placeshistory'

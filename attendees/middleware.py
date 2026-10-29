@@ -15,7 +15,7 @@ class Early404Middleware:
     """
     Scans the requested URL against urls.py. If it doesn't match any valid path, 
     immediately returns a lightweight 404 response. This runs high in the middleware 
-    stack to completely bypass DB queries caused by other middlewares (like pghistory).
+    stack to completely bypass DB queries caused by other middlewares.
     """
     def __init__(self, get_response):
         self.get_response = get_response

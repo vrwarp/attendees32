@@ -4,8 +4,6 @@ from attendees.persons.models import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 from private_storage.fields import PrivateFileField
 from private_storage.storage.files import PrivateFileSystemStorage
 
@@ -54,45 +52,5 @@ class Migration(migrations.Migration):
             model_name='gathering',
             name='attendings',
             field=models.ManyToManyField(through='occasions.Attendance', to='persons.Attending'),
-        ),
-        migrations.CreateModel(
-            name='AttendancesHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='occasions.attendance')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('display_order', models.SmallIntegerField(default=0)),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"kid_points": 5}. Please keep {} here even no data', null=True)),
-                ('attending', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.attending')),
-                ('character', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.character')),
-                ('gathering', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.gathering')),
-                ('category', models.ForeignKey(db_constraint=False, default=1, help_text='RSVPed, leave, remote, etc', on_delete=models.SET(1), related_name='+', related_query_name='+', to='persons.category')),
-                ('team', models.ForeignKey(blank=True, db_constraint=False, default=None, help_text='empty for main meet', null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.team')),
-                ('file', PrivateFileField(blank=True, null=True, storage=PrivateFileSystemStorage(), upload_to='attendance_file', verbose_name='file')),
-                ('start', models.DateTimeField(blank=True, help_text='optional', null=True)),
-                ('finish', models.DateTimeField(blank=True, help_text='optional', null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'occasions_attendanceshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_attendanceshistory', original_model_table='occasions_attendances')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='attendance',
-            trigger=pgtrigger.compiler.Trigger(name='attendance_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_attendanceshistory" ("id", "created", "modified", "is_removed", "display_order", "infos", "attending_id", "character_id", "gathering_id", "category_id", "file", "team_id", "start", "finish", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."infos", NEW."attending_id", NEW."character_id", NEW."gathering_id", NEW."category_id", NEW."file", NEW."team_id", NEW."start", NEW."finish", NOW(), \'attendance.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='61aa2d0d9c11bb612134d2a286fbdddf0c158449', operation='INSERT', pgid='pgtrigger_attendance_snapshot_insert_4ff4a', table='occasions_attendances', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='attendance',
-            trigger=pgtrigger.compiler.Trigger(name='attendance_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."display_order" IS DISTINCT FROM NEW."display_order" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."attending_id" IS DISTINCT FROM NEW."attending_id" OR OLD."character_id" IS DISTINCT FROM NEW."character_id" OR OLD."gathering_id" IS DISTINCT FROM NEW."gathering_id" OR OLD."category_id" IS DISTINCT FROM NEW."category_id" OR OLD."file" IS DISTINCT FROM NEW."file" OR OLD."team_id" IS DISTINCT FROM NEW."team_id" OR OLD."start" IS DISTINCT FROM NEW."start" OR OLD."finish" IS DISTINCT FROM NEW."finish")', func='INSERT INTO "occasions_attendanceshistory" ("id", "created", "modified", "is_removed", "display_order", "infos", "attending_id", "character_id", "gathering_id", "category_id", "file", "team_id", "start", "finish", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."infos", NEW."attending_id", NEW."character_id", NEW."gathering_id", NEW."category_id", NEW."file", NEW."team_id", NEW."start", NEW."finish", NOW(), \'attendance.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='2839b7ad17cab2e9312212aacc04e0468f80937e', operation='UPDATE', pgid='pgtrigger_attendance_snapshot_update_8e986', table='occasions_attendances', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='attendance',
-            trigger=pgtrigger.compiler.Trigger(name='attendance_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_attendanceshistory" ("id", "created", "modified", "is_removed", "display_order", "infos", "attending_id", "character_id", "gathering_id", "category_id", "file", "team_id", "start", "finish", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."display_order", OLD."infos", OLD."attending_id", OLD."character_id", OLD."gathering_id", OLD."category_id", OLD."file", OLD."team_id", OLD."start", OLD."finish", NOW(), \'attendance.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='be082be10f2c20e049f7f214a8aa3165c54ec2e7', operation='DELETE', pgid='pgtrigger_attendance_before_delete_7c98f', table='occasions_attendances', when='AFTER')),
         ),
     ]

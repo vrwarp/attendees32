@@ -5,8 +5,6 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -49,45 +47,4 @@ class Migration(migrations.Migration):
             index=GinIndex(fields=['infos'], name='meet_infos_gin'),
         ),
         migrations.RunSQL(Utility.default_sql('occasions_meets')),
-        migrations.CreateModel(
-            name='MeetsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='occasions.meet')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('shown_audience', models.BooleanField(default=True, help_text='[some meets are only for internal records] show the AttendingMeet to attendee?', verbose_name='show AttendingMeet to participant?')),
-                ('audience_editable', models.BooleanField(default=True, help_text='[some meets are editable only by coworkers] participant can edit AttendingMeet?', verbose_name='participant can edit AttendingMeet?')),
-                ('start', models.DateTimeField(default=Utility.now_with_timezone)),
-                ('finish', models.DateTimeField(help_text='Required for user to filter by time')),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"info": "...", "url": "https://..."}. Please keep {} here even no data', null=True)),
-                ('site_type', models.ForeignKey(db_constraint=False, help_text='site: django_content_type id for table name', on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='contenttypes.contenttype')),
-                ('slug', models.SlugField(db_index=False)),
-                ('site_id', models.CharField(default='0', max_length=36)),
-                ('assembly', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.assembly')),
-                ('major_character', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.character')),
-                ('display_name', models.CharField(blank=True, help_text='The Rock, Little Foot, singspiration, A/V control, etc.', max_length=50, null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'occasions_meetshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_meetshistory', original_model_table='occasions_meets')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='meet',
-            trigger=pgtrigger.compiler.Trigger(name='meet_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_meetshistory" ("id", "created", "modified", "is_removed", "shown_audience", "audience_editable", "start", "finish", "infos", "site_type_id", "slug", "site_id", "assembly_id", "major_character_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."shown_audience", NEW."audience_editable", NEW."start", NEW."finish", NEW."infos", NEW."site_type_id", NEW."slug", NEW."site_id", NEW."assembly_id", NEW."major_character_id", NEW."display_name", NOW(), \'meet.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='5281fcd913e11324a5adaed62195702ad8d9f5a7', operation='INSERT', pgid='pgtrigger_meet_snapshot_insert_fd3df', table='occasions_meets', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='meet',
-            trigger=pgtrigger.compiler.Trigger(name='meet_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."shown_audience" IS DISTINCT FROM NEW."shown_audience" OR OLD."audience_editable" IS DISTINCT FROM NEW."audience_editable" OR OLD."start" IS DISTINCT FROM NEW."start" OR OLD."finish" IS DISTINCT FROM NEW."finish" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."site_type_id" IS DISTINCT FROM NEW."site_type_id" OR OLD."slug" IS DISTINCT FROM NEW."slug" OR OLD."site_id" IS DISTINCT FROM NEW."site_id" OR OLD."assembly_id" IS DISTINCT FROM NEW."assembly_id" OR OLD."major_character_id" IS DISTINCT FROM NEW."major_character_id" OR OLD."display_name" IS DISTINCT FROM NEW."display_name")', func='INSERT INTO "occasions_meetshistory" ("id", "created", "modified", "is_removed", "shown_audience", "audience_editable", "start", "finish", "infos", "site_type_id", "slug", "site_id", "assembly_id", "major_character_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."shown_audience", NEW."audience_editable", NEW."start", NEW."finish", NEW."infos", NEW."site_type_id", NEW."slug", NEW."site_id", NEW."assembly_id", NEW."major_character_id", NEW."display_name", NOW(), \'meet.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='988cbdcd4c49c599ce3e4e5e460491b2bb66aa71', operation='UPDATE', pgid='pgtrigger_meet_snapshot_update_a7821', table='occasions_meets', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='meet',
-            trigger=pgtrigger.compiler.Trigger(name='meet_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_meetshistory" ("id", "created", "modified", "is_removed", "shown_audience", "audience_editable", "start", "finish", "infos", "site_type_id", "slug", "site_id", "assembly_id", "major_character_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."shown_audience", OLD."audience_editable", OLD."start", OLD."finish", OLD."infos", OLD."site_type_id", OLD."slug", OLD."site_id", OLD."assembly_id", OLD."major_character_id", OLD."display_name", NOW(), \'meet.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='829ccfcd572f6e6a93013eb6c6300890bc7b4d9d', operation='DELETE', pgid='pgtrigger_meet_before_delete_1dbc9', table='occasions_meets', when='AFTER')),
-        ),
     ]

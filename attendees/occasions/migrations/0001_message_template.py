@@ -4,8 +4,6 @@ from attendees.persons.models.utility import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -37,39 +35,5 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name='messagetemplate',
             constraint=models.UniqueConstraint(condition=models.Q(is_removed=False), fields=('organization', 'type'), name='organization_type'),
-        ),
-        migrations.CreateModel(
-            name='MessageTemplatesHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='occasions.messagetemplate')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('organization', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.organization')),
-                ('templates', models.JSONField(blank=True, default=dict, help_text='Example: {"body": "Dear {name}: Hello!"}. Whatever in curly braces will be interpolated by variables, Please keep {} here even no data', null=True)),
-                ('defaults', models.JSONField(blank=True, default=dict, help_text='Example: {"name": "John", "Date": "08/31/2020"}. Please keep {} here even no data', null=True)),
-                ('type', models.SlugField(db_index=False, help_text='format: Organization_slug-prefix-message-type-name')),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'occasions_message_templateshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_message_templateshistory', original_model_table='occasions_message_templates')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='messagetemplate',
-            trigger=pgtrigger.compiler.Trigger(name='messagetemplate_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_message_templateshistory" ("id", "created", "modified", "is_removed", "organization_id", "templates", "defaults", "type", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."organization_id", NEW."templates", NEW."defaults", NEW."type", NOW(), \'messagetemplate.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='8f4a624ea128d8cac26f98bd05ce2b49291f37b8', operation='INSERT', pgid='pgtrigger_messagetemplate_snapshot_insert_a67d5', table='occasions_message_templates', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='messagetemplate',
-            trigger=pgtrigger.compiler.Trigger(name='messagetemplate_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."organization_id" IS DISTINCT FROM NEW."organization_id" OR OLD."templates" IS DISTINCT FROM NEW."templates" OR OLD."defaults" IS DISTINCT FROM NEW."defaults" OR OLD."type" IS DISTINCT FROM NEW."type")', func='INSERT INTO "occasions_message_templateshistory" ("id", "created", "modified", "is_removed", "organization_id", "templates", "defaults", "type", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."organization_id", NEW."templates", NEW."defaults", NEW."type", NOW(), \'messagetemplate.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='8c69c604124871534d5b4e6978096b9860f21d0e', operation='UPDATE', pgid='pgtrigger_messagetemplate_snapshot_update_594a2', table='occasions_message_templates', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='messagetemplate',
-            trigger=pgtrigger.compiler.Trigger(name='messagetemplate_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_message_templateshistory" ("id", "created", "modified", "is_removed", "organization_id", "templates", "defaults", "type", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."organization_id", OLD."templates", OLD."defaults", OLD."type", NOW(), \'messagetemplate.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='8a94268a7c4f6602eefb99d82957dfc69e6b54b8', operation='DELETE', pgid='pgtrigger_messagetemplate_before_delete_7d84d', table='occasions_message_templates', when='AFTER')),
         ),
     ]

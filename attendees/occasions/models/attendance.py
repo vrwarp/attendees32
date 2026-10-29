@@ -1,19 +1,18 @@
-import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.urls import reverse
-import django.utils.timezone
-import model_utils.fields
 from django.utils.functional import cached_property
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 from private_storage.fields import PrivateFileField
-from private_storage.storage.files import PrivateFileSystemStorage
 
 from attendees.persons.models import Note, Searchable, Utility
+from attendees.history import track
+from attendees.history.querysets import TrackedSoftDeletable
 
 
-class Attendance(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
+@track
+class Attendance(TrackedSoftDeletable, Searchable, TimeStampedModel, SoftDeletableModel, Utility):
     notes = GenericRelation(Note)
     id = models.BigAutoField(
         auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
@@ -113,35 +112,3 @@ class Attendance(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
             self.attending,
             self.team or "",
         )
-
-
-class AttendancesHistory(pghistory.get_event_model(
-    Attendance,
-    pghistory.Snapshot('attendance.snapshot'),
-    pghistory.BeforeDelete('attendance.before_delete'),
-    name='AttendancesHistory',
-    related_name='history',
-)):
-    pgh_id = models.BigAutoField(primary_key=True, serialize=False)
-    pgh_created_at = models.DateTimeField(auto_now_add=True)
-    pgh_label = models.TextField(help_text='The event label.')
-    pgh_obj = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='occasions.attendance')
-    id = models.BigIntegerField(db_index=True)
-    created = model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')
-    modified = model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')
-    is_removed = models.BooleanField(default=False)
-    display_order = models.SmallIntegerField(default=0)
-    infos = models.JSONField(blank=True, default=dict, help_text='Example: {"kid_points": 5}. Please keep {} here even no data', null=True)
-    attending = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.attending')
-    character = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.character')
-    gathering = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.gathering')
-    category = models.ForeignKey(db_constraint=False, help_text="RSVPed, leave, remote, etc", default=1, on_delete=models.SET(1), related_name='+', related_query_name='+', to='persons.category')
-    file = PrivateFileField(blank=True, null=True, storage=PrivateFileSystemStorage(), upload_to='attendance_file', verbose_name='file')
-    team = models.ForeignKey(blank=True, db_constraint=False, default=None, help_text='empty for main meet', null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.team')
-    start = models.DateTimeField(blank=True, help_text='optional', null=True)
-    finish = models.DateTimeField(blank=True, help_text='optional', null=True)
-    pgh_context = models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')
-
-    class Meta:
-        db_table = 'occasions_attendanceshistory'
-

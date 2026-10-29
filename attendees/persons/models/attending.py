@@ -1,17 +1,17 @@
-import pghistory
 from django.contrib.contenttypes.fields import GenericRelation
 from django.core.exceptions import ValidationError
 from django.db import models
-import django.utils.timezone
-import model_utils.fields
 from django.urls import reverse
 from django.utils.functional import cached_property
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
 from . import Attendee, Note, Registration, Utility
+from attendees.history import track
+from attendees.history.querysets import TrackedSoftDeletable
 
 
-class Attending(TimeStampedModel, SoftDeletableModel, Utility):
+@track
+class Attending(TrackedSoftDeletable, TimeStampedModel, SoftDeletableModel, Utility):
     notes = GenericRelation(Note)
     id = models.BigAutoField(
         auto_created=True, primary_key=True, serialize=False, verbose_name="ID"
@@ -93,29 +93,3 @@ class Attending(TimeStampedModel, SoftDeletableModel, Utility):
 
     def __str__(self):
         return "%s %s" % (self.attendee, self.meet_names)
-
-
-class AttendingsHistory(pghistory.get_event_model(
-    Attending,
-    pghistory.Snapshot('attending.snapshot'),
-    pghistory.BeforeDelete('attending.before_delete'),
-    name='AttendingsHistory',
-    related_name='history',
-)):
-    pgh_id = models.BigAutoField(primary_key=True, serialize=False)
-    pgh_created_at = models.DateTimeField(auto_now_add=True)
-    pgh_label = models.TextField(help_text='The event label.')
-    pgh_obj = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='persons.attending')
-    id = models.BigIntegerField(db_index=True)
-    created = model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')
-    modified = model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')
-    is_removed = models.BooleanField(default=False)
-    attendee = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.attendee')
-    infos = models.JSONField(blank=True, default=dict, help_text='Example: {"grade": 5, "age": 11, "bed_needs": 1, "mobility": 300}. Please keep {} here even no data', null=True)
-    category = models.CharField(default='normal', help_text='normal, not_going, coworker, etc', max_length=20)
-    price = models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.price')
-    registration = models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.registration')
-    pgh_context = models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')
-
-    class Meta:
-        db_table = 'persons_attendingshistory'

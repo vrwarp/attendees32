@@ -7,8 +7,6 @@ from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -70,44 +68,5 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name='place',
             constraint=models.UniqueConstraint(condition=models.Q(is_removed=False), fields=('organization', 'content_type', 'object_id', 'address'), name='address_object'),
-        ),
-        migrations.CreateModel(
-            name='PlacesHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='whereabouts.place')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('id', models.UUIDField(db_index=True, default=uuid4, editable=False, serialize=False)),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('organization', models.ForeignKey(db_constraint=False, default=0, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.organization')),
-                ('content_type', models.ForeignKey(db_constraint=False, default=0, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='contenttypes.contenttype')),
-                ('object_id', models.CharField(default='0', max_length=36)),
-                ('infos', models.JSONField(blank=True, default=Utility.default_infos, help_text="please keep {} here even there's no data", null=True)),
-                ('display_order', models.SmallIntegerField(default=0)),
-                ('display_name', models.CharField(default='main', help_text='main, resident, etc (main will be displayed first)', max_length=50)),
-                ('address', AddressField(blank=True, db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='address.address')),
-                ('start', models.DateField(blank=True, help_text='optional, moved in date', null=True)),
-                ('finish', models.DateField(blank=True, help_text='optional, moved out date', null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'whereabouts_placeshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_placeshistory', original_model_table='whereabouts_places')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='place',
-            trigger=pgtrigger.compiler.Trigger(name='place_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_placeshistory" ("created", "id", "modified", "is_removed", "organization_id", "content_type_id", "object_id", "infos", "display_order", "display_name", "address_id", "start", "finish", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."id", NEW."modified", NEW."is_removed", NEW."organization_id", NEW."content_type_id", NEW."object_id", NEW."infos", NEW."display_order", NEW."display_name", NEW."address_id", NEW."start", NEW."finish", NOW(), \'place.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='db587f3a9612d6e2d3f1833df1e5f89236e5f62a', operation='INSERT', pgid='pgtrigger_place_snapshot_insert_9ab9a', table='whereabouts_places', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='place',
-            trigger=pgtrigger.compiler.Trigger(name='place_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."created" IS DISTINCT FROM NEW."created" OR OLD."id" IS DISTINCT FROM NEW."id" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."organization_id" IS DISTINCT FROM NEW."organization_id" OR OLD."content_type_id" IS DISTINCT FROM NEW."content_type_id" OR OLD."object_id" IS DISTINCT FROM NEW."object_id" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."display_order" IS DISTINCT FROM NEW."display_order" OR OLD."display_name" IS DISTINCT FROM NEW."display_name" OR OLD."address_id" IS DISTINCT FROM NEW."address_id" OR OLD."start" IS DISTINCT FROM NEW."start" OR OLD."finish" IS DISTINCT FROM NEW."finish")', func='INSERT INTO "whereabouts_placeshistory" ("created", "id", "modified", "is_removed", "organization_id", "content_type_id", "object_id", "infos", "display_order", "display_name", "address_id", "start", "finish", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."id", NEW."modified", NEW."is_removed", NEW."organization_id", NEW."content_type_id", NEW."object_id", NEW."infos", NEW."display_order", NEW."display_name", NEW."address_id", NEW."start", NEW."finish", NOW(), \'place.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='40ccc0260a8621ae050115ed5a8325fa262d2c88', operation='UPDATE', pgid='pgtrigger_place_snapshot_update_d5a98', table='whereabouts_places', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='place',
-            trigger=pgtrigger.compiler.Trigger(name='place_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_placeshistory" ("created", "id", "modified", "is_removed", "organization_id", "content_type_id", "object_id", "infos", "display_order", "display_name", "address_id", "start", "finish", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."created", OLD."id", OLD."modified", OLD."is_removed", OLD."organization_id", OLD."content_type_id", OLD."object_id", OLD."infos", OLD."display_order", OLD."display_name", OLD."address_id", OLD."start", OLD."finish", NOW(), \'place.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='8349799a94e6a679dab70f08fd667efe60de0959', operation='DELETE', pgid='pgtrigger_place_before_delete_0c3bd', table='whereabouts_places', when='AFTER')),
         ),
     ]

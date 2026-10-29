@@ -38,18 +38,19 @@ def test_organization_pk():
 def test_userhistory_created_on_user_create():
     org = Organization.objects.create(display_name="Test Org", slug="test-org")
     user = User.objects.create_user(username="historyuser", email="history@example.com", password="pass1234", organization=org)
-    # There should be at least one UserHistory record for this user
+    # The creation is one event, holding the record without its password
     history = user.history
-    assert history.count() >= 1
-    assert history.latest("pgh_created_at").username == "historyuser"
+    assert history.count() == 1
+    assert history.last().instance.username == "historyuser"
+    assert "password" not in history.last().snapshot
 
 def test_userhistory_created_on_user_update():
     org2 = Organization.objects.create(display_name="Test Org2", slug="test-org2")
     user = User.objects.create_user(name="original_name", username="historyuser2", email="history2@example.com", password="pass1234", organization=org2)
     user.name = "new_name"
     user.save()
-    # There should be at least two UserHistory records for this user
+    # The creation and the change are two events
     history = user.history
-    assert history.count() >= 2
-    assert history.last().name == "new_name"
-    assert history.first().name == "original_name"
+    assert history.count() == 2
+    assert history.last().instance.name == "new_name"
+    assert history.first().instance.name == "original_name"

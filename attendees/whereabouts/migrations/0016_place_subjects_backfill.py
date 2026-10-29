@@ -2,8 +2,7 @@
 
 A place's subject used to be a content type and a 36-character text ``object_id``. Each row's pair
 becomes the one typed key it names; a row naming a subject no place can have, or one that no
-longer exists, stops the migration with a list of them, to be re-pointed or deleted first. The
-history rows get their keys the same way, without the checks.
+longer exists, stops the migration with a list of them, to be re-pointed or deleted first.
 
 The site picker's four columns added to ``django_content_type`` by raw SQL move to
 ``ContentTypeExtra``; on Postgres the columns are then dropped.
@@ -53,12 +52,6 @@ def copy_place_subjects(apps, schema_editor):
             f"Subjects no place can have: {unsupported[:20]}. Subjects that no longer exist: {missing[:20]}."
         )
 
-    PlacesHistory = apps.get_model("whereabouts", "PlacesHistory")
-    for row in PlacesHistory._default_manager.all().iterator(chunk_size=500):
-        field, value = subject_of(row, check=False)
-        if field and value is not None:
-            setattr(row, f"{field}_id", value)
-            row.save(update_fields=[field])
     unsupported.clear()
 
 

@@ -1,14 +1,14 @@
-import pghistory
 from django.core.exceptions import ValidationError
 from django.db import models
-import django.utils.timezone
-import model_utils.fields
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
 from . import Searchable, Utility
+from attendees.history import track
+from attendees.history.querysets import TrackedSoftDeletable
 
 
-class AttendingMeet(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
+@track
+class AttendingMeet(TrackedSoftDeletable, Searchable, TimeStampedModel, SoftDeletableModel, Utility):
     """
     Served as a partial template for attendance
     """
@@ -88,32 +88,3 @@ class AttendingMeet(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
                 attending__attendee=attendee,
                 finish__gte=Utility.now_with_timezone()
         ).exists()
-
-
-class AttendingMeetsHistory(pghistory.get_event_model(
-    AttendingMeet,
-    pghistory.Snapshot('attendingmeet.snapshot'),
-    pghistory.BeforeDelete('attendingmeet.before_delete'),
-    name='AttendingMeetsHistory',
-    related_name='history',
-)):
-    pgh_id = models.BigAutoField(primary_key=True, serialize=False)
-    pgh_created_at = models.DateTimeField(auto_now_add=True)
-    pgh_label = models.TextField(help_text='The event label.')
-    pgh_obj = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='persons.attendingmeet')
-    id = models.BigIntegerField()
-    created = model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')
-    modified = model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')
-    is_removed = models.BooleanField(default=False)
-    start = models.DateTimeField(default=Utility.now_with_timezone)
-    finish = models.DateTimeField(help_text='Required for user to filter by time')
-    infos = models.JSONField(blank=True, default=dict, help_text='Example: {"kid_points": 5, "pdf_folks": ["uuid1"]}. Please keep {} here even no data', null=True)
-    meet = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.meet')
-    attending = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.attending')
-    character = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.character')
-    category = models.ForeignKey(db_constraint=False, help_text="primary, secondary, etc (primary will be displayed first)", default=1, on_delete=models.SET(1), related_name='+', related_query_name='+', to='persons.category')
-    team = models.ForeignKey(blank=True, db_constraint=False, default=None, help_text='empty for main meet', null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.team')
-    pgh_context = models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')
-
-    class Meta:
-        db_table = 'persons_attending_meetshistory'

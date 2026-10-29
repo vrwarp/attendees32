@@ -5,8 +5,6 @@ from django.core.validators import MinValueValidator
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -36,40 +34,4 @@ class Migration(migrations.Migration):
             bases=(models.Model, Utility),
         ),
         migrations.RunSQL(Utility.default_sql('occasions_prices')),
-        migrations.CreateModel(
-            name='PricesHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='occasions.price')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('assembly', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.assembly')),
-                ('start', models.DateTimeField()),
-                ('finish', models.DateTimeField()),
-                ('price_type', models.CharField(max_length=20, help_text="example: no bed_earlybird")),
-                ('price_value', models.DecimalField(decimal_places=2, default=999999, max_digits=8, validators=[MinValueValidator(0)])),
-                ('display_name', models.CharField(max_length=50)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'occasions_priceshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_priceshistory', original_model_table='occasions_prices')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='price',
-            trigger=pgtrigger.compiler.Trigger(name='price_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_priceshistory" ("id", "created", "modified", "is_removed", "assembly_id", "start", "finish", "price_type", "price_value", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."assembly_id", NEW."start", NEW."finish", NEW."price_type", NEW."price_value", NEW."display_name", NOW(), \'price.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='b159c54b691fc29c5fbe685532d756c750c6fe3a', operation='INSERT', pgid='pgtrigger_price_snapshot_insert_6fd23', table='occasions_prices', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='price',
-            trigger=pgtrigger.compiler.Trigger(name='price_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."assembly_id" IS DISTINCT FROM NEW."assembly_id" OR OLD."start" IS DISTINCT FROM NEW."start" OR OLD."finish" IS DISTINCT FROM NEW."finish" OR OLD."price_type" IS DISTINCT FROM NEW."price_type" OR OLD."price_value" IS DISTINCT FROM NEW."price_value" OR OLD."display_name" IS DISTINCT FROM NEW."display_name")', func='INSERT INTO "occasions_priceshistory" ("id", "created", "modified", "is_removed", "assembly_id", "start", "finish", "price_type", "price_value", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."assembly_id", NEW."start", NEW."finish", NEW."price_type", NEW."price_value", NEW."display_name", NOW(), \'price.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='f6d39cbfb45541280a845d371cfc07e877627559', operation='UPDATE', pgid='pgtrigger_price_snapshot_update_79b88', table='occasions_prices', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='price',
-            trigger=pgtrigger.compiler.Trigger(name='price_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_priceshistory" ("id", "created", "modified", "is_removed", "assembly_id", "start", "finish", "price_type", "price_value", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."assembly_id", OLD."start", OLD."finish", OLD."price_type", OLD."price_value", OLD."display_name", NOW(), \'price.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='2f905d63e55467f7cf6c1a11ba2e8900f7b1121f', operation='DELETE', pgid='pgtrigger_price_before_delete_3b568', table='occasions_prices', when='AFTER')),
-        ),
     ]

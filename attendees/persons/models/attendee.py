@@ -4,12 +4,7 @@ from uuid import uuid4
 import opencc
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
-import pghistory
-import django.utils.timezone
-import model_utils.fields
-import partial_date.fields
 # import private_storage.fields
-from private_storage.storage.files import PrivateFileSystemStorage
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -23,9 +18,12 @@ from attendees.utils.search_text import ATTENDEE_SEARCHED_SECTIONS, attendee_ful
 
 from . import GenderEnum, Note, Searchable, Utility
 from .attendee_links import AttendeeScheduler
+from attendees.history import track
+from attendees.history.querysets import TrackedSoftDeletable
 
 
-class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
+@track
+class Attendee(TrackedSoftDeletable, Searchable, Utility, TimeStampedModel, SoftDeletableModel):
     FAMILY_CATEGORY = 0
     NON_FAMILY_CATEGORY = 25
     PAUSED_CATEGORY = 27
@@ -380,49 +378,4 @@ class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
 
 # class TestModel(models.Model):
 #     ...
-# @pghistory.track(
-#     pghistory.Snapshot('attendee.snapshot')
 # )
-
-
-class AttendeesHistory(pghistory.get_event_model(
-    Attendee,
-    pghistory.Snapshot('attendee.snapshot'),
-    pghistory.BeforeDelete('attendee.before_delete'),
-    name='AttendeesHistory',
-    related_name='history',
-)):
-    pgh_id = models.BigAutoField(primary_key=True, serialize=False)
-    pgh_created_at = models.DateTimeField(auto_now_add=True)
-    created = model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')
-    modified = model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')
-    is_removed = models.BooleanField(default=False)
-    pgh_obj = models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='history', to='persons.attendee')
-    id = models.UUIDField(db_index=True, default=uuid4, editable=False, serialize=False)
-    division = models.ForeignKey(db_constraint=False, default=0, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.division')
-    gender = models.CharField(choices=GenderEnum.choices(), default=GenderEnum['UNSPECIFIED'], max_length=11)
-    pgh_label = models.TextField(help_text='The event label.')
-    user = models.ForeignKey(blank=True, db_constraint=False, default=None, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to=settings.AUTH_USER_MODEL)
-    pgh_context = models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')
-    infos = models.JSONField(blank=True, default=Utility.attendee_infos, help_text='Example: {"fixed": {"food_pref": "peanut allergy", "nick_name": "John"}}.Please keep {} here even no data', null=True)
-    first_name = models.CharField(blank=True, max_length=25, null=True)
-    last_name = models.CharField(blank=True, max_length=25, null=True)
-    first_name2 = models.CharField(blank=True, max_length=12, null=True)
-    last_name2 = models.CharField(blank=True, max_length=8, null=True)
-    photo = PrivateFileField(blank=True, null=True, storage=PrivateFileSystemStorage(), upload_to='attendee_portrait', verbose_name='Photo')
-    actual_birthday = models.DateField(blank=True, null=True)
-    estimated_birthday = partial_date.fields.PartialDateField(blank=True, help_text='1998, 1998-12 or 1992-12-31, please enter 1800 if year not known', null=True)
-    deathday = models.DateField(blank=True, null=True)
-    merged_into = models.ForeignKey(
-        blank=True,
-        db_constraint=False,
-        default=None,
-        help_text="Set when this attendee was merged into another; the row stays as a tombstone so the old id can still be followed.",
-        null=True,
-        on_delete=django.db.models.deletion.DO_NOTHING,
-        related_name="+",
-        to="persons.attendee",
-    )
-
-    class Meta:
-        db_table = "persons_attendeeshistory"

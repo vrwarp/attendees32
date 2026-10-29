@@ -1,6 +1,7 @@
 import pytest
 from datetime import date
 from django.core.exceptions import ValidationError
+from attendees.history.models import HistoryEvent
 from attendees.persons.models.enum import GenderEnum
 from attendees.persons.models import Attendee, Category, Relation
 from attendees.whereabouts.models import Division, Organization
@@ -121,20 +122,19 @@ class TestAttendee:
             gender=GenderEnum.UNSPECIFIED.value,
             division=self.division,
         )
-        AttendeesHistory = attendee._meta.apps.get_model('persons', 'AttendeesHistory')
 
-        # 1. Snapshot created on attendee creation
-        assert AttendeesHistory.objects.filter(pgh_obj=attendee).exists()
-        assert attendee.history.count() >= 1
-        assert attendee.history.first().pgh_label == "attendee.snapshot"
+        # 1. A snapshot is recorded when the attendee is created
+        assert attendee.history.count() == 1
+        assert attendee.history.first().label == "snapshot"
+        assert attendee.history.first().snapshot["first_name"] == "HistoryTracking"
 
-        # 2. Snapshot created on attendee update
+        # 2. and when it is updated
         attendee.first_name = "Renamed"
         attendee.save()
-        assert attendee.history.count() >= 2
-        assert attendee.history.order_by("pgh_id").last().first_name == "Renamed"
+        assert attendee.history.count() == 2
+        assert attendee.history.last().instance.first_name == "Renamed"
 
-        # 3. Merged_into field is tracked in history
+        # 3. merged_into is in the snapshot like any other field
         target_attendee = Attendee.objects.create(
             first_name="Target",
             last_name="Attendee",
@@ -143,15 +143,16 @@ class TestAttendee:
         )
         attendee.merged_into = target_attendee
         attendee.save()
-        assert attendee.history.order_by("pgh_id").last().merged_into == target_attendee
+        assert attendee.history.last().instance.merged_into == target_attendee
 
-        # 4. Soft delete sets is_removed=True and creates snapshot
+        # 4. A soft delete is a save with is_removed set, so it is a snapshot
         attendee.delete()
-        assert attendee.history.order_by("pgh_id").last().is_removed is True
+        assert attendee.history.last().label == "snapshot"
+        assert attendee.history.last().instance.is_removed is True
 
-        # 5. BeforeDelete event recorded when attendee is deleted
-        attendee_id = attendee.id
+        # 5. A hard delete records the record before it goes
+        key = attendee.pk
         attendee.delete(soft=False)
-        delete_events = AttendeesHistory.objects.filter(pgh_label="attendee.before_delete")
-        assert delete_events.filter(id=attendee_id).exists()
-
+        gone = HistoryEvent.objects.filter(model="persons.attendee", object_id=str(key)).order_by("seq").last()
+        assert gone.label == "before_delete"
+        assert gone.snapshot["first_name"] == "Renamed"

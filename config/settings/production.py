@@ -6,6 +6,8 @@ ENV_NAME = env('ENV_NAME', default='production.py')  # for mail task
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#secret-key
 SECRET_KEY = env("DJANGO_SECRET_KEY")
+# The history chain key: a second secret, kept with the recovery sheet; see the history section of the README.
+HISTORY_CHAIN_KEY = env("DJANGO_HISTORY_CHAIN_KEY")
 # https://docs.djangoproject.com/en/dev/ref/settings/#allowed-hosts
 ALLOWED_HOSTS = env.list("DJANGO_ALLOWED_HOSTS", default=["chineseforchristchurch.org"])
 # https://docs.djangoproject.com/en/4.2/ref/settings/#csrf-trusted-origins

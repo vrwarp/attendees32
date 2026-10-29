@@ -5,9 +5,12 @@ two tables. They used to be maps of attendee id to true or false inside ``Attend
 only Postgres could query and which kept the ids of people since merged or removed.
 """
 from django.db import models
+from attendees.history import track
+from attendees.history.querysets import Tracked
 
 
-class AttendeeScheduler(models.Model):
+@track
+class AttendeeScheduler(Tracked, models.Model):
     """``scheduler`` may see and change ``attendee``'s activities: a parent for a child, a guardian
     for a ward, a caregiver for the person in their care."""
 
@@ -24,7 +27,8 @@ class AttendeeScheduler(models.Model):
         return f"{self.scheduler} schedules {self.attendee}"
 
 
-class AttendeeEmergencyContact(models.Model):
+@track
+class AttendeeEmergencyContact(Tracked, models.Model):
     """``contact`` is who to call about ``attendee`` in an emergency, and who the organization
     writes to about them: a parent about a child, a spouse about a spouse."""
 

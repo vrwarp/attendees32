@@ -13043,34 +13043,9 @@
         "state"
       ],
       [
-        "add_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "change_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "view_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "add_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
         "add_messagetemplate",
         "occasions",
         "messagetemplate"
-      ],
-      [
-        "view_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
       ],
       [
         "add_price",
@@ -13078,44 +13053,9 @@
         "price"
       ],
       [
-        "view_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "view_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "view_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "add_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "change_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "view_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
         "add_folk",
         "persons",
         "folk"
-      ],
-      [
-        "view_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
       ],
       [
         "add_note",
@@ -13123,79 +13063,14 @@
         "note"
       ],
       [
-        "add_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "change_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "view_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
         "add_past",
         "persons",
         "past"
       ],
       [
-        "add_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "change_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "delete_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "view_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "view_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
         "add_relation",
         "persons",
         "relation"
-      ],
-      [
-        "add_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "change_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "delete_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "view_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "view_context",
-        "pghistory",
-        "context"
       ],
       [
         "add_calendar",
@@ -13208,119 +13083,9 @@
         "calendar"
       ],
       [
-        "add_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "change_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "delete_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "view_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "view_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "add_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "add_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "change_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "view_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
         "add_menu",
         "users",
         "menu"
-      ],
-      [
-        "add_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "add_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "add_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "add_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "add_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "change_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "view_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "add_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "add_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "add_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "change_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "view_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "add_addressproxy",
-        "whereabouts",
-        "addressproxy"
       ],
       [
         "add_campus",
@@ -13328,64 +13093,14 @@
         "campus"
       ],
       [
-        "add_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
         "add_division",
         "whereabouts",
         "division"
       ],
       [
-        "add_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "change_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "view_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "add_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "change_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "view_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
         "add_organization",
         "whereabouts",
         "organization"
-      ],
-      [
-        "add_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "change_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "view_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
       ],
       [
         "view_place",
@@ -13403,24 +13118,9 @@
         "room"
       ],
       [
-        "add_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "view_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
         "add_suite",
         "whereabouts",
         "suite"
-      ],
-      [
-        "add_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
       ]
     ]
   }
@@ -13591,26 +13291,6 @@
         "permission"
       ],
       [
-        "add_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "change_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "delete_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "view_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
         "add_assembly",
         "occasions",
         "assembly"
@@ -13649,26 +13329,6 @@
         "view_character",
         "occasions",
         "character"
-      ],
-      [
-        "add_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "change_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "delete_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "view_charactershistory",
-        "occasions",
-        "charactershistory"
       ],
       [
         "add_meet",
@@ -13711,26 +13371,6 @@
         "messagetemplate"
       ],
       [
-        "add_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "change_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "delete_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "view_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
         "add_price",
         "occasions",
         "price"
@@ -13751,26 +13391,6 @@
         "price"
       ],
       [
-        "add_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "change_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "delete_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "view_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
         "add_attendee",
         "persons",
         "attendee"
@@ -13789,26 +13409,6 @@
         "view_attendee",
         "persons",
         "attendee"
-      ],
-      [
-        "add_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "change_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "delete_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "view_attendeeshistory",
-        "persons",
-        "attendeeshistory"
       ],
       [
         "add_attending",
@@ -13849,66 +13449,6 @@
         "view_attendingmeet",
         "persons",
         "attendingmeet"
-      ],
-      [
-        "add_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "change_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "delete_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "view_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "add_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "change_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "delete_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "view_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "add_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "change_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "delete_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "view_categorieshistory",
-        "persons",
-        "categorieshistory"
       ],
       [
         "add_category",
@@ -13971,46 +13511,6 @@
         "folkattendee"
       ],
       [
-        "add_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "change_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "delete_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "view_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "add_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "change_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "delete_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "view_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
         "add_note",
         "persons",
         "note"
@@ -14029,26 +13529,6 @@
         "view_note",
         "persons",
         "note"
-      ],
-      [
-        "add_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "change_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "delete_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "view_noteshistory",
-        "persons",
-        "noteshistory"
       ],
       [
         "add_past",
@@ -14071,26 +13551,6 @@
         "past"
       ],
       [
-        "add_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "change_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "delete_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "view_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
         "add_registration",
         "persons",
         "registration"
@@ -14111,26 +13571,6 @@
         "registration"
       ],
       [
-        "add_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "change_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "delete_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "view_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
         "add_relation",
         "persons",
         "relation"
@@ -14149,41 +13589,6 @@
         "view_relation",
         "persons",
         "relation"
-      ],
-      [
-        "add_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "change_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "delete_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "view_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "add_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "change_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "view_context",
-        "pghistory",
-        "context"
       ],
       [
         "add_calendar",
@@ -14296,161 +13701,6 @@
         "site"
       ],
       [
-        "add_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "change_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "delete_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "view_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "add_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "change_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "view_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "add_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "change_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "delete_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "view_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "add_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "change_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "delete_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "view_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "add_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "change_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "delete_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "view_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "add_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "change_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "delete_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "view_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "add_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "change_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "delete_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "view_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "add_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "change_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "delete_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "view_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
         "add_menu",
         "users",
         "menu"
@@ -14491,181 +13741,6 @@
         "menuauthgroup"
       ],
       [
-        "view_menuauthgroupshistory",
-        "users",
-        "menuauthgroupshistory"
-      ],
-      [
-        "view_menushistory",
-        "users",
-        "menushistory"
-      ],
-      [
-        "add_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "change_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "delete_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "view_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "add_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "change_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "delete_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "view_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "add_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "change_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "delete_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "view_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "add_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "change_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "delete_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "view_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "add_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "change_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "view_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "delete_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "view_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "add_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "change_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "delete_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "view_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "add_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "change_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "delete_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "view_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "add_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "change_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "delete_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "view_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
         "add_campus",
         "whereabouts",
         "campus"
@@ -14684,66 +13759,6 @@
         "view_campus",
         "whereabouts",
         "campus"
-      ],
-      [
-        "add_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "change_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "delete_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "view_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "add_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "change_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "delete_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "view_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "add_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "change_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "delete_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "view_countryproxy",
-        "whereabouts",
-        "countryproxy"
       ],
       [
         "add_division",
@@ -14766,66 +13781,6 @@
         "division"
       ],
       [
-        "add_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "change_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "delete_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "view_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "add_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "change_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "delete_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "view_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "add_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "change_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "delete_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "view_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
         "add_organization",
         "whereabouts",
         "organization"
@@ -14846,26 +13801,6 @@
         "organization"
       ],
       [
-        "add_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "change_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "delete_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "view_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
         "add_place",
         "whereabouts",
         "place"
@@ -14884,46 +13819,6 @@
         "view_place",
         "whereabouts",
         "place"
-      ],
-      [
-        "add_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "change_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "delete_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "view_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "add_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "change_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "delete_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "view_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
       ],
       [
         "add_property",
@@ -14961,66 +13856,6 @@
         "room"
       ],
       [
-        "add_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "change_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "delete_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "view_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "add_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "change_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "delete_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "view_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "add_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "change_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "delete_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "view_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
         "add_suite",
         "whereabouts",
         "suite"
@@ -15039,26 +13874,6 @@
         "view_suite",
         "whereabouts",
         "suite"
-      ],
-      [
-        "add_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "change_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "delete_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "view_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
       ]
     ]
   }
@@ -15229,26 +14044,6 @@
         "permission"
       ],
       [
-        "add_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "change_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "delete_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "view_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
         "add_assembly",
         "occasions",
         "assembly"
@@ -15287,26 +14082,6 @@
         "view_character",
         "occasions",
         "character"
-      ],
-      [
-        "add_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "change_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "delete_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "view_charactershistory",
-        "occasions",
-        "charactershistory"
       ],
       [
         "add_meet",
@@ -15349,26 +14124,6 @@
         "messagetemplate"
       ],
       [
-        "add_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "change_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "delete_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "view_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
         "add_price",
         "occasions",
         "price"
@@ -15389,26 +14144,6 @@
         "price"
       ],
       [
-        "add_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "change_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "delete_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "view_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
         "add_attendee",
         "persons",
         "attendee"
@@ -15427,26 +14162,6 @@
         "view_attendee",
         "persons",
         "attendee"
-      ],
-      [
-        "add_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "change_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "delete_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "view_attendeeshistory",
-        "persons",
-        "attendeeshistory"
       ],
       [
         "add_attending",
@@ -15487,66 +14202,6 @@
         "view_attendingmeet",
         "persons",
         "attendingmeet"
-      ],
-      [
-        "add_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "change_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "delete_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "view_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "add_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "change_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "delete_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "view_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "add_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "change_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "delete_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "view_categorieshistory",
-        "persons",
-        "categorieshistory"
       ],
       [
         "add_category",
@@ -15609,46 +14264,6 @@
         "folkattendee"
       ],
       [
-        "add_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "change_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "delete_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "view_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "add_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "change_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "delete_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "view_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
         "add_note",
         "persons",
         "note"
@@ -15667,26 +14282,6 @@
         "view_note",
         "persons",
         "note"
-      ],
-      [
-        "add_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "change_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "delete_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "view_noteshistory",
-        "persons",
-        "noteshistory"
       ],
       [
         "add_past",
@@ -15709,26 +14304,6 @@
         "past"
       ],
       [
-        "add_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "change_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "delete_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "view_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
         "add_registration",
         "persons",
         "registration"
@@ -15749,26 +14324,6 @@
         "registration"
       ],
       [
-        "add_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "change_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "delete_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "view_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
         "add_relation",
         "persons",
         "relation"
@@ -15787,41 +14342,6 @@
         "view_relation",
         "persons",
         "relation"
-      ],
-      [
-        "add_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "change_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "delete_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "view_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "add_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "change_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "view_context",
-        "pghistory",
-        "context"
       ],
       [
         "add_calendar",
@@ -15934,161 +14454,6 @@
         "site"
       ],
       [
-        "add_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "change_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "delete_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "view_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "add_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "change_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "view_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "add_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "change_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "delete_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "view_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "add_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "change_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "delete_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "view_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "add_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "change_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "delete_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "view_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "add_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "change_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "delete_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "view_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "add_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "change_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "delete_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "view_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "add_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "change_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "delete_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "view_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
         "add_menu",
         "users",
         "menu"
@@ -16129,181 +14494,6 @@
         "menuauthgroup"
       ],
       [
-        "view_menuauthgroupshistory",
-        "users",
-        "menuauthgroupshistory"
-      ],
-      [
-        "view_menushistory",
-        "users",
-        "menushistory"
-      ],
-      [
-        "add_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "change_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "delete_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "view_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "add_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "change_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "delete_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "view_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "add_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "change_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "delete_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "view_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "add_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "change_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "delete_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "view_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "add_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "change_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "view_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "delete_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "view_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "add_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "change_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "delete_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "view_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "add_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "change_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "delete_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "view_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "add_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "change_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "delete_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "view_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
         "add_campus",
         "whereabouts",
         "campus"
@@ -16322,66 +14512,6 @@
         "view_campus",
         "whereabouts",
         "campus"
-      ],
-      [
-        "add_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "change_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "delete_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "view_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "add_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "change_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "delete_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "view_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "add_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "change_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "delete_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "view_countryproxy",
-        "whereabouts",
-        "countryproxy"
       ],
       [
         "add_division",
@@ -16404,66 +14534,6 @@
         "division"
       ],
       [
-        "add_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "change_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "delete_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "view_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "add_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "change_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "delete_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "view_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "add_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "change_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "delete_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "view_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
         "add_organization",
         "whereabouts",
         "organization"
@@ -16484,26 +14554,6 @@
         "organization"
       ],
       [
-        "add_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "change_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "delete_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "view_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
         "add_place",
         "whereabouts",
         "place"
@@ -16522,46 +14572,6 @@
         "view_place",
         "whereabouts",
         "place"
-      ],
-      [
-        "add_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "change_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "delete_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "view_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "add_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "change_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "delete_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "view_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
       ],
       [
         "add_property",
@@ -16599,66 +14609,6 @@
         "room"
       ],
       [
-        "add_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "change_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "delete_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "view_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "add_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "change_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "delete_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "view_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "add_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "change_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "delete_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "view_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
         "add_suite",
         "whereabouts",
         "suite"
@@ -16677,26 +14627,6 @@
         "view_suite",
         "whereabouts",
         "suite"
-      ],
-      [
-        "add_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "change_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "delete_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "view_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
       ]
     ]
   }
@@ -16867,26 +14797,6 @@
         "permission"
       ],
       [
-        "add_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "change_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "delete_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "view_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
         "add_assembly",
         "occasions",
         "assembly"
@@ -16925,26 +14835,6 @@
         "view_character",
         "occasions",
         "character"
-      ],
-      [
-        "add_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "change_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "delete_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "view_charactershistory",
-        "occasions",
-        "charactershistory"
       ],
       [
         "add_meet",
@@ -16987,26 +14877,6 @@
         "messagetemplate"
       ],
       [
-        "add_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "change_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "delete_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "view_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
         "add_price",
         "occasions",
         "price"
@@ -17027,26 +14897,6 @@
         "price"
       ],
       [
-        "add_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "change_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "delete_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "view_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
         "add_attendee",
         "persons",
         "attendee"
@@ -17065,26 +14915,6 @@
         "view_attendee",
         "persons",
         "attendee"
-      ],
-      [
-        "add_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "change_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "delete_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "view_attendeeshistory",
-        "persons",
-        "attendeeshistory"
       ],
       [
         "add_attending",
@@ -17125,66 +14955,6 @@
         "view_attendingmeet",
         "persons",
         "attendingmeet"
-      ],
-      [
-        "add_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "change_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "delete_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "view_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "add_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "change_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "delete_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "view_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "add_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "change_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "delete_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "view_categorieshistory",
-        "persons",
-        "categorieshistory"
       ],
       [
         "add_category",
@@ -17247,46 +15017,6 @@
         "folkattendee"
       ],
       [
-        "add_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "change_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "delete_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "view_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "add_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "change_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "delete_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "view_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
         "add_note",
         "persons",
         "note"
@@ -17305,26 +15035,6 @@
         "view_note",
         "persons",
         "note"
-      ],
-      [
-        "add_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "change_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "delete_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "view_noteshistory",
-        "persons",
-        "noteshistory"
       ],
       [
         "add_past",
@@ -17347,26 +15057,6 @@
         "past"
       ],
       [
-        "add_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "change_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "delete_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "view_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
         "add_registration",
         "persons",
         "registration"
@@ -17387,26 +15077,6 @@
         "registration"
       ],
       [
-        "add_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "change_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "delete_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "view_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
         "add_relation",
         "persons",
         "relation"
@@ -17425,41 +15095,6 @@
         "view_relation",
         "persons",
         "relation"
-      ],
-      [
-        "add_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "change_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "delete_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "view_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "add_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "change_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "view_context",
-        "pghistory",
-        "context"
       ],
       [
         "add_calendar",
@@ -17572,161 +15207,6 @@
         "site"
       ],
       [
-        "add_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "change_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "delete_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "view_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "add_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "change_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "view_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "add_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "change_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "delete_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "view_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "add_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "change_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "delete_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "view_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "add_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "change_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "delete_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "view_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "add_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "change_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "delete_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "view_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "add_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "change_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "delete_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "view_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "add_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "change_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "delete_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "view_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
         "add_menu",
         "users",
         "menu"
@@ -17767,181 +15247,6 @@
         "menuauthgroup"
       ],
       [
-        "view_menuauthgroupshistory",
-        "users",
-        "menuauthgroupshistory"
-      ],
-      [
-        "view_menushistory",
-        "users",
-        "menushistory"
-      ],
-      [
-        "add_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "change_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "delete_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "view_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "add_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "change_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "delete_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "view_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "add_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "change_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "delete_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "view_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "add_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "change_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "delete_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "view_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "add_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "change_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "view_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "delete_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "view_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "add_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "change_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "delete_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "view_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "add_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "change_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "delete_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "view_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "add_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "change_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "delete_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "view_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
         "add_campus",
         "whereabouts",
         "campus"
@@ -17960,66 +15265,6 @@
         "view_campus",
         "whereabouts",
         "campus"
-      ],
-      [
-        "add_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "change_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "delete_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "view_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "add_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "change_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "delete_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "view_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "add_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "change_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "delete_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "view_countryproxy",
-        "whereabouts",
-        "countryproxy"
       ],
       [
         "add_division",
@@ -18042,66 +15287,6 @@
         "division"
       ],
       [
-        "add_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "change_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "delete_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "view_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "add_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "change_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "delete_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "view_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "add_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "change_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "delete_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "view_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
         "add_organization",
         "whereabouts",
         "organization"
@@ -18122,26 +15307,6 @@
         "organization"
       ],
       [
-        "add_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "change_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "delete_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "view_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
         "add_place",
         "whereabouts",
         "place"
@@ -18160,46 +15325,6 @@
         "view_place",
         "whereabouts",
         "place"
-      ],
-      [
-        "add_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "change_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "delete_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "view_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "add_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "change_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "delete_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "view_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
       ],
       [
         "add_property",
@@ -18237,66 +15362,6 @@
         "room"
       ],
       [
-        "add_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "change_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "delete_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "view_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "add_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "change_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "delete_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "view_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "add_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "change_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "delete_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "view_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
         "add_suite",
         "whereabouts",
         "suite"
@@ -18315,26 +15380,6 @@
         "view_suite",
         "whereabouts",
         "suite"
-      ],
-      [
-        "add_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "change_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "delete_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "view_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
       ]
     ]
   }
@@ -18505,26 +15550,6 @@
         "permission"
       ],
       [
-        "add_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "change_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "delete_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "view_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
         "add_assembly",
         "occasions",
         "assembly"
@@ -18563,26 +15588,6 @@
         "view_character",
         "occasions",
         "character"
-      ],
-      [
-        "add_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "change_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "delete_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "view_charactershistory",
-        "occasions",
-        "charactershistory"
       ],
       [
         "add_meet",
@@ -18625,26 +15630,6 @@
         "messagetemplate"
       ],
       [
-        "add_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "change_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "delete_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "view_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
         "add_price",
         "occasions",
         "price"
@@ -18665,26 +15650,6 @@
         "price"
       ],
       [
-        "add_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "change_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "delete_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "view_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
         "add_attendee",
         "persons",
         "attendee"
@@ -18703,26 +15668,6 @@
         "view_attendee",
         "persons",
         "attendee"
-      ],
-      [
-        "add_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "change_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "delete_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "view_attendeeshistory",
-        "persons",
-        "attendeeshistory"
       ],
       [
         "add_attending",
@@ -18763,66 +15708,6 @@
         "view_attendingmeet",
         "persons",
         "attendingmeet"
-      ],
-      [
-        "add_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "change_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "delete_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "view_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "add_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "change_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "delete_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "view_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "add_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "change_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "delete_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "view_categorieshistory",
-        "persons",
-        "categorieshistory"
       ],
       [
         "add_category",
@@ -18885,46 +15770,6 @@
         "folkattendee"
       ],
       [
-        "add_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "change_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "delete_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "view_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "add_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "change_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "delete_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "view_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
         "add_note",
         "persons",
         "note"
@@ -18943,26 +15788,6 @@
         "view_note",
         "persons",
         "note"
-      ],
-      [
-        "add_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "change_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "delete_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "view_noteshistory",
-        "persons",
-        "noteshistory"
       ],
       [
         "add_past",
@@ -18985,26 +15810,6 @@
         "past"
       ],
       [
-        "add_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "change_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "delete_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "view_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
         "add_registration",
         "persons",
         "registration"
@@ -19025,26 +15830,6 @@
         "registration"
       ],
       [
-        "add_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "change_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "delete_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "view_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
         "add_relation",
         "persons",
         "relation"
@@ -19063,41 +15848,6 @@
         "view_relation",
         "persons",
         "relation"
-      ],
-      [
-        "add_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "change_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "delete_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "view_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "add_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "change_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "view_context",
-        "pghistory",
-        "context"
       ],
       [
         "add_calendar",
@@ -19210,161 +15960,6 @@
         "site"
       ],
       [
-        "add_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "change_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "delete_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "view_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "add_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "change_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "view_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "add_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "change_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "delete_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "view_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "add_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "change_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "delete_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "view_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "add_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "change_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "delete_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "view_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "add_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "change_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "delete_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "view_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "add_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "change_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "delete_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "view_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "add_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "change_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "delete_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "view_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
         "add_menu",
         "users",
         "menu"
@@ -19405,181 +16000,6 @@
         "menuauthgroup"
       ],
       [
-        "view_menuauthgroupshistory",
-        "users",
-        "menuauthgroupshistory"
-      ],
-      [
-        "view_menushistory",
-        "users",
-        "menushistory"
-      ],
-      [
-        "add_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "change_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "delete_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "view_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "add_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "change_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "delete_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "view_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "add_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "change_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "delete_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "view_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "add_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "change_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "delete_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "view_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "add_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "change_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "view_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "delete_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "view_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "add_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "change_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "delete_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "view_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "add_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "change_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "delete_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "view_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "add_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "change_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "delete_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "view_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
         "add_campus",
         "whereabouts",
         "campus"
@@ -19598,66 +16018,6 @@
         "view_campus",
         "whereabouts",
         "campus"
-      ],
-      [
-        "add_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "change_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "delete_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "view_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "add_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "change_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "delete_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "view_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "add_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "change_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "delete_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "view_countryproxy",
-        "whereabouts",
-        "countryproxy"
       ],
       [
         "add_division",
@@ -19680,66 +16040,6 @@
         "division"
       ],
       [
-        "add_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "change_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "delete_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "view_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "add_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "change_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "delete_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "view_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "add_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "change_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "delete_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "view_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
         "add_organization",
         "whereabouts",
         "organization"
@@ -19760,26 +16060,6 @@
         "organization"
       ],
       [
-        "add_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "change_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "delete_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "view_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
         "add_place",
         "whereabouts",
         "place"
@@ -19798,46 +16078,6 @@
         "view_place",
         "whereabouts",
         "place"
-      ],
-      [
-        "add_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "change_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "delete_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "view_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "add_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "change_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "delete_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "view_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
       ],
       [
         "add_property",
@@ -19875,66 +16115,6 @@
         "room"
       ],
       [
-        "add_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "change_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "delete_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "view_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "add_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "change_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "delete_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "view_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "add_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "change_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "delete_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "view_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
         "add_suite",
         "whereabouts",
         "suite"
@@ -19953,26 +16133,6 @@
         "view_suite",
         "whereabouts",
         "suite"
-      ],
-      [
-        "add_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "change_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "delete_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "view_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
       ]
     ]
   }
@@ -20143,26 +16303,6 @@
         "permission"
       ],
       [
-        "add_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "change_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "delete_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
-        "view_assemblieshistory",
-        "occasions",
-        "assemblieshistory"
-      ],
-      [
         "add_assembly",
         "occasions",
         "assembly"
@@ -20201,26 +16341,6 @@
         "view_character",
         "occasions",
         "character"
-      ],
-      [
-        "add_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "change_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "delete_charactershistory",
-        "occasions",
-        "charactershistory"
-      ],
-      [
-        "view_charactershistory",
-        "occasions",
-        "charactershistory"
       ],
       [
         "add_meet",
@@ -20263,26 +16383,6 @@
         "messagetemplate"
       ],
       [
-        "add_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "change_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "delete_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
-        "view_messagetemplateshistory",
-        "occasions",
-        "messagetemplateshistory"
-      ],
-      [
         "add_price",
         "occasions",
         "price"
@@ -20303,26 +16403,6 @@
         "price"
       ],
       [
-        "add_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "change_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "delete_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
-        "view_priceshistory",
-        "occasions",
-        "priceshistory"
-      ],
-      [
         "add_attendee",
         "persons",
         "attendee"
@@ -20341,26 +16421,6 @@
         "view_attendee",
         "persons",
         "attendee"
-      ],
-      [
-        "add_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "change_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "delete_attendeeshistory",
-        "persons",
-        "attendeeshistory"
-      ],
-      [
-        "view_attendeeshistory",
-        "persons",
-        "attendeeshistory"
       ],
       [
         "add_attending",
@@ -20401,66 +16461,6 @@
         "view_attendingmeet",
         "persons",
         "attendingmeet"
-      ],
-      [
-        "add_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "change_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "delete_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "view_attendingmeetshistory",
-        "persons",
-        "attendingmeetshistory"
-      ],
-      [
-        "add_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "change_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "delete_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "view_attendingshistory",
-        "persons",
-        "attendingshistory"
-      ],
-      [
-        "add_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "change_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "delete_categorieshistory",
-        "persons",
-        "categorieshistory"
-      ],
-      [
-        "view_categorieshistory",
-        "persons",
-        "categorieshistory"
       ],
       [
         "add_category",
@@ -20523,46 +16523,6 @@
         "folkattendee"
       ],
       [
-        "add_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "change_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "delete_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "view_folkattendeeshistory",
-        "persons",
-        "folkattendeeshistory"
-      ],
-      [
-        "add_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "change_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "delete_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
-        "view_folkshistory",
-        "persons",
-        "folkshistory"
-      ],
-      [
         "add_note",
         "persons",
         "note"
@@ -20581,26 +16541,6 @@
         "view_note",
         "persons",
         "note"
-      ],
-      [
-        "add_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "change_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "delete_noteshistory",
-        "persons",
-        "noteshistory"
-      ],
-      [
-        "view_noteshistory",
-        "persons",
-        "noteshistory"
       ],
       [
         "add_past",
@@ -20623,26 +16563,6 @@
         "past"
       ],
       [
-        "add_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "change_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "delete_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
-        "view_pastshistory",
-        "persons",
-        "pastshistory"
-      ],
-      [
         "add_registration",
         "persons",
         "registration"
@@ -20663,26 +16583,6 @@
         "registration"
       ],
       [
-        "add_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "change_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "delete_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
-        "view_registrationshistory",
-        "persons",
-        "registrationshistory"
-      ],
-      [
         "add_relation",
         "persons",
         "relation"
@@ -20701,41 +16601,6 @@
         "view_relation",
         "persons",
         "relation"
-      ],
-      [
-        "add_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "change_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "delete_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "view_relationshistory",
-        "persons",
-        "relationshistory"
-      ],
-      [
-        "add_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "change_context",
-        "pghistory",
-        "context"
-      ],
-      [
-        "view_context",
-        "pghistory",
-        "context"
       ],
       [
         "add_calendar",
@@ -20848,161 +16713,6 @@
         "site"
       ],
       [
-        "add_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "change_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "delete_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "view_emailaddresshistory",
-        "users",
-        "emailaddresshistory"
-      ],
-      [
-        "add_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "change_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "view_emailaddressproxy",
-        "users",
-        "emailaddressproxy"
-      ],
-      [
-        "add_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "change_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "delete_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "view_emailconfirmationhistory",
-        "users",
-        "emailconfirmationhistory"
-      ],
-      [
-        "add_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "change_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "delete_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "view_emailconfirmationproxy",
-        "users",
-        "emailconfirmationproxy"
-      ],
-      [
-        "add_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "change_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "delete_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "view_grouppermissionproxy",
-        "users",
-        "grouppermissionproxy"
-      ],
-      [
-        "add_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "change_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "delete_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "view_grouppermissionshistory",
-        "users",
-        "grouppermissionshistory"
-      ],
-      [
-        "add_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "change_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "delete_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "view_groupproxy",
-        "users",
-        "groupproxy"
-      ],
-      [
-        "add_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "change_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "delete_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
-        "view_groupshistory",
-        "users",
-        "groupshistory"
-      ],
-      [
         "add_menu",
         "users",
         "menu"
@@ -21043,181 +16753,6 @@
         "menuauthgroup"
       ],
       [
-        "view_menuauthgroupshistory",
-        "users",
-        "menuauthgroupshistory"
-      ],
-      [
-        "view_menushistory",
-        "users",
-        "menushistory"
-      ],
-      [
-        "add_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "change_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "delete_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "view_permissionproxy",
-        "users",
-        "permissionproxy"
-      ],
-      [
-        "add_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "change_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "delete_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "view_permissionshistory",
-        "users",
-        "permissionshistory"
-      ],
-      [
-        "add_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "change_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "delete_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "view_usergroupproxy",
-        "users",
-        "usergroupproxy"
-      ],
-      [
-        "add_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "change_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "delete_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "view_usergroupshistory",
-        "users",
-        "usergroupshistory"
-      ],
-      [
-        "add_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "change_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "view_userhistory",
-        "users",
-        "userhistory"
-      ],
-      [
-        "delete_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "view_userpermissionproxy",
-        "users",
-        "userpermissionproxy"
-      ],
-      [
-        "add_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "change_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "delete_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "view_userpermissionshistory",
-        "users",
-        "userpermissionshistory"
-      ],
-      [
-        "add_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "change_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "delete_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "view_addresshistory",
-        "whereabouts",
-        "addresshistory"
-      ],
-      [
-        "add_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "change_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "delete_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
-        "view_addressproxy",
-        "whereabouts",
-        "addressproxy"
-      ],
-      [
         "add_campus",
         "whereabouts",
         "campus"
@@ -21236,66 +16771,6 @@
         "view_campus",
         "whereabouts",
         "campus"
-      ],
-      [
-        "add_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "change_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "delete_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "view_campuseshistory",
-        "whereabouts",
-        "campuseshistory"
-      ],
-      [
-        "add_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "change_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "delete_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "view_countryhistory",
-        "whereabouts",
-        "countryhistory"
-      ],
-      [
-        "add_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "change_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "delete_countryproxy",
-        "whereabouts",
-        "countryproxy"
-      ],
-      [
-        "view_countryproxy",
-        "whereabouts",
-        "countryproxy"
       ],
       [
         "add_division",
@@ -21318,66 +16793,6 @@
         "division"
       ],
       [
-        "add_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "change_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "delete_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "view_divisionshistory",
-        "whereabouts",
-        "divisionshistory"
-      ],
-      [
-        "add_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "change_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "delete_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "view_localityhistory",
-        "whereabouts",
-        "localityhistory"
-      ],
-      [
-        "add_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "change_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "delete_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
-        "view_localityproxy",
-        "whereabouts",
-        "localityproxy"
-      ],
-      [
         "add_organization",
         "whereabouts",
         "organization"
@@ -21398,26 +16813,6 @@
         "organization"
       ],
       [
-        "add_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "change_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "delete_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
-        "view_organizationshistory",
-        "whereabouts",
-        "organizationshistory"
-      ],
-      [
         "add_place",
         "whereabouts",
         "place"
@@ -21436,46 +16831,6 @@
         "view_place",
         "whereabouts",
         "place"
-      ],
-      [
-        "add_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "change_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "delete_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "view_placeshistory",
-        "whereabouts",
-        "placeshistory"
-      ],
-      [
-        "add_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "change_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "delete_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
-      ],
-      [
-        "view_propertieshistory",
-        "whereabouts",
-        "propertieshistory"
       ],
       [
         "add_property",
@@ -21513,66 +16868,6 @@
         "room"
       ],
       [
-        "add_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "change_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "delete_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "view_roomshistory",
-        "whereabouts",
-        "roomshistory"
-      ],
-      [
-        "add_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "change_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "delete_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "view_statehistory",
-        "whereabouts",
-        "statehistory"
-      ],
-      [
-        "add_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "change_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "delete_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
-        "view_stateproxy",
-        "whereabouts",
-        "stateproxy"
-      ],
-      [
         "add_suite",
         "whereabouts",
         "suite"
@@ -21591,26 +16886,6 @@
         "view_suite",
         "whereabouts",
         "suite"
-      ],
-      [
-        "add_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "change_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "delete_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
-      ],
-      [
-        "view_suiteshistory",
-        "whereabouts",
-        "suiteshistory"
       ]
     ]
   }

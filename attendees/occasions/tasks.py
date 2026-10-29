@@ -1,6 +1,5 @@
 from datetime import datetime
 
-import pghistory
 import pytz
 from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
@@ -10,6 +9,8 @@ from django.core.mail import send_mail
 from attendees.occasions.models import Meet, MessageTemplate
 from attendees.occasions.services import AttendanceService
 from config import celery_app
+
+from attendees.history import context
 
 from .services.gathering_service import GatheringService
 
@@ -34,7 +35,7 @@ def mail_result(mail_variables):
 
 
 @celery_app.task()
-@pghistory.context(modifier='batch create gatherings')
+@context("batch create gatherings")
 def batch_create_gatherings(meet_infos):
     """
     A Celery task to periodically generate gatherings taking arguments from model of "periodic task"
@@ -159,7 +160,7 @@ def batch_create_gatherings(meet_infos):
 
 
 @celery_app.task()
-@pghistory.context(modifier='batch create attendances')
+@context("batch create attendances")
 def batch_create_attendances(meet_infos):
     """
     A Celery task to periodically generate attendances taking arguments from model of "periodic task"

@@ -1,18 +1,18 @@
 # from django.core.exceptions import ValidationError
-import pghistory, pytz
 from django.contrib.contenttypes.fields import GenericForeignKey, GenericRelation
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
 from django.urls import reverse
-import django.utils.timezone
-import model_utils.fields
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 from schedule.models import Occurrence
 
 from attendees.persons.models import Note, Searchable, Utility
+from attendees.history import track
+from attendees.history.querysets import TrackedSoftDeletable
 
 
-class Gathering(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
+@track
+class Gathering(TrackedSoftDeletable, Searchable, TimeStampedModel, SoftDeletableModel, Utility):
     """
     The gathering pk/id is also stored in the corresponding 3rd party model
     schedule.Occurrence.title such as gathering#42, so when calendar shows
@@ -111,31 +111,3 @@ class Gathering(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
     #         "time": self.start.astimezone(pytz.timezone(timezone)).strftime(timeformat),
     #         "location": str(self.site),
     #     }
-
-
-class GatheringsHistory(pghistory.get_event_model(
-    Gathering,
-    pghistory.Snapshot('gathering.snapshot'),
-    pghistory.BeforeDelete('gathering.before_delete'),
-    name='GatheringsHistory',
-    related_name='history',
-)):
-    pgh_id = models.BigAutoField(primary_key=True, serialize=False)
-    pgh_created_at = models.DateTimeField(auto_now_add=True)
-    pgh_label = models.TextField(help_text='The event label.')
-    pgh_obj = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='occasions.gathering')
-    id = models.BigIntegerField(db_index=True)
-    meet = models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.meet')
-    created = model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')
-    modified = model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')
-    is_removed = models.BooleanField(default=False)
-    start = models.DateTimeField()
-    finish = models.DateTimeField(help_text='Required for user to filter by time')
-    site_type = models.ForeignKey(db_constraint=False, help_text='site: django_content_type id for table name', on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='contenttypes.contenttype')
-    infos = models.JSONField(blank=True, default=dict, help_text='Example: {"LG_location": "F207", "link": "https://..."}. Please keep {} here even no data', null=True)
-    site_id = models.CharField(default='0', max_length=36)
-    display_name = models.CharField(blank=True, help_text='02/09/2020, etc', max_length=255, null=True)
-    pgh_context = models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')
-
-    class Meta:
-        db_table = 'occasions_gatheringshistory'

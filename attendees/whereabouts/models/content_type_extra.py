@@ -1,8 +1,11 @@
 from django.contrib.contenttypes.models import ContentType
 from django.db import models
+from attendees.history import track
+from attendees.history.querysets import Tracked
 
 
-class ContentTypeExtra(models.Model):
+@track
+class ContentTypeExtra(Tracked, models.Model):
     """What the site picker knows about a content type beyond Django's own row: the genre of
     model it is (``location`` for the kinds of place a gathering can be held at), the order to
     list them in, the endpoint that lists the rows of that model and a hint for the picker.

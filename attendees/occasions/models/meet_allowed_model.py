@@ -1,7 +1,10 @@
 from django.db import models
+from attendees.history import track
+from attendees.history.querysets import Tracked
 
 
-class MeetAllowedModel(models.Model):
+@track
+class MeetAllowedModel(Tracked, models.Model):
     """The pages a meet is listed on.
 
     Every page that offers a choice of meets (gatherings, enrollments, attendances, the calendar)

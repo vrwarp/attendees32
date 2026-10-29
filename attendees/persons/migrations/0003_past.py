@@ -4,7 +4,6 @@ from attendees.persons.models import Utility
 import django.contrib.postgres.indexes
 from django.db import migrations, models
 from partial_date.fields import PartialDateField
-import pgtrigger.migrations
 import django.utils.timezone
 import model_utils.fields
 from uuid import uuid4
@@ -47,45 +46,6 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='past',
             index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='past_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='PastsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='persons.past')),
-                ('id', models.UUIDField(db_index=True, default=uuid4, editable=False, serialize=False)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('object_id', models.CharField(max_length=36)),
-                ('display_order', models.SmallIntegerField(default=30000)),
-                ('infos', models.JSONField(blank=True, default=Utility.relationship_infos, help_text=('Example: {"show_secret": {"attendee1id": true, "attendee2id": false}}.Please keep {} here even no data',), null=True)),
-                ('category', models.ForeignKey(db_constraint=False, help_text="subtype: for education it's primary/high/college sub-types etc", on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.category')),
-                ('content_type', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='contenttypes.contenttype')),
-                ('organization', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.organization')),
-                ('when', PartialDateField(blank=True, help_text='1998, 1998-12 or 1992-12-31, please enter 1800 if year not known', null=True)),
-                ('finish', models.DateTimeField(blank=True, null=True)),
-                ('display_name', models.CharField(blank=True, max_length=50, null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'persons_pastshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_pastshistory', original_model_table='persons_pasts')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='past',
-            trigger=pgtrigger.compiler.Trigger(name='past_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_pastshistory" ("created", "modified", "is_removed", "id", "object_id", "display_order", "infos", "category_id", "content_type_id", "organization_id", "when", "finish", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NEW."when", NEW."finish", NEW."display_name", NOW(), \'past.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='11dfec053e713f8ffa2d41cd4243f9b50b0984e7', operation='INSERT', pgid='pgtrigger_past_snapshot_insert_e6306', table='persons_pasts', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='past',
-            trigger=pgtrigger.compiler.Trigger(name='past_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."id" IS DISTINCT FROM NEW."id" OR OLD."object_id" IS DISTINCT FROM NEW."object_id" OR OLD."display_order" IS DISTINCT FROM NEW."display_order" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."category_id" IS DISTINCT FROM NEW."category_id" OR OLD."content_type_id" IS DISTINCT FROM NEW."content_type_id" OR OLD."organization_id" IS DISTINCT FROM NEW."organization_id" OR OLD."when" IS DISTINCT FROM NEW."when" OR OLD."finish" IS DISTINCT FROM NEW."finish" OR OLD."display_name" IS DISTINCT FROM NEW."display_name")', func='INSERT INTO "persons_pastshistory" ("created", "modified", "is_removed", "id", "object_id", "display_order", "infos", "category_id", "content_type_id", "organization_id", "when", "finish", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."id", NEW."object_id", NEW."display_order", NEW."infos", NEW."category_id", NEW."content_type_id", NEW."organization_id", NEW."when", NEW."finish", NEW."display_name", NOW(), \'past.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='7ee0682088c7d71433708663f1ccc92572cd7fc6', operation='UPDATE', pgid='pgtrigger_past_snapshot_update_9fb1c', table='persons_pasts', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='past',
-            trigger=pgtrigger.compiler.Trigger(name='past_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_pastshistory" ("created", "modified", "is_removed", "id", "object_id", "display_order", "infos", "category_id", "content_type_id", "organization_id", "when", "finish", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."created", OLD."modified", OLD."is_removed", OLD."id", OLD."object_id", OLD."display_order", OLD."infos", OLD."category_id", OLD."content_type_id", OLD."organization_id", OLD."when", OLD."finish", OLD."display_name", NOW(), \'past.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='874c4cf51b2497907bb14720514a7fc5e95ecb9a', operation='DELETE', pgid='pgtrigger_past_before_delete_30eec', table='persons_pasts', when='AFTER')),
         ),
     ]
 

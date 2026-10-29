@@ -3,8 +3,6 @@ from attendees.persons.models import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -42,38 +40,4 @@ class Migration(migrations.Migration):
             field=models.ManyToManyField(related_name='auth_groups', through='users.MenuAuthGroup', to='auth.Group'),
         ),
 
-        migrations.CreateModel(
-            name='MenuAuthGroupsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='users.menuauthgroup')),
-                ('id', models.IntegerField()),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('read', models.BooleanField(default=True)),
-                ('write', models.BooleanField(default=True)),
-                ('auth_group', models.ForeignKey(db_constraint=False, default=0, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='auth.group')),
-                ('menu', models.ForeignKey(db_constraint=False, default=0, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='users.menu')),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'users_menu_auth_groupshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_menu_auth_groupshistory', original_model_table='users_menu_auth_groups')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='menuauthgroup',
-            trigger=pgtrigger.compiler.Trigger(name='menuauthgroup_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_menu_auth_groupshistory" ("id", "created", "modified", "is_removed", "read", "write", "auth_group_id", "menu_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."read", NEW."write", NEW."auth_group_id", NEW."menu_id", NOW(), \'menuauthgroup.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='96ebda0f1ede8affd15d679abfa9ad944e4e305d', operation='INSERT', pgid='pgtrigger_menuauthgroup_snapshot_insert_f821d', table='users_menu_auth_groups', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='menuauthgroup',
-            trigger=pgtrigger.compiler.Trigger(name='menuauthgroup_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."read" IS DISTINCT FROM NEW."read" OR OLD."write" IS DISTINCT FROM NEW."write" OR OLD."auth_group_id" IS DISTINCT FROM NEW."auth_group_id" OR OLD."menu_id" IS DISTINCT FROM NEW."menu_id")', func='INSERT INTO "users_menu_auth_groupshistory" ("id", "created", "modified", "is_removed", "read", "write", "auth_group_id", "menu_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."read", NEW."write", NEW."auth_group_id", NEW."menu_id", NOW(), \'menuauthgroup.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='51643ad988c6d2c8fa686d5d57aa323b9f809d00', operation='UPDATE', pgid='pgtrigger_menuauthgroup_snapshot_update_f44f0', table='users_menu_auth_groups', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='menuauthgroup',
-            trigger=pgtrigger.compiler.Trigger(name='menuauthgroup_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_menu_auth_groupshistory" ("id", "created", "modified", "is_removed", "read", "write", "auth_group_id", "menu_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."read", OLD."write", OLD."auth_group_id", OLD."menu_id", NOW(), \'menuauthgroup.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='7c1eac3db1202ed2deaf9eda1e9595e9a934e215', operation='DELETE', pgid='pgtrigger_menuauthgroup_before_delete_0ef33', table='users_menu_auth_groups', when='AFTER')),
-        ),
     ]

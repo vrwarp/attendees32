@@ -161,6 +161,7 @@ https://dbdiagram.io/d/5d5ff66eced98361d6dddc48
 # DJANGO_READ_DOT_ENV_FILE=True
 DJANGO_SETTINGS_MODULE=config.settings.production
 DJANGO_SECRET_KEY=<<your django secret key>>
+DJANGO_HISTORY_CHAIN_KEY=<<your history chain key, see Audit history>>
 DJANGO_ADMIN_URL=<<any cryptic string as admin path>>
 DJANGO_ALLOWED_HOSTS=<<your domain name>>,127.0.0.1,localhost
 DJANGO_DEBUG=False
@@ -241,6 +242,9 @@ EMAIL_HOST=mailgun
 ```
 DJANGO_ALLOWED_HOSTS=your.domain.name,another.domain.name,127.0.0.1,localhost
 DJANGO_SECRET_KEY=<<production Django secret key>>
+DJANGO_HISTORY_CHAIN_KEY=<<production history chain key, kept with the recovery sheet>>
+DJANGO_HISTORY_ANCHOR_FILE=/data/history-anchors.txt
+DJANGO_HISTORY_ANCHOR_RECIPIENTS=<<officer@example.org,clerk@example.org>>
 ```
 * build and start the production machine by `docker-compose -f production.yml build`
 * migrate database by
@@ -259,6 +263,58 @@ DJANGO_SECRET_KEY=<<production Django secret key>>
 * For keeping the site surviving reboot, add starting of the Django upon system reboot, such as `sudo su user_name sh -c 'sleep 99 && cd ~user_name/repo_dir && docker-compose -f production.yml up -d' >> /tmp/attendee_startup.log` (need work)
 </details>
 * enter Redis-CLI by `docker exec -it redis redis-cli`
+
+## Audit history
+
+Every change to a tracked record is an event in one table, `history_event`: which record, the whole
+record as it stood, who made the change (the request, the Celery task, or the shell and its
+operating-system user) and when. The writer is the application itself (`attendees.history`); nothing
+depends on database triggers, so the history is the same on every database backend. Each event is
+sealed onto a chain with an HMAC, which is what makes the trail tamper-evident.
+
+Settings, in the `.django` environment file:
+
+- `DJANGO_HISTORY_CHAIN_KEY` (required in production): the key of the chain. Generate it like a secret
+  key, keep it in the environment file on the encrypted volume, and write it on the recovery sheet with
+  the other secrets. Someone who copies the database without it cannot rewrite an event and recompute
+  the chain behind it. Losing it does not lose data: the events still read, but the seal can no longer be
+  checked.
+- `DJANGO_HISTORY_ANCHOR_FILE`: where the daily anchor is appended (a file on the encrypted volume).
+- `DJANGO_HISTORY_ANCHOR_RECIPIENTS`: the officers who are mailed each anchor.
+- `DJANGO_HISTORY_AUDIT_RECIPIENTS`: who is mailed when a verification fails (defaults to the admins).
+
+The daily routine, as management commands or the Celery tasks of the same names (schedule them with
+django-celery-beat in the admin):
+
+```bash
+python manage.py history_anchor        # once a day: append the head of the chain to the anchor file and mail it
+python manage.py verify_history        # once a night: chain, anchors and the replay against the live tables
+python manage.py verify_history --incremental   # any time: only the events since the last clean run
+```
+
+An anchor is the head of the chain (`seq`, `mac`, time): a few dozen characters that reveal nothing
+about the data. Once a month, copy the latest one into the board minutes. The verifier stores each run
+as a `HistoryAudit` (visible in the admin under History) and, on a failure, mails the first bad event,
+which also brackets when it happened: between the last anchor that still matches and the first that
+does not.
+
+Reading and using the history:
+
+- The admin's History button on any tracked record lists its events, who made each and what changed.
+- Admin > History > History events lists everything; filter by user and pick a period to see what one
+  person changed.
+- Restore: select one event in that list and run "Restore the record to this version". The record is
+  saved back through the normal path, so the restore is itself recorded with who did it.
+- `python manage.py history_replay --as-of 2026-03-01` counts the records as they stood on a day;
+  `--to /tmp/that-day.sqlite3` writes them into a SQLite file the normal queries can run against
+  (`Model.objects.using("history_replay")` after `attendees.history.replay.open_sqlite(path)`), with
+  nothing touched in the live database. `--diff` compares the replay with the live tables, which is how
+  a change made with no event (a direct `psql` edit) is found.
+
+What the history does not hold: passwords (left out of every snapshot on purpose), sessions, content
+types, Celery schedules, uploaded files (the path is recorded, the file is in the backups), and the
+events themselves. Erasing a person follows the written procedure through the normal screens, so the
+changes are ordinary events; earlier events keep the earlier values under the board's retention rule.
 
 ## DB SQL Backup & Restore process (with production.yml)
 <details>
@@ -356,7 +412,7 @@ EMAIL_HOST=mailgun
 * create 2 superusers by `docker-compose -f local.yml run django python manage.py createsuperuser`
 * import the seed data by `docker-compose -f local.yml run django python manage.py loaddata fixtures/db_seed`, which was generated by:
   ```
-docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e pghistory.context -e pghistory.aggregateevent -e users.userhistory -e users.menushistory -e users.menuauthgroupshistory -e users.groupshistory -e users.grouppermissionshistory -e users.usergroupshistory -e users.userpermissionshistory -e users.emailaddresshistory -e users.emailconfirmationhistory -e whereabouts.organizationshistory -e whereabouts.divisionshistory -e whereabouts.placeshistory -e whereabouts.campuseshistory -e whereabouts.propertieshistory -e whereabouts.suiteshistory -e whereabouts.roomshistory -e whereabouts.countryhistory -e whereabouts.statehistory -e whereabouts.localityhistory -e whereabouts.addresshistory -e persons.categorieshistory -e persons.noteshistory -e persons.pastshistory -e persons.folkshistory -e persons.attendeeshistory -e persons.folkattendeeshistory -e persons.relationshistory -e persons.registrationshistory -e persons.attendingshistory -e persons.attendingmeetshistory -e occasions.assemblieshistory -e occasions.attendanceshistory -e occasions.charactershistory -e occasions.gatheringshistory -e occasions.meetshistory -e occasions.messagetemplateshistory -e occasions.priceshistory -e occasions.teamshistory -e occasions.calendarhistory -e occasions.calendarrelationhistory -e occasions.eventhistory -e occasions.eventrelationhistory -e occasions.occurrencehistory -e occasions.rulehistory -e occasions.periodictaskhistory -e occasions.crontabschedulehistory -e occasions.intervalschedulehistory -e users.permissionshistory -e users.grouppermissionproxy -e users.usergroupproxy -e users.userpermissionproxy --indent 2 > fixtures/db_seed.json
+docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e history.historyevent -e history.historycontext -e history.historyhead -e history.historyaudit --indent 2 > fixtures/db_seed.json
   ```
 * go to Django admin to add the first organization and all groups to the first user (superuser) at http://<<your domain name>>:8008/admin/users/user/
 * to see django log: `docker-compose -f local.yml logs django`
@@ -381,7 +437,7 @@ EMAIL_HOST=mailgun
 * create 2 superusers by `docker-compose -f local.yml run --rm django python manage.py createsuperuser`
 * import the seed data by `docker-compose -f local.yml run django python manage.py loaddata fixtures/db_seed`, which was generated by:
   ```
-docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e pghistory.context -e pghistory.aggregateevent -e users.userhistory -e users.menushistory -e users.menuauthgroupshistory -e users.groupshistory -e users.grouppermissionshistory -e users.usergroupshistory -e users.userpermissionshistory -e users.emailaddresshistory -e users.emailconfirmationhistory -e whereabouts.organizationshistory -e whereabouts.divisionshistory -e whereabouts.placeshistory -e whereabouts.campuseshistory -e whereabouts.propertieshistory -e whereabouts.suiteshistory -e whereabouts.roomshistory -e whereabouts.countryhistory -e whereabouts.statehistory -e whereabouts.localityhistory -e whereabouts.addresshistory -e persons.categorieshistory -e persons.noteshistory -e persons.pastshistory -e persons.folkshistory -e persons.attendeeshistory -e persons.folkattendeeshistory -e persons.relationshistory -e persons.registrationshistory -e persons.attendingshistory -e persons.attendingmeetshistory -e occasions.assemblieshistory -e occasions.attendanceshistory -e occasions.charactershistory -e occasions.gatheringshistory -e occasions.meetshistory -e occasions.messagetemplateshistory -e occasions.priceshistory -e occasions.teamshistory -e occasions.calendarhistory -e occasions.calendarrelationhistory -e occasions.eventhistory -e occasions.eventrelationhistory -e occasions.occurrencehistory -e occasions.rulehistory -e occasions.periodictaskhistory -e occasions.crontabschedulehistory -e occasions.intervalschedulehistory -e users.permissionshistory -e users.grouppermissionproxy -e users.usergroupproxy -e users.userpermissionproxy --indent 2 > fixtures/db_seed.json
+docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e history.historyevent -e history.historycontext -e history.historyhead -e history.historyaudit --indent 2 > fixtures/db_seed.json
   ```
 * go to Django admin to add the first organization and all groups to the first user (superuser) at http://localhost:8008/admin123/users/user/
 ```
@@ -422,7 +478,7 @@ EMAIL_HOST=mailhog
 * create 2 superusers by `docker compose -f local.yml run --rm django python manage.py createsuperuser`
 * import the seed data by `docker compose -f local.yml run django python manage.py loaddata fixtures/db_seed`, data were created by:
   ```
-docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e pghistory.context -e pghistory.aggregateevent -e users.userhistory -e users.menushistory -e users.menuauthgroupshistory -e users.groupshistory -e users.grouppermissionshistory -e users.usergroupshistory -e users.userpermissionshistory -e users.emailaddresshistory -e users.emailconfirmationhistory -e whereabouts.organizationshistory -e whereabouts.divisionshistory -e whereabouts.placeshistory -e whereabouts.campuseshistory -e whereabouts.propertieshistory -e whereabouts.suiteshistory -e whereabouts.roomshistory -e whereabouts.countryhistory -e whereabouts.statehistory -e whereabouts.localityhistory -e whereabouts.addresshistory -e persons.categorieshistory -e persons.noteshistory -e persons.pastshistory -e persons.folkshistory -e persons.attendeeshistory -e persons.folkattendeeshistory -e persons.relationshistory -e persons.registrationshistory -e persons.attendingshistory -e persons.attendingmeetshistory -e occasions.assemblieshistory -e occasions.attendanceshistory -e occasions.charactershistory -e occasions.gatheringshistory -e occasions.meetshistory -e occasions.messagetemplateshistory -e occasions.priceshistory -e occasions.teamshistory -e occasions.calendarhistory -e occasions.calendarrelationhistory -e occasions.eventhistory -e occasions.eventrelationhistory -e occasions.occurrencehistory -e occasions.rulehistory -e occasions.periodictaskhistory -e occasions.crontabschedulehistory -e occasions.intervalschedulehistory -e users.permissionshistory -e users.grouppermissionproxy -e users.usergroupproxy -e users.userpermissionproxy --indent 2 > fixtures/db_seed.json
+docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e history.historyevent -e history.historycontext -e history.historyhead -e history.historyaudit --indent 2 > fixtures/db_seed.json
   ```
 * go to Django admin to add the first organization and all groups to the first user (superuser) at http://localhost:8008/admin123/users/user/
 * use browser to open http://localhost:8008/ and http://localhost:8025/
