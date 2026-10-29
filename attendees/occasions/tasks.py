@@ -5,6 +5,7 @@ from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import transaction
 
 from attendees.occasions.models import Meet, MessageTemplate
 from attendees.occasions.services import AttendanceService
@@ -135,14 +136,15 @@ def batch_create_gatherings(meet_infos):
             return results
 
         end = datetime.utcnow() + relativedelta(months=+meet_info["months_adding"])
-        gathering_results = GatheringService.batch_create(
-            begin=begin.isoformat(sep="T", timespec="milliseconds") + "Z",
-            end=end.isoformat(sep="T", timespec="milliseconds") + "Z",
-            meet_slug=meet_info["meet_slug"],
-            duration=0,
-            meet=meet,
-            user_time_zone=time_zone,
-        )
+        with transaction.atomic():  # one meet's batch is all or nothing
+            gathering_results = GatheringService.batch_create(
+                begin=begin.isoformat(sep="T", timespec="milliseconds") + "Z",
+                end=end.isoformat(sep="T", timespec="milliseconds") + "Z",
+                meet_slug=meet_info["meet_slug"],
+                duration=0,
+                meet=meet,
+                user_time_zone=time_zone,
+            )
 
         results["begin"] = gathering_results["begin"]
         results["end"] = gathering_results["end"]
@@ -261,13 +263,14 @@ def batch_create_attendances(meet_infos):
             return results
 
         end = datetime.utcnow() + relativedelta(months=+meet_info["months_adding"])
-        attendance_results = AttendanceService.batch_create(
-            begin=begin.isoformat(sep="T", timespec="milliseconds") + "Z",
-            end=end.isoformat(sep="T", timespec="milliseconds") + "Z",
-            meet_slug=meet_info["meet_slug"],
-            meet=meet,
-            user_time_zone=time_zone,
-        )
+        with transaction.atomic():  # one meet's batch is all or nothing
+            attendance_results = AttendanceService.batch_create(
+                begin=begin.isoformat(sep="T", timespec="milliseconds") + "Z",
+                end=end.isoformat(sep="T", timespec="milliseconds") + "Z",
+                meet_slug=meet_info["meet_slug"],
+                meet=meet,
+                user_time_zone=time_zone,
+            )
 
         results["begin"] = attendance_results["begin"]
         results["end"] = attendance_results["end"]

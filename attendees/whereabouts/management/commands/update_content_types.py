@@ -1,6 +1,7 @@
 from address.models import Address
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 
 from attendees.whereabouts.models import (
     Campus,
@@ -31,6 +32,7 @@ class Command(BaseCommand):
         (Address, "all_addresses", 8, "street address", Organization._meta.app_label),
     )
 
+    @transaction.atomic
     def handle(self, *args, **options):
         self.stdout.write("checking ContentType data ..")
         if ContentType.objects.count() < 1:

@@ -27,7 +27,6 @@ for host in ALLOWED_HOSTS:
 # DATABASES
 # ------------------------------------------------------------------------------
 # DATABASES["default"] = env.db("DATABASE_URL")  # noqa F405
-# DATABASES["default"]["ATOMIC_REQUESTS"] = True  # noqa F405
 DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # noqa F405
 
 # CACHES

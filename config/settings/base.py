@@ -41,7 +41,9 @@ LOCALE_PATHS = [str(ROOT_DIR / "locale")]
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {"default": env.db("DATABASE_URL")}
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
+# Only write requests run in a transaction (attendees.middleware.AtomicWritesMiddleware, last in
+# MIDDLEWARE); a read holds none, which is what lets reads run alongside a writer on SQLite.
+DATABASES["default"]["ATOMIC_REQUESTS"] = False
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -159,6 +161,7 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "attendees.history.middleware.HistoryContextMiddleware",
     "attendees.middleware.TimezoneMiddleware",
+    "attendees.middleware.AtomicWritesMiddleware",
 ]
 
 # STATIC

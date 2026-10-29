@@ -2,6 +2,7 @@ import re
 
 import pytz
 from urllib import parse
+from django.db import transaction
 from django.utils import timezone
 # from django.utils.deprecation import MiddlewareMixin
 from django.conf import settings
@@ -86,4 +87,26 @@ class XForwardedForMiddleware:
     def __call__(self, request):
         if "HTTP_X_FORWARDED_FOR" in request.META:
             request.META["REMOTE_ADDR"] = request.META["HTTP_X_FORWARDED_FOR"].split(",")[0].strip()
+        return self.get_response(request)
+
+
+class AtomicWritesMiddleware:
+    """One transaction around each request that writes, none around a read.
+
+    POST, PUT, PATCH and DELETE requests run inside ``transaction.atomic()``,
+    so a write keeps its all-or-nothing behaviour; GET, HEAD and OPTIONS
+    requests hold no transaction at all. This replaces ``ATOMIC_REQUESTS``,
+    which opened one for every request. It sits last in the middleware list,
+    so only the view itself runs inside the transaction.
+    """
+
+    WRITE_METHODS = frozenset({"POST", "PUT", "PATCH", "DELETE"})
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        if request.method in self.WRITE_METHODS:
+            with transaction.atomic():
+                return self.get_response(request)
         return self.get_response(request)

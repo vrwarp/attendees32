@@ -1,4 +1,5 @@
 from django.core.management.base import BaseCommand
+from django.db import transaction
 
 from attendees.occasions.models import Attendance, Gathering
 from attendees.persons.models import Attendee, AttendingMeet
@@ -13,6 +14,7 @@ class Command(BaseCommand):
 
     BATCH = 500
 
+    @transaction.atomic
     def handle(self, *args, **options):
         # Attendees derive their names on save as well, so they go through save() itself.
         attendees = Attendee.all_objects.select_related("division__organization")

@@ -7,6 +7,7 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 
 from address.models import Locality, State
 
@@ -1305,6 +1306,7 @@ class Command(BaseCommand):
         parser.add_argument('rock_meet_slug')
         parser.add_argument('foot_meet_slug')
 
+    @transaction.atomic
     def handle(self, *args, **options):
         self.stdout.write("Running load_access_csv.py... with arguments: ")
         self.stdout.write(f"Reading household_csv_file: {options.get('household_csv_file')}")
