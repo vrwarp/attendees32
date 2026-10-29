@@ -10,7 +10,6 @@ import pgtrigger.migrations
 import timezone_field.fields
 
 from attendees.persons.models import Utility
-from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -49,7 +48,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        PortableRunSQL(Utility.pgh_default_sql('occasions_intervalschedulehistory', index_on_id=True, original_model_table='django_celery_beat_intervalschedule')),
+        migrations.RunSQL(Utility.pgh_default_sql('occasions_intervalschedulehistory', index_on_id=True, original_model_table='django_celery_beat_intervalschedule')),
         pgtrigger.migrations.AddTrigger(
             model_name='intervalscheduleproxy',
             trigger=pgtrigger.compiler.Trigger(name='intervalschedule_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_intervalschedulehistory" ("every", "period", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."every", NEW."period", NEW."id", NOW(), \'intervalschedule.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='bd121afb0f53557418133546e4ee994781533640', operation='INSERT', pgid='pgtrigger_intervalschedule_snapshot_insert_1525e', table='django_celery_beat_intervalschedule', when='AFTER')),

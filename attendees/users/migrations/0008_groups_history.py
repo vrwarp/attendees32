@@ -5,7 +5,6 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
-from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -46,7 +45,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        PortableRunSQL(Utility.pgh_default_sql('users_groupshistory', index_on_id=True, original_model_table='auth_group')),
+        migrations.RunSQL(Utility.pgh_default_sql('users_groupshistory', index_on_id=True, original_model_table='auth_group')),
         migrations.AlterField(
             model_name='groupshistory',
             name='pgh_obj',

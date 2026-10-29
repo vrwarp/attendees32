@@ -2,9 +2,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from partial_date import PartialDate
 from django.contrib.contenttypes.models import ContentType
-from attendees.utils.dbcompat.aggregates import JSONBAgg, JsonBuildObject, StringAgg
-from attendees.utils.dbcompat.expressions import JsonArrayHasKeyValue
-from attendees.utils.dbcompat.lookups import json_contains
+from django.contrib.postgres.aggregates.general import StringAgg, JSONBAgg
 from django.db.models import Case, F, Func, Q, When, CharField, JSONField
 from django.db.models.functions import Cast, Substr, Coalesce
 from django.db.models.expressions import OrderBy, Value
@@ -191,21 +189,23 @@ class AttendeeService:
             .prefetch_related()
             .annotate(
                 attendingmeets=Coalesce(JSONBAgg(  # Coalesce required or null/true/false will break sorting
-                    JsonBuildObject(
+                    Func(
                         Value('attendingmeet_id'), 'attendings__attendingmeet',
                         Value('meet_slug'), 'attendings__meets__slug',
                         Value('attendingmeet_note'), 'attendings__attendingmeet__infos__note',
                         Value('attendingmeet_category'), 'attendings__attendingmeet__category',
+                        function='jsonb_build_object',
                     ),
                     filter=Q(attendings__attendingmeet__finish__gte=now, attendings__attendingmeet__is_removed=False),
                     distinct=True,
                     default=[],
                 ), Value('[]'), output_field=JSONField()),
                 folkcities=Coalesce(JSONBAgg(  # Coalesce required or null/true/false will break sorting
-                    JsonBuildObject(
+                    Func(
                         Value('locality__name'), 'folks__places__address__locality__name',
                         Value('address__raw'), 'folks__places__address__raw',
                         Value('places__id'), 'folks__places__id',
+                        function='jsonb_build_object',
                     ),
                     filter=(Q(folks__places__finish__isnull=True) | Q(folks__places__finish__gte=now)) & Q(folks__places__is_removed=False),
                     distinct=True,
@@ -230,7 +230,7 @@ class AttendeeService:
         :return: a List of sorter for order_by()
         """
         meet_sorters = {  # this sorter only needed since there're dynamic columns (slug is column name)
-            meet.slug: JsonArrayHasKeyValue("attendingmeets", "meet_slug", meet.slug)
+            meet.slug: Func("attendingmeets", function="'[{\"meet_slug\":\"" + meet.slug + "\"}]'::jsonb <@ ")
             for meet in Meet.objects.filter(
                 id__in=meets, assembly__division__organization=current_user.organization
             )
@@ -419,12 +419,12 @@ class AttendeeService:
                 ).update(finish=now)
 
         attendee_id = str(attendee.id)
-        for scheduler in Attendee.objects.filter(json_contains('infos__schedulers', {attendee_id: True})):
+        for scheduler in Attendee.objects.filter(infos__schedulers__contains={attendee_id: True}):
             scheduler.infos['schedulers'][attendee_id] = False
             scheduler.infos['updating_attendees'][updating_attendee_uuid_str] = Utility.now_with_timezone().isoformat(timespec='minutes')
             scheduler.save()
 
-        for contact in Attendee.objects.filter(json_contains('infos__emergency_contacts', {attendee_id: True})):
+        for contact in Attendee.objects.filter(infos__emergency_contacts__contains={attendee_id: True}):
             contact.infos['emergency_contacts'][attendee_id] = False
             contact.infos['updating_attendees'][updating_attendee_uuid_str] = Utility.now_with_timezone().isoformat(timespec='minutes')
             contact.save()

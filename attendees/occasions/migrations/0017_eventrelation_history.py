@@ -5,7 +5,6 @@ import django.db.models.deletion
 import pgtrigger.compiler
 import pgtrigger.migrations
 from attendees.persons.models import Utility
-from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -47,7 +46,7 @@ class Migration(migrations.Migration):
                 'abstract': False,
             },
         ),
-        PortableRunSQL(Utility.pgh_default_sql('occasions_eventrelationhistory', original_model_table='schedule_eventrelation')),
+        migrations.RunSQL(Utility.pgh_default_sql('occasions_eventrelationhistory', original_model_table='schedule_eventrelation')),
         pgtrigger.migrations.AddTrigger(
             model_name='eventrelationproxy',
             trigger=pgtrigger.compiler.Trigger(name='eventrelation_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_eventrelationhistory" ("event_id", "content_type_id", "object_id", "distinction", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."event_id", NEW."content_type_id", NEW."object_id", NEW."distinction", NEW."id", NOW(), \'eventrelation.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='39fe05bcad8b06031f5ab25ca26e02b108e5821b', operation='INSERT', pgid='pgtrigger_eventrelation_snapshot_insert_8130f', table='schedule_eventrelation', when='AFTER')),

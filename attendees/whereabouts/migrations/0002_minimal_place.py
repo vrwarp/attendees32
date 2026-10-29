@@ -6,7 +6,6 @@ from attendees.persons.models import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-from attendees.utils.dbcompat.migrations import PortableRunSQL
 
 
 class Migration(migrations.Migration):
@@ -40,5 +39,5 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        PortableRunSQL(Utility.default_sql('whereabouts_places')),
+        migrations.RunSQL(Utility.default_sql('whereabouts_places')),
     ]
