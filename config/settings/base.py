@@ -91,6 +91,8 @@ THIRD_PARTY_APPS = [
 ]
 
 LOCAL_APPS = [
+    # Must precede every app that tracks models with pghistory; see its models.py.
+    "attendees.utils.history_compat",
     "attendees.users",
     # Your stuff: custom apps go here
     "attendees.whereabouts.apps.WhereaboutsConfig",
