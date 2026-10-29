@@ -40,10 +40,6 @@ class Migration(migrations.Migration):
             name='folks',
             field=models.ManyToManyField(related_name='folks', through='persons.FolkAttendee', to='persons.Folk'),
         ),
-        migrations.AddIndex(
-            model_name='folkattendee',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='folkattendee_infos_gin'),
-        ),
         migrations.AddConstraint(
             model_name='folkattendee',
             constraint=models.UniqueConstraint(fields=('folk', 'attendee'), condition=models.Q(is_removed=False), name='folk_attendee'),

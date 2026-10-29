@@ -27,7 +27,8 @@ for host in ALLOWED_HOSTS:
 # DATABASES
 # ------------------------------------------------------------------------------
 # DATABASES["default"] = env.db("DATABASE_URL")  # noqa F405
-DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # noqa F405
+if DATABASES["default"]["ENGINE"] != "django.db.backends.sqlite3":  # noqa F405  SQLite keeps the base setting: a connection per request
+    DATABASES["default"]["CONN_MAX_AGE"] = env.int("CONN_MAX_AGE", default=60)  # noqa F405
 
 # CACHES
 # ------------------------------------------------------------------------------

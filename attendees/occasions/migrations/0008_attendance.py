@@ -44,10 +44,6 @@ class Migration(migrations.Migration):
             model_name='attendance',
             constraint=models.UniqueConstraint(fields=('gathering', 'attending', 'character', 'team', 'start'), condition=models.Q(is_removed=False), name='gathering_attending_character_team_start'),
         ),
-        migrations.AddIndex(
-            model_name='attendance',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='attendance_infos_gin'),
-        ),
         migrations.AddField(
             model_name='gathering',
             name='attendings',

@@ -51,6 +51,16 @@ class Utility:
 
     @staticmethod
     def default_sql(table_name):
+        """Column defaults for the timestamp and soft-delete columns, for rows written outside Django.
+
+        Only PostgreSQL takes ALTER COLUMN ... SET DEFAULT, and Django fills these
+        columns itself, so on any other database the old migrations that call
+        this run nothing.
+        """
+        from django.db import connection
+
+        if connection.vendor != "postgresql":
+            return ""
         return f"""
                 ALTER TABLE {table_name} ALTER COLUMN created SET DEFAULT CURRENT_TIMESTAMP;
                 ALTER TABLE {table_name} ALTER COLUMN modified SET DEFAULT CURRENT_TIMESTAMP;

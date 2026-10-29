@@ -28,28 +28,4 @@ class Migration(migrations.Migration):
                 "DROP INDEX IF EXISTS schedule_event_description",
             ],
         ),
-        migrations.RemoveIndex(
-            model_name="assembly",
-            name="assembly_infos_gin",
-        ),
-        migrations.RemoveIndex(
-            model_name="attendance",
-            name="attendance_infos_gin",
-        ),
-        migrations.RemoveIndex(
-            model_name="character",
-            name="character_infos_gin",
-        ),
-        migrations.RemoveIndex(
-            model_name="gathering",
-            name="gathering_infos_gin",
-        ),
-        migrations.RemoveIndex(
-            model_name="meet",
-            name="meet_infos_gin",
-        ),
-        migrations.RemoveIndex(
-            model_name="team",
-            name="team_infos_gin",
-        ),
     ]

@@ -439,9 +439,14 @@ class AttendeeService:
         some of the values are calculated cell values, and need to convert back to db field for search
         :return: string of fields in database
         """
+        # The name and contact columns show what the search column is built from, so a search or a
+        # sort on them goes to search_text: one lowercased text column that every backend compares
+        # the same way, where a match inside the JSON would miss Han names stored with ASCII escapes.
         field_converter = {
-            "self_phone_numbers": "infos__contacts",
-            "self_email_addresses": "infos__contacts",
+            "infos.names": "search_text",
+            "infos.contacts": "search_text",
+            "self_phone_numbers": "search_text",
+            "self_email_addresses": "search_text",
         }
         if meets:
             for meet in Meet.objects.filter(

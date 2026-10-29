@@ -60,6 +60,9 @@ class TestDatagridDataAttendees:
         by_name = search("陳明恩")  # 明恩 is a common given name: Grace is one of several it finds
         assert "Grace Chen 陳明恩" in {row["full_name"] for row in by_name}
         assert all("陳明恩" in row["full_name"] for row in by_name)
+        # The name column alone finds a whole Han name, on every backend: it is answered from the
+        # search column, not from the JSON the names live in (SQLite stores that with ASCII escapes).
+        assert {row["full_name"] for row in search("馮瑞安", searched=("infos.names",))} == {"Ruian Feng 馮瑞安"}
         assert search("Castro Valley"), "the whole search box finds the city too"
         by_city = search("Castro Valley", searched=("folkcities",))
         assert by_city and all(

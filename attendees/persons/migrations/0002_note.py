@@ -39,8 +39,4 @@ class Migration(migrations.Migration):
             model_name='note',
             index=models.Index(condition=models.Q(('is_removed', False)), fields=['content_type', 'object_id'], name='note_content_objects'),
         ),
-        migrations.AddIndex(
-            model_name='note',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='note_infos_gin'),
-        ),
     ]

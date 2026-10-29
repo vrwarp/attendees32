@@ -29,9 +29,5 @@ class Migration(migrations.Migration):
             },
             bases=(models.Model, Utility),
         ),
-        migrations.AddIndex(
-            model_name='organization',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='organization_infos_gin'),
-        ),
         migrations.RunSQL(Utility.default_sql('whereabouts_organizations')),
     ]

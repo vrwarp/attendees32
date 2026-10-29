@@ -44,6 +44,17 @@ DATABASES = {"default": env.db("DATABASE_URL")}
 # Only write requests run in a transaction (attendees.middleware.AtomicWritesMiddleware, last in
 # MIDDLEWARE); a read holds none, which is what lets reads run alongside a writer on SQLite.
 DATABASES["default"]["ATOMIC_REQUESTS"] = False
+if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+    # One writer at a time, readers alongside it: write transactions start IMMEDIATE so they queue
+    # instead of failing late, WAL lets reads proceed during a write, and a fresh connection per
+    # request keeps the file's locks short. The file must live on local disk (see the README).
+    DATABASES["default"]["CONN_MAX_AGE"] = 0
+    DATABASES["default"]["OPTIONS"] = {
+        **DATABASES["default"].get("OPTIONS", {}),
+        "transaction_mode": "IMMEDIATE",
+        "timeout": 30,
+        "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON;",
+    }
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 

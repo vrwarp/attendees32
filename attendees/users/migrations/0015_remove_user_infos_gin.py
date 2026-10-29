@@ -14,8 +14,4 @@ class Migration(migrations.Migration):
             name="user",
             options={"verbose_name": "user", "verbose_name_plural": "users"},
         ),
-        migrations.RemoveIndex(
-            model_name="user",
-            name="user_infos_gin",
-        ),
     ]

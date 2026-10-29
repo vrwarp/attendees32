@@ -33,30 +33,6 @@ class Migration(migrations.Migration):
             name='place',
             options={'ordering': ('organization', 'display_order')},
         ),
-        migrations.RemoveIndex(
-            model_name='campus',
-            name='campus_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='division',
-            name='division_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='organization',
-            name='organization_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='place',
-            name='place_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='property',
-            name='property_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='room',
-            name='room_infos_gin',
-        ),
         migrations.AddField(
             model_name='place',
             name='assembly',

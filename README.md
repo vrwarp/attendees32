@@ -264,6 +264,41 @@ DJANGO_HISTORY_ANCHOR_RECIPIENTS=<<officer@example.org,clerk@example.org>>
 </details>
 * enter Redis-CLI by `docker exec -it redis redis-cli`
 
+## Running on SQLite
+
+The application runs on PostgreSQL (the default) or on SQLite with nothing but the database setting:
+
+```
+DATABASE_URL=sqlite:////data/attendees/attendees.sqlite3
+```
+
+The settings then open each connection with `transaction_mode=IMMEDIATE`, a 30 second busy timeout,
+WAL journaling and foreign keys on, and close it after every request, so one writer at a time proceeds
+while readers keep reading; only write requests open a transaction at all (see Phase 6 of the plan).
+`migrate` builds a new database from the same migrations as PostgreSQL. Expect one write at a time: a
+second writer waits up to the timeout, which suits an office of a few staff and a congregation of a
+few thousand, not a public site.
+
+What to know when operating it:
+
+- **Keep the file on local disk**, never on NFS, SMB or another network share: SQLite's locking is
+  not reliable there and a corrupted database is the usual result.
+- **Back up with SQLite's online backup**, not by copying the live file (a copy taken during a write is
+  inconsistent): `sqlite3 attendees.sqlite3 ".backup /backups/attendees-$(date +%F).sqlite3"`, or run
+  [Litestream](https://litestream.io/) beside the application for continuous replication. Encrypt the
+  copy before it leaves the machine, as for the PostgreSQL dumps.
+- **Run a few workers**, for example `gunicorn config.wsgi --workers 3`; more workers do not add
+  write throughput, since writes serialize on the file.
+- **Encryption at rest** is the disk's job (see the security track). SQLCipher for the file itself was
+  considered and deferred: build it only for a machine without disk encryption.
+- Two known differences are documented rather than worked around: names with non-ASCII characters can
+  sort differently (SQLite compares bytes; PostgreSQL uses a locale collation), and `icontains` on
+  ordinary text columns ignores case only for ASCII letters (the search column lowercases in Python,
+  so searches are unaffected).
+
+The history's replay (`history_replay --to file.sqlite3`) writes a SQLite file too, whatever the live
+database is.
+
 ## Audit history
 
 Every change to a tracked record is an event in one table, `history_event`: which record, the whole

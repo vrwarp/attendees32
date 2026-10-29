@@ -29,9 +29,5 @@ class Migration(migrations.Migration):
             name='user',
             options={},
         ),
-        migrations.AddIndex(
-            model_name='user',
-            index=GinIndex(fields=['infos'], name='user_infos_gin'),
-        ),
     ]
 

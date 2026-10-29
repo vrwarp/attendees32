@@ -45,9 +45,5 @@ class Migration(migrations.Migration):
             model_name='gathering',
             index=models.Index(condition=models.Q(('is_removed', False)), fields=['site_type', 'site_id'], name='gathering_sites'),
         ),
-        migrations.AddIndex(
-            model_name='Gathering',
-            index=GinIndex(fields=['infos'], name='gathering_infos_gin'),
-        ),
         migrations.RunSQL(Utility.default_sql('occasions_gatherings')),
     ]

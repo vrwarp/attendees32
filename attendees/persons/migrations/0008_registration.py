@@ -36,8 +36,4 @@ class Migration(migrations.Migration):
             model_name='registration',
             constraint=models.UniqueConstraint(fields=('assembly', 'registrant'), condition=models.Q(is_removed=False), name='assembly_registrant'),
         ),
-        migrations.AddIndex(
-            model_name='registration',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='registration_infos_gin'),
-        ),
     ]

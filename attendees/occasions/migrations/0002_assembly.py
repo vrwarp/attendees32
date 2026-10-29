@@ -38,8 +38,4 @@ class Migration(migrations.Migration):
             bases=(models.Model, Utility),
         ),
         migrations.RunSQL(Utility.default_sql('occasions_assemblies')),
-        migrations.AddIndex(
-            model_name='Assembly',
-            index=GinIndex(fields=['infos'], name='assembly_infos_gin'),
-        ),
     ]

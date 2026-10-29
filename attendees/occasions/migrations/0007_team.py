@@ -39,9 +39,5 @@ class Migration(migrations.Migration):
             model_name='Team',
             index=models.Index(condition=models.Q(('is_removed', False)), fields=['site_type', 'site_id'], name='team_sites'),
         ),
-        migrations.AddIndex(
-            model_name='Team',
-            index=GinIndex(fields=['infos'], name='team_infos_gin'),
-        ),
         migrations.RunSQL(Utility.default_sql('occasions_teams')),
     ]

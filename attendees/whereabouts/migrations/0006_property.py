@@ -33,8 +33,4 @@ class Migration(migrations.Migration):
             bases=(models.Model, Utility),
         ),
         migrations.RunSQL(Utility.default_sql('whereabouts_properties')),
-        migrations.AddIndex(
-            model_name='property',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='property_infos_gin'),
-        ),
     ]

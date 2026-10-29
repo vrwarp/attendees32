@@ -2,7 +2,6 @@
 from address.models import AddressField
 from attendees.persons.models import Utility
 from uuid import uuid4
-import django.contrib.postgres.indexes
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
@@ -60,10 +59,6 @@ class Migration(migrations.Migration):
         migrations.AddIndex(
             model_name='place',
             index=models.Index(condition=models.Q(('is_removed', False)), fields=['content_type', 'object_id'], name='place_subjects'),
-        ),
-        migrations.AddIndex(
-            model_name='place',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='place_infos_gin'),
         ),
         migrations.AddConstraint(
             model_name='place',

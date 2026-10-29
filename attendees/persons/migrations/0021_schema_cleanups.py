@@ -10,42 +10,6 @@ class Migration(migrations.Migration):
     ]
 
     operations = [
-        migrations.RemoveIndex(
-            model_name='attendee',
-            name='attendee_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='attending',
-            name='attending_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='attendingmeet',
-            name='attendingmeet_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='category',
-            name='category_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='folk',
-            name='folk_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='folkattendee',
-            name='folkattendee_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='note',
-            name='note_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='past',
-            name='past_infos_gin',
-        ),
-        migrations.RemoveIndex(
-            model_name='registration',
-            name='registration_infos_gin',
-        ),
         migrations.AddField(
             model_name='relation',
             name='reciprocals',

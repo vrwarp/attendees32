@@ -64,9 +64,5 @@ class Migration(migrations.Migration):
         #         """,
         #     # reverse_sql="",
         # ),  # switching to use opencc for language conversion in Attendee.save()
-        migrations.AddIndex(
-            model_name='attendee',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='attendee_infos_gin'),
-        ),
 
     ]

@@ -170,7 +170,7 @@ class TestAttendeeService:
 
     def test_field_convert(self):
         field = AttendeeService.field_convert("self_phone_numbers", [], self.user)
-        assert field == "infos__contacts"
+        assert field == "search_text"  # the contact columns are answered from the search column
 
     def test_create_or_update_first_folk(self):
         folk = AttendeeService.create_or_update_first_folk(

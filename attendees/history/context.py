@@ -80,13 +80,17 @@ def context_row_id(using=None):
     from .models import HistoryContext
 
     state = current()
-    if state.row_id is not None and HistoryContext.objects.using(using).filter(pk=state.row_id).exists():
-        return state.row_id
-    user_id, user_name = state.user_id, state.user_name
     if state.user_getter is not None:
         user = state.user_getter()
         if user is not None and getattr(user, "is_authenticated", False):
-            user_id, user_name = user.pk, user.get_username()
-    row = HistoryContext.objects.using(using).create(label=state.label, user_id=user_id, user_name=user_name)
+            state.user_id, state.user_name = user.pk, user.get_username()
+        state.user_getter = None
+    # The row is checked by content, not by id alone: a row created in a transaction that rolled
+    # back leaves a stale id, and SQLite hands the same id to the next row.
+    if state.row_id is not None and HistoryContext.objects.using(using).filter(
+        pk=state.row_id, label=state.label, user_id=state.user_id, user_name=state.user_name
+    ).exists():
+        return state.row_id
+    row = HistoryContext.objects.using(using).create(label=state.label, user_id=state.user_id, user_name=state.user_name)
     state.row_id = row.pk
     return row.pk

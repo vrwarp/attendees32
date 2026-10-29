@@ -33,8 +33,4 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.RunSQL(Utility.default_sql('persons_categories')),
-        migrations.AddIndex(
-            model_name='category',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='category_infos_gin'),
-        ),
     ]

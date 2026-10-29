@@ -35,8 +35,4 @@ class Migration(migrations.Migration):
             bases=(models.Model, Utility),
         ),
         migrations.RunSQL(Utility.default_sql('occasions_characters')),
-        migrations.AddIndex(
-            model_name='Character',
-            index=GinIndex(fields=['infos'], name='character_infos_gin'),
-        ),
     ]
