@@ -60,7 +60,7 @@ class AttendeeService:
                             Func(F("id"), function="'{}'=".format(user_checking_id)),
                             descending=True,
                         ),
-                        "infos__names__original",
+                        "full_name",
                     )
                 )
             else:
@@ -78,7 +78,7 @@ class AttendeeService:
                             Func(F("id"), function="'{}'=".format(user_attendee.id)),
                             descending=True,
                         ),
-                        "infos__names__original",
+                        "full_name",
                     )
                 )
 

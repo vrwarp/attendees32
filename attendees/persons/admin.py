@@ -57,7 +57,7 @@ class PastAdmin(PgHistoryPage, admin.ModelAdmin):
         models.JSONField: {"widget": JSONEditorWidget},
     }
     # Todo 20210528  combine with NoteAdmin's show_secret
-    search_fields = ("id", "display_name", "infos")
+    search_fields = ("id", "display_name")
     readonly_fields = ["id", "created", "modified"]
     list_display = ("subject", "category", "display_order", "display_name", "when")
 
@@ -104,7 +104,7 @@ class FolkAdmin(PgHistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
-    search_fields = ("id", "display_name", "infos")
+    search_fields = ("id", "display_name")
     readonly_fields = ["is_removed", "id", "created", "modified"]
     inlines = (FolkAttendeeInline,)
     list_display_links = ("id",)
@@ -139,7 +139,7 @@ class FolkAdmin(PgHistoryPage, admin.ModelAdmin):
 class FolkAttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
     readonly_fields = ["display_folk_id", "is_removed", "id", "created", "modified"]
     list_display = ("id", "folk", "attendee", "role", "is_removed", "infos")
-    search_fields = ("id", "attendee__id", "attendee__infos", "folk__id", "infos")
+    search_fields = ("id", "attendee__id", "attendee__search_text", "folk__id")
 
     def display_folk_id(self, obj):
         return obj.folk.id
@@ -180,7 +180,7 @@ class AttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
-    search_fields = ("id", "infos")
+    search_fields = ("id", "search_text")
     readonly_fields = ["id", "created", "modified"]
     # inlines = (RelationshipInline,)  # AttendeeContactInline
     list_display_links = ("id",)
@@ -342,7 +342,7 @@ class AttendingMeetAdmin(PgHistoryPage, admin.ModelAdmin):
     }
     list_display_links = ("attending",)
     autocomplete_fields = ('attending',)
-    search_fields = ('infos', 'attending__attendee__infos',)
+    search_fields = ('search_text', 'attending__attendee__search_text',)
     readonly_fields = ["id", "created", "modified"]
     list_display = (
         "id",

@@ -11,10 +11,10 @@ import model_utils.fields
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 from schedule.models import Occurrence
 
-from attendees.persons.models import Note, Utility
+from attendees.persons.models import Note, Searchable, Utility
 
 
-class Gathering(TimeStampedModel, SoftDeletableModel, Utility):
+class Gathering(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
     """
     The gathering pk/id is also stored in the corresponding 3rd party model
     schedule.Occurrence.title such as gathering#42, so when calendar shows

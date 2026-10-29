@@ -9,6 +9,7 @@ from rest_framework.utils import json
 from attendees.occasions.models import Attendance, Meet
 from attendees.persons.models import AttendingMeet
 from attendees.persons.services import AttendeeService
+from attendees.persons.services.search_service import SearchService
 
 
 class AttendanceService:
@@ -148,9 +149,9 @@ class AttendanceService:
                                Q(attending__registration__registrant=current_user.attendee)), Q.AND)
 
         if search_value and search_operation == 'contains' and search_expression == 'attending_label':  # only contains supported now
-            extra_filters.add((Q(attending__registration__registrant__infos__icontains=search_value)
+            extra_filters.add((SearchService.contains("attending__registration__registrant__search_text", search_value)
                                |
-                               Q(attending__attendee__infos__icontains=search_value)), Q.AND)
+                               SearchService.contains("attending__attendee__search_text", search_value)), Q.AND)
         if start:   # warning: attendance start&finish is optional, so limiting on gathering is needed in datagrid
             # extra_filters.add((Q(finish__isnull=True) | Q(finish__gte=start)), Q.AND)
             extra_filters.add(Q(gathering__finish__gte=start), Q.AND)
@@ -169,13 +170,13 @@ class AttendanceService:
             searching_by_panel = isinstance(search_term, str) and filter.count(search_term) == 3
 
             if isinstance(search_term, str) and searching_by_panel:
-                extra_filters.add((Q(attending__registration__registrant__infos__icontains=search_term)
+                extra_filters.add((SearchService.contains("attending__registration__registrant__search_text", search_term)
                                    |
                                    Q(gathering__display_name__icontains=search_term)
                                    |
-                                   Q(infos__icontains=search_term)
+                                   SearchService.contains("search_text", search_term)
                                    |
-                                   Q(attending__attendee__infos__icontains=search_term)), Q.AND)
+                                   SearchService.contains("attending__attendee__search_text", search_term)), Q.AND)
             elif not searching_by_panel:  # it's grouping
                 filters = AttendeeService.filter_parser(filter_list, Meet.objects.filter(slug__in=meet_slugs), current_user)
                 extra_filters.add(filters, Q.AND)
@@ -253,11 +254,7 @@ class AttendanceService:
             Q(category__in=category_ids), Q.AND)
 
         if name_search[-1][-1]:
-            filters.add(Q(Q(attending__attendee__infos__names__original__icontains=name_search[-1][-1])
-                          |
-                          Q(attending__attendee__infos__names__traditional__icontains=name_search[-1][-1])
-                          |
-                          Q(attending__attendee__infos__names__simplified__icontains=name_search[-1][-1])), Q.AND)
+            filters.add(SearchService.contains("attending__attendee__search_text", name_search[-1][-1]), Q.AND)
 
         if start:
             filters.add((Q(gathering__finish__gte=start)), Q.AND)
@@ -298,7 +295,7 @@ class AttendanceService:
             "attending__attendee",
         ).filter(filters).values(
             'attending__attendee',
-            'attending__attendee__infos__names__original',
+            'attending__attendee__full_name',
             'attending__registration__registrant_id',
         ).annotate(
             count=Count('attending__attendee'),
@@ -425,8 +422,9 @@ class AttendanceService:
         field_converter = {
             'gathering': 'gathering__display_name',
             'character': 'character__display_name',
-            'attending': 'attending__attendee__infos__names__original',
-            # 'attending_name': 'attending__attendee__infos__names__original',
+            'attending': 'attending__attendee__full_name',
+            'attending__attendee__infos__names__original': 'attending__attendee__full_name',
+            # 'attending_name': 'attending__attendee__full_name',
         }
 
         for orderby in orderbys:

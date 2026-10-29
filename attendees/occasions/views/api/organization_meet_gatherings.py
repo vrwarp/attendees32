@@ -11,6 +11,7 @@ from attendees.occasions.models import Gathering
 from attendees.occasions.serializers import GatheringSerializer
 from attendees.occasions.services import GatheringService
 from attendees.persons.models import Utility
+from attendees.persons.services.search_service import SearchService
 
 
 class ApiOrganizationMeetGatheringsViewSet(viewsets.ModelViewSet):
@@ -39,7 +40,7 @@ class ApiOrganizationMeetGatheringsViewSet(viewsets.ModelViewSet):
                     Q(meet__assembly__division__organization=request.user.organization), Q.AND)
 
                 if search_value:
-                    search_filters = Q(infos__icontains=search_value)
+                    search_filters = SearchService.contains("search_text", search_value)
                     search_filters.add(Q(display_name__icontains=search_value), Q.OR)
 
                     for site, field in GatheringService.SITE_SEARCHING_PROPERTIES.items():

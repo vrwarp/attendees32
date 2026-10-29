@@ -20,19 +20,23 @@ class TestApiDatagridDataAttendeeViewSet:
         mock_annotate.assert_called_once()
         mock_qs.filter.assert_called_once()
 
+    @patch('attendees.persons.views.api.datagrid_data_attendee.SearchService.search')
     @patch('attendees.persons.views.api.datagrid_data_attendee.Attendee.objects.filter')
-    def test_get_queryset_with_term(self, mock_filter):
+    def test_get_queryset_with_term(self, mock_filter, mock_search):
         view = ApiDatagridDataAttendeeViewSet()
         view.request = MagicMock()
         view.kwargs = {}
         view.request.query_params = {"searchValue": "term"}
-        
+
         mock_qs = MagicMock()
         mock_filter.return_value = mock_qs
-        
+        mock_search.return_value = mock_qs
+
         view.get_queryset()
-        
+
+        # the organisation's people go to the search service, and its result is filtered again
         mock_filter.assert_called_once()
+        mock_search.assert_called_once_with(mock_qs, "term")
         mock_qs.filter.assert_called_once()
 
     @patch('attendees.persons.views.api.datagrid_data_attendee.Attendee.objects.order_by')

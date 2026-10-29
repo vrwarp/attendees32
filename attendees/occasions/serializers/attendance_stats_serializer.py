@@ -6,7 +6,9 @@ from attendees.occasions.models import Attendance
 class AttendanceStatsSerializer(serializers.ModelSerializer):
     characters = serializers.CharField(read_only=True)
     teams = serializers.CharField(read_only=True)
-    attending__attendee__infos__names__original = serializers.CharField(read_only=True)
+    attending__attendee__infos__names__original = serializers.CharField(
+        read_only=True, source="attending__attendee__full_name"
+    )
     attending__attendee = serializers.CharField(read_only=True)
     count = serializers.IntegerField(read_only=True)
     attending__registration__registrant_id = serializers.CharField(read_only=True)

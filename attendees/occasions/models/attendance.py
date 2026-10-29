@@ -12,10 +12,10 @@ from model_utils.models import SoftDeletableModel, TimeStampedModel
 from private_storage.fields import PrivateFileField
 from private_storage.storage.files import PrivateFileSystemStorage
 
-from attendees.persons.models import Note, Utility
+from attendees.persons.models import Note, Searchable, Utility
 
 
-class Attendance(TimeStampedModel, SoftDeletableModel, Utility):
+class Attendance(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
     notes = GenericRelation(Note)
     id = models.BigAutoField(
         auto_created=True, primary_key=True, serialize=False, verbose_name="ID"

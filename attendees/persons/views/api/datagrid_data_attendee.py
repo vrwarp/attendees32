@@ -29,6 +29,7 @@ from attendees.persons.services import (
     AttendingMeetService,
     MergeRefused,
 )
+from attendees.persons.services.search_service import SearchService
 
 
 class AttendeeMergedAway(APIException):
@@ -233,8 +234,9 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
                 pk=querying_attendee_id,
             )
         elif querying_term:
-            qs = Attendee.objects.filter(
-                infos__icontains=querying_term,
+            qs = SearchService.search(
+                Attendee.objects.filter(division__organization=current_user.organization),
+                querying_term,
             )
         else:  # a bare list: the whole organization, ordered so pages are stable
             qs = Attendee.objects.order_by("id")

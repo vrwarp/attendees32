@@ -20,10 +20,12 @@ from model_utils.models import SoftDeletableModel, TimeStampedModel
 from private_storage.fields import PrivateFileField
 from unidecode import unidecode
 
-from . import GenderEnum, Note, Utility
+from attendees.utils.search_text import ATTENDEE_SEARCHED_SECTIONS, attendee_full_name
+
+from . import GenderEnum, Note, Searchable, Utility
 
 
-class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
+class Attendee(Searchable, Utility, TimeStampedModel, SoftDeletableModel):
     FAMILY_CATEGORY = 0
     NON_FAMILY_CATEGORY = 25
     PAUSED_CATEGORY = 27
@@ -61,6 +63,14 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
     last_name = models.CharField(max_length=25, db_index=True, null=True, blank=True)
     first_name2 = models.CharField(max_length=12, db_index=True, null=True, blank=True)
     last_name2 = models.CharField(max_length=8, db_index=True, null=True, blank=True)
+    full_name = models.CharField(
+        max_length=80,
+        blank=True,
+        default="",
+        editable=False,
+        db_index=True,
+        help_text="Derived on save: the western name then the eastern one; what lists sort by.",
+    )
     gender = models.CharField(
         max_length=11,
         blank=False,
@@ -277,7 +287,7 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         return ", ".join(
             list(
                 self.get_relative_emergency_contacts().values_list(
-                    "infos__names__original", flat=True
+                    "full_name", flat=True
                 )
             )
         )
@@ -340,9 +350,10 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         for section, default in Utility.attendee_infos().items():
             infos.setdefault(section, default)
         self.infos = infos
-        name = self.name1()
-        name2 = self.name2()
-        both_names = f"{name} {name2}".strip()
+        both_names = attendee_full_name(
+            self.first_name, self.last_name, self.last_name2, self.first_name2
+        )
+        self.full_name = both_names
         self.infos["names"]["original"] = both_names
         self.infos["names"]["romanization"] = unidecode(
             both_names
@@ -359,10 +370,24 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         # even when the caller limits update_fields -- as update_or_create()
         # does since Django 4.2 -- or the searchable names keep the old spelling.
         update_fields = kwargs.get("update_fields")
-        if update_fields is not None and "infos" not in update_fields:
-            kwargs["update_fields"] = {*update_fields, "infos"}
+        if update_fields is not None and not {"infos", "full_name"} <= set(update_fields):
+            kwargs["update_fields"] = {*update_fields, "infos", "full_name"}
 
         super(Attendee, self).save(*args, **kwargs)
+
+    def search_text_parts(self):
+        """Names in every form, contacts and the fixed facts: what a person is looked up by.
+
+        The other sections of infos hold ids, flags and timestamps.
+        """
+        infos = self.infos or {}
+        return [
+            self.first_name,
+            self.last_name,
+            self.last_name2,
+            self.first_name2,
+            *(infos.get(section) for section in ATTENDEE_SEARCHED_SECTIONS),
+        ]
 
     def all_names(self):
         return [

@@ -13,6 +13,7 @@ from attendees.persons.serializers import FolkSerializer
 from attendees.persons.services import FolkService, AttendingMeetService
 from attendees.users.authorization.drf_guards import DrfSpyGuard
 from attendees.whereabouts.models import Place
+from attendees.persons.services.search_service import SearchService
 
 
 class ApiAttendeeFolksViewsSet(viewsets.ModelViewSet):
@@ -39,7 +40,7 @@ class ApiAttendeeFolksViewsSet(viewsets.ModelViewSet):
         extra_filter.add(Q(division__organization=current_user.organization), Q.AND)
 
         if search_value and search_expression == 'display_name' and search_operation == 'contains':
-            extra_filter.add((Q(attendees__infos__icontains=search_value)
+            extra_filter.add((SearchService.contains("attendees__search_text", search_value)
                               |
                               Q(display_name__icontains=search_value)), Q.AND)
 

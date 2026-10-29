@@ -6,10 +6,10 @@ import django.utils.timezone
 import model_utils.fields
 from model_utils.models import SoftDeletableModel, TimeStampedModel
 
-from . import Utility
+from . import Searchable, Utility
 
 
-class AttendingMeet(TimeStampedModel, SoftDeletableModel, Utility):
+class AttendingMeet(Searchable, TimeStampedModel, SoftDeletableModel, Utility):
     """
     Served as a partial template for attendance
     """
