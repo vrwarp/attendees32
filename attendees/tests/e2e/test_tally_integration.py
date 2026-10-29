@@ -11,7 +11,8 @@ from django.core.management import call_command
 from rest_framework.authtoken.models import Token
 
 from attendees.occasions.models import Meet
-from attendees.persons.models import Attendee, AttendingMeet, Folk, Relation
+from attendees.persons.models import Attendee, Folk, Relation
+from attendees.tests.golden.builder import GOLDEN_MEET_SLUGS
 from attendees.tests.golden.constants import ORGANIZATION_SLUG
 from attendees.users.models import User
 
@@ -24,7 +25,8 @@ def tally(golden):
     from rest_framework.test import APIClient
 
     call_command(
-        "setup_tally_integration", organization_slug=ORGANIZATION_SLUG, verbosity=0
+        "setup_tally_integration", organization_slug=ORGANIZATION_SLUG,
+        readable_meet=[GOLDEN_MEET_SLUGS["youth_group"]], verbosity=0,
     )
     user = User.objects.get(username="tally-integration")
     token, _ = Token.objects.get_or_create(user=user)
@@ -53,6 +55,20 @@ class TestProvisioning:
             User.objects.count(),
         )
         assert before == after
+
+    def test_a_readable_meet_is_listed_to_the_token(self, tally):
+        response = tally.get("/occasions/api/organization_meets/", {"take": 100, "skip": 0})
+        assert response.status_code == 200
+        listed = [row["slug"] for row in response.json()["data"]]
+        assert listed == [GOLDEN_MEET_SLUGS["youth_group"]]
+
+    def test_nothing_of_tallys_own_is_made_in_the_congregation(self, golden):
+        before = (Meet.objects.count(), Attendee.all_objects.count())
+        call_command(
+            "setup_tally_integration", organization_slug=ORGANIZATION_SLUG, verbosity=0
+        )
+        # One attendee, the integration's own, and not one meet more.
+        assert (Meet.objects.count(), Attendee.all_objects.count()) == (before[0], before[1] + 1)
 
     def test_it_refuses_an_unknown_organization(self, golden):
         from django.core.management.base import CommandError
@@ -146,21 +162,4 @@ class TestQuickAdd:
         assert created.families.count() == 1
         assert Folk.objects.filter(
             pk=created.families.first().pk, category_id=0
-        ).exists()
-
-    def test_a_quick_added_person_can_join_a_meet(self, tally, golden):
-        meet = Meet.objects.get(slug=f"{ORGANIZATION_SLUG}_tally_gathering")
-        newcomer = golden.attendee("feng_ruian")
-        tally.credentials(
-            HTTP_AUTHORIZATION=tally._credentials["HTTP_AUTHORIZATION"],
-            HTTP_X_TARGET_ATTENDEE_ID=str(newcomer.id),
-        )
-        response = tally.put(
-            "/persons/api/default_attendingmeets/",
-            {"action": "join", "meet": meet.slug},
-            format="json",
-        )
-        assert response.status_code == 200, response.content
-        assert AttendingMeet.objects.filter(
-            meet=meet, attending__attendee=newcomer
         ).exists()
