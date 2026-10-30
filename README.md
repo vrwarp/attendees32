@@ -386,6 +386,72 @@ application. Each paragraph below says what the code does and what the operator 
 - **HSTS** is a year (`DJANGO_SECURE_HSTS_SECONDS`, default 31536000); lower it only while changing
   the TLS setup.
 
+### Encryption at rest and the recovery sheet (S2)
+
+Three layers, each answering one way a copy of the data could be taken:
+
+1. **The disk.** LUKS on the data volume with two keyslots: one bound through Clevis to a Tang
+   service on a small second device in another locked room, so the disk opens only on the church
+   network and a reboot after a power cut needs nobody present; the other a recovery passphrase on the
+   recovery sheet, for the day the Tang device dies. Never the TPM alone, which would let a stolen
+   machine unlock itself. A server carried out of the building stays ciphertext.
+   ```bash
+   # on the server, once; the Tang device serves http://tang.church.lan
+   sudo clevis luks bind -d /dev/sdX2 tang '{"url":"http://tang.church.lan"}'
+   sudo systemctl enable clevis-luks-askpass.path
+   # the second keyslot, typed from the sheet when asked
+   sudo cryptsetup luksAddKey /dev/sdX2
+   ```
+2. **Application secrets.** The only application-level key is the history chain key
+   (`DJANGO_HISTORY_CHAIN_KEY`). It lives in the environment file on the encrypted volume, readable by
+   the application user alone, and goes on the recovery sheet. There is no key service and no
+   per-person key. No column is encrypted: pastoral notes are not kept in the app, so a dump reveals
+   the directory and nothing written about anyone. If notes ever come in, `Note.body` gets an
+   encrypted field with one service key then, and the history writer encrypts the same field inside
+   its snapshots.
+3. **Backups.** The `backup` maintenance script of the postgres container encrypts the database dump
+   and a tarball of the file store to an `age` public key before either touches disk, copies both to a
+   cloud bucket with `rclone`, and removes local copies older than the retention period. It is
+   configured from the postgres environment file; the bucket's credentials go there too, as rclone's
+   environment form, so nothing is mounted into the container:
+   ```bash
+   # .envs/.production/.postgres
+   BACKUP_AGE_RECIPIENT=age1...        # the public key printed on the recovery sheet
+   BACKUP_RCLONE_REMOTE=church-bucket:attendees/backups
+   BACKUP_KEEP_DAYS=90
+   RCLONE_CONFIG_CHURCH_BUCKET_TYPE=s3           # or b2, azureblob, ...; see rclone's documentation
+   RCLONE_CONFIG_CHURCH_BUCKET_PROVIDER=Other
+   RCLONE_CONFIG_CHURCH_BUCKET_ENDPOINT=https://...
+   RCLONE_CONFIG_CHURCH_BUCKET_ACCESS_KEY_ID=...
+   RCLONE_CONFIG_CHURCH_BUCKET_SECRET_ACCESS_KEY=...
+   ```
+   Run it nightly from the host's crontab, since the container has no scheduler of its own:
+   ```
+   0 2 * * * cd /srv/attendees && docker compose -f production.yml exec -T postgres backup
+   ```
+   Without `BACKUP_AGE_RECIPIENT` the script still writes the plaintext dump it always did and warns;
+   without `BACKUP_RCLONE_REMOTE` the backup stays on the machine and warns. Give the bucket
+   versioning or an object lock and the credentials write-only rights (no delete), so a compromised
+   server cannot destroy its own backup history. The private key exists only on the recovery sheet.
+   Keep 90 days in the bucket; test a restore every quarter, on a machine that is not the server:
+   ```bash
+   rclone copy church-bucket:attendees/backups/backup_2026_03_01T02_00_00.sql.gz.age .
+   age -d -i recovery-sheet-key.txt backup_2026_03_01T02_00_00.sql.gz.age > backup_2026_03_01T02_00_00.sql.gz
+   docker compose -f local.yml exec postgres restore backup_2026_03_01T02_00_00.sql.gz   # or: gunzip | psql
+   ```
+   On SQLite the dump step is `sqlite3 attendees.sqlite3 ".backup /backups/attendees.sqlite3"` (the
+   online backup, never a copy of the live file) followed by the same `age` and `rclone` steps.
+
+**The recovery sheet** is one sheet of paper holding the `age` identity that opens the backups, the
+LUKS recovery passphrase and the history chain key, each as text beside a QR code, with the `age`
+public key printed alongside so `age-keygen -y` can confirm the sheet is intact. Print it offline on a
+church-owned laser printer, never through a website or an office copier that keeps print jobs. Before
+filing it, decrypt a real backup from the printed copy once, because printers substitute quotes and
+ligatures. Two copies: one in the church safe, one with an officer at home. Write down who holds them.
+Once a year, restore a backup on a laptop from the paper alone. A sheet alone opens nothing without a
+backup to apply it to, and the bucket has its own credentials. A lost sheet and a dead Tang device
+together mean lost data by design.
+
 ### Who saw what: the access log (S3)
 
 Every detail page, export and print of personal data writes an `AccessLog` row: when, who, which
