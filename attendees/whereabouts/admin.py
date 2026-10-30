@@ -2,18 +2,19 @@ from django.contrib import admin, messages
 from django.db import models
 from django_json_widget.widgets import JSONEditorWidget
 
-from attendees.persons.models import PgHistoryPage
+from attendees.history.admin import HistoryPage
 from attendees.whereabouts.models import Place, Campus, Property, Suite, Room, Division, Organization
 
 
-class PlaceAdmin(PgHistoryPage, admin.ModelAdmin):
+class PlaceAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
-    search_fields = ("id", "display_name", "infos")
+    search_fields = ("id", "display_name")
     list_display_links = ("id",)
     readonly_fields = ["id", "created", "modified"]
     list_display = ("id", "display_name", "subject", "address")
+    autocomplete_fields = ("attendee", "folk")
 
     def get_queryset(self, request):
         qs = super().get_queryset(request)
@@ -25,7 +26,7 @@ class PlaceAdmin(PgHistoryPage, admin.ModelAdmin):
         return qs.filter(organization=request.user.organization)
 
 
-class DivisionAdmin(PgHistoryPage, admin.ModelAdmin):
+class DivisionAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -57,7 +58,7 @@ class DivisionAdmin(PgHistoryPage, admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class PropertyAdmin(PgHistoryPage, admin.ModelAdmin):
+class PropertyAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -66,7 +67,7 @@ class PropertyAdmin(PgHistoryPage, admin.ModelAdmin):
     list_display = ("id", "display_name", "slug", "campus", "modified")
 
 
-class CampusAdmin(PgHistoryPage, admin.ModelAdmin):
+class CampusAdmin(HistoryPage, admin.ModelAdmin):
     prepopulated_fields = {"slug": ("display_name",)}
     readonly_fields = ["id", "created", "modified"]
     list_display = ("display_name", "organization", "slug", "modified")
@@ -81,13 +82,13 @@ class CampusAdmin(PgHistoryPage, admin.ModelAdmin):
         return qs.filter(organization=request.user.organization)
 
 
-class SuiteAdmin(PgHistoryPage, admin.ModelAdmin):
+class SuiteAdmin(HistoryPage, admin.ModelAdmin):
     prepopulated_fields = {"slug": ("display_name",)}
     readonly_fields = ["id", "created", "modified"]
     list_display = ("id", "display_name", "slug", "site", "modified")
 
 
-class RoomAdmin(PgHistoryPage, admin.ModelAdmin):
+class RoomAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -96,7 +97,7 @@ class RoomAdmin(PgHistoryPage, admin.ModelAdmin):
     list_display = ("display_name", "label", "suite", "infos", "modified")
 
 
-class OrganizationAdmin(PgHistoryPage, admin.ModelAdmin):
+class OrganizationAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }

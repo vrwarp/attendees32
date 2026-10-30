@@ -1,11 +1,11 @@
 from address.models import Address
 from django.contrib.contenttypes.models import ContentType
 from django.core.management.base import BaseCommand, CommandError
-from django.db import connection
-from schedule.models.events import Event, Occurrence
+from django.db import transaction
 
 from attendees.whereabouts.models import (
     Campus,
+    ContentTypeExtra,
     Division,
     Organization,
     Property,
@@ -15,103 +15,40 @@ from attendees.whereabouts.models import (
 
 
 class Command(BaseCommand):
-    help = "Update extra content type columns after migrations and content type data seeded, no arguments needed"
+    help = (
+        "Fill the content type extras the site picker reads (genre, order, endpoint, hint). "
+        "Run after migrations, once the content types exist; no arguments needed."
+    )
 
+    #: The kinds of place a gathering can be held at, in the order the picker lists them.
+    LOCATIONS = (
+        (Room, "organizational_rooms", 2, "single room/office", None),
+        (Suite, "organizational_suites", 3, "entire floor/space", None),
+        (Property, "organizational_properties", 4, "entire building/villa/lodge", None),
+        (Campus, "organizational_campuses", 5, "entire campus/park", None),
+        (Division, "user_divisions", 6, "entire division/department", None),
+        (Organization, "user_organizations", 7, "entire organization", None),
+        # Address lives in a third-party app, so its endpoint hangs off whereabouts.
+        (Address, "all_addresses", 8, "street address", Organization._meta.app_label),
+    )
+
+    @transaction.atomic
     def handle(self, *args, **options):
         self.stdout.write("checking ContentType data ..")
-
-        if ContentType._meta.db_table not in connection.introspection.table_names():
-            raise CommandError(
-                f"Fail! Cannot find the table {ContentType._meta.db_table}, did the migration run?"
-            )
-
         if ContentType.objects.count() < 1:
             raise CommandError(
                 "ContentType data does not exist! Please try again after 30 sec."
             )
 
         self.stdout.write("update extra data for ContentType ...")
-
-        cursor = connection.cursor()
-        cursor.execute(
-            f"""
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=2,
-                      endpoint='/{Room._meta.app_label}/api/organizational_rooms/',
-                      hint='single room/office'
-                  WHERE app_label='{Room._meta.app_label}'
-                    AND model='{Room._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=3,
-                      endpoint='/{Suite._meta.app_label}/api/organizational_suites/',
-                      hint='entire floor/space'
-                  WHERE app_label='{Suite._meta.app_label}'
-                    AND model='{Suite._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=4,
-                      endpoint='/{Property._meta.app_label}/api/organizational_properties/',
-                      hint='entire building/villa/lodge'
-                  WHERE app_label='{Property._meta.app_label}'
-                    AND model='{Property._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=5,
-                      endpoint='/{Campus._meta.app_label}/api/organizational_campuses/',
-                      hint='entire campus/park'
-                  WHERE app_label='{Campus._meta.app_label}'
-                    AND model='{Campus._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=6,
-                      hint='entire division/department',
-                      endpoint='/{Division._meta.app_label}/api/user_divisions/'
-                  WHERE app_label='{Division._meta.app_label}'
-                    AND model='{Division._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=7,
-                      endpoint='/{Organization._meta.app_label}/api/user_organizations/',
-                      hint='entire organization'
-                  WHERE app_label='{Organization._meta.app_label}'
-                    AND model='{Organization._meta.model_name}';
-
-                UPDATE {ContentType._meta.db_table}
-                  SET genres='location',
-                      display_order=8,
-                      hint='street address',
-                      endpoint='/{Organization._meta.app_label}/api/all_addresses/'
-                  WHERE app_label='{Address._meta.app_label}'
-                    AND model='{Address._meta.model_name}';
-
-                COMMENT ON COLUMN {Event._meta.db_table}.description
-                  IS 'location: <model name>#<pk>';
-
-                COMMENT ON COLUMN {Occurrence._meta.db_table}.description
-                  IS 'location: <model name>#<pk>';
-
-                COMMENT ON COLUMN {Occurrence._meta.db_table}.title
-                  IS 'relation: gathering#<id>';
-
-                CREATE INDEX IF NOT EXISTS {Occurrence._meta.db_table}_titles
-                  ON {Occurrence._meta.db_table} (title);
-
-                CREATE INDEX IF NOT EXISTS {Occurrence._meta.db_table}_description
-                  ON {Occurrence._meta.db_table} (description);
-
-                CREATE INDEX IF NOT EXISTS {Event._meta.db_table}__titles
-                  ON {Event._meta.db_table} (title);
-
-                CREATE INDEX IF NOT EXISTS {Event._meta.db_table}_description
-                  ON {Event._meta.db_table} (description);
-                    """
-        )
-
+        for model, endpoint, display_order, hint, app_label in self.LOCATIONS:
+            ContentTypeExtra.objects.update_or_create(
+                content_type=ContentType.objects.get_for_model(model),
+                defaults={
+                    "genres": "location",
+                    "display_order": display_order,
+                    "endpoint": f"/{app_label or model._meta.app_label}/api/{endpoint}/",
+                    "hint": hint,
+                },
+            )
         self.stdout.write("done!")

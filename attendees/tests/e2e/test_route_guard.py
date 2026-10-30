@@ -108,8 +108,12 @@ EXTRA_ALLOWED = {
 #: The outsider has no organization at all, so pages that read
 #: ``request.user.organization.infos`` cannot serve them; they are covered by
 #: the API tests instead, where organization scoping is the thing under test.
+#: The new officer has admin access and no second factor yet, so every page
+#: sends them to enrol before any route guard runs; ``users/tests/test_mfa_required``
+#: and the browser suite cover that.
 MATRIX_PERSONAS = tuple(
-    persona for persona in PERSONAS if persona.username != "golden_outsider"
+    persona for persona in PERSONAS
+    if persona.username not in {"golden_outsider", "golden_new_officer"}
 )
 
 

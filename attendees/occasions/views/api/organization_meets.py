@@ -49,10 +49,10 @@ class OrganizationMeetsViewSet(viewsets.ModelViewSet):
             assemblies = self.request.query_params.getlist("assemblies[]")
             extra_filter = Q(assembly__division__organization=current_user_organization)
 
-            extra_filter.add(Q(infos__allowed_groups__regex=fr"({'|'.join([name for name in user_groups])})"), Q.AND)
+            extra_filter.add(Meet.allowed_to_any_of(user_groups), Q.AND)
 
             if model:
-                extra_filter.add(Q(infos__allowed_models__regex=fr'({model})'), Q.AND)
+                extra_filter.add(Meet.listed_on(model), Q.AND)
 
             if assemblies:
                 extra_filter.add(Q(assembly__in=assemblies), Q.AND)

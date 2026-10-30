@@ -4,6 +4,10 @@ from attendees.persons.models import Attendee
 
 
 class AttendeeSerializer(serializers.ModelSerializer):
+    # Declared, because a many-to-many through a model of its own is read-only to a
+    # ModelSerializer; both are lists of attendee ids, written whole.
+    schedulers = serializers.PrimaryKeyRelatedField(many=True, queryset=Attendee.objects.all(), required=False)
+    emergency_contacts = serializers.PrimaryKeyRelatedField(many=True, queryset=Attendee.objects.all(), required=False)
     parents_notifiers_names = serializers.CharField(read_only=True)
     self_email_addresses = serializers.CharField(read_only=True)
     caregiver_email_addresses = serializers.CharField(read_only=True)
@@ -16,6 +20,8 @@ class AttendeeSerializer(serializers.ModelSerializer):
         fields = [
             f.name for f in model._meta.fields if f.name not in ["is_removed"]
         ] + [
+            "schedulers",
+            "emergency_contacts",
             "age",
             "display_label",
             "division_label",

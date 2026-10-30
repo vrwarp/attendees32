@@ -5,8 +5,6 @@ from attendees.persons.models import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -35,43 +33,4 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.RunSQL(Utility.default_sql('persons_folks')),
-        migrations.AddIndex(
-            model_name='folk',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='folk_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='FolksHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='persons.folk')),
-                ('id', models.UUIDField(db_index=True, default=uuid4, editable=False, serialize=False)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('division', models.ForeignKey(db_constraint=False, default=0, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.division')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('display_order', models.SmallIntegerField(default=0)),
-                ('infos', models.JSONField(blank=True, default=Utility.folk_infos, help_text='Example: {"print_directory": False}. Please keep {} here even no data', null=True)),
-                ('category', models.ForeignKey(db_constraint=False, default=0, help_text='subtype: for folk, 0 is family and 25 is other', on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.category')),
-                ('display_name', models.CharField(blank=True, max_length=50, null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'persons_folkshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_folkshistory', original_model_table='persons_folks')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='folk',
-            trigger=pgtrigger.compiler.Trigger(name='folk_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_folkshistory" ("id", "created", "modified", "division_id", "is_removed", "display_order", "infos", "category_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."division_id", NEW."is_removed", NEW."display_order", NEW."infos", NEW."category_id", NEW."display_name", NOW(), \'folk.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='42d7eda763a45bfc56fec30b854dacdd064fb2d0', operation='INSERT', pgid='pgtrigger_folk_snapshot_insert_36418', table='persons_folks', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='folk',
-            trigger=pgtrigger.compiler.Trigger(name='folk_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."division_id" IS DISTINCT FROM NEW."division_id" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."display_order" IS DISTINCT FROM NEW."display_order" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."category_id" IS DISTINCT FROM NEW."category_id" OR OLD."display_name" IS DISTINCT FROM NEW."display_name")', func='INSERT INTO "persons_folkshistory" ("id", "created", "modified", "division_id", "is_removed", "display_order", "infos", "category_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."division_id", NEW."is_removed", NEW."display_order", NEW."infos", NEW."category_id", NEW."display_name", NOW(), \'folk.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='719ab181b0446c365fbca9c140d122297174de8f', operation='UPDATE', pgid='pgtrigger_folk_snapshot_update_5fd2b', table='persons_folks', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='folk',
-            trigger=pgtrigger.compiler.Trigger(name='folk_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_folkshistory" ("id", "created", "modified", "division_id", "is_removed", "display_order", "infos", "category_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."division_id", OLD."is_removed", OLD."display_order", OLD."infos", OLD."category_id", OLD."display_name", NOW(), \'folk.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='61e7d015f914f357522e652a53a3f8642f1911cc', operation='DELETE', pgid='pgtrigger_folk_before_delete_343f8', table='persons_folks', when='AFTER')),
-        ),
     ]

@@ -4,8 +4,6 @@ from django.db import migrations, models
 from django.contrib.postgres.fields import ArrayField
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 from attendees.persons.models.enum import GenderEnum
 from attendees.persons.models import Utility
 
@@ -39,42 +37,4 @@ class Migration(migrations.Migration):
             },
         ),
         migrations.RunSQL(Utility.default_sql('persons_relations')),
-        migrations.CreateModel(
-            name='RelationsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='persons.relation')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('display_order', models.SmallIntegerField(default=0)),
-                ('emergency_contact', models.BooleanField(default=False, help_text='default value, can be changed in relationships further', verbose_name='to be the emergency contact?')),
-                ('scheduler', models.BooleanField(default=False, help_text='default value, can view/change the schedules of the caller?', verbose_name='to be the scheduler?')),
-                ('relative', models.BooleanField(default=False, help_text='is it a relative?', verbose_name='relative?')),
-                ('consanguinity', models.BooleanField(default=False, help_text='is it blood relatives?', verbose_name='blood relatives?')),
-                ('reciprocal_ids', ArrayField(base_field=models.BigIntegerField(), blank=True, default=list, help_text="Have to be completely empty or in the shape of '1,2,3', no brackets", null=True, size=None, verbose_name='corresponding relation ids')),
-                ('gender', models.CharField(choices=GenderEnum.choices(), default=GenderEnum.UNSPECIFIED, max_length=11)),
-                ('title', models.CharField(max_length=50, verbose_name='To be called')),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'persons_relationshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_relationshistory', original_model_table='persons_relations')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='relation',
-            trigger=pgtrigger.compiler.Trigger(name='relation_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_relationshistory" ("id", "created", "modified", "is_removed", "display_order", "emergency_contact", "scheduler", "relative", "consanguinity", "reciprocal_ids", "gender", "title", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."emergency_contact", NEW."scheduler", NEW."relative", NEW."consanguinity", NEW."reciprocal_ids", NEW."gender", NEW."title", NOW(), \'relation.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='25072ce7ccc7e38a1ac5beb450abe721e91294c6', operation='INSERT', pgid='pgtrigger_relation_snapshot_insert_8fe53', table='persons_relations', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='relation',
-            trigger=pgtrigger.compiler.Trigger(name='relation_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."display_order" IS DISTINCT FROM NEW."display_order" OR OLD."emergency_contact" IS DISTINCT FROM NEW."emergency_contact" OR OLD."scheduler" IS DISTINCT FROM NEW."scheduler" OR OLD."relative" IS DISTINCT FROM NEW."relative" OR OLD."consanguinity" IS DISTINCT FROM NEW."consanguinity" OR OLD."reciprocal_ids" IS DISTINCT FROM NEW."reciprocal_ids" OR OLD."gender" IS DISTINCT FROM NEW."gender" OR OLD."title" IS DISTINCT FROM NEW."title")', func='INSERT INTO "persons_relationshistory" ("id", "created", "modified", "is_removed", "display_order", "emergency_contact", "scheduler", "relative", "consanguinity", "reciprocal_ids", "gender", "title", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."emergency_contact", NEW."scheduler", NEW."relative", NEW."consanguinity", NEW."reciprocal_ids", NEW."gender", NEW."title", NOW(), \'relation.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='2d1e2a44c736aa2495fefe4c27666c852801d306', operation='UPDATE', pgid='pgtrigger_relation_snapshot_update_b9a34', table='persons_relations', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='relation',
-            trigger=pgtrigger.compiler.Trigger(name='relation_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_relationshistory" ("id", "created", "modified", "is_removed", "display_order", "emergency_contact", "scheduler", "relative", "consanguinity", "reciprocal_ids", "gender", "title", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."display_order", OLD."emergency_contact", OLD."scheduler", OLD."relative", OLD."consanguinity", OLD."reciprocal_ids", OLD."gender", OLD."title", NOW(), \'relation.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='28ca2cb4701e53a86a70f5c693d18b8b4ec0ca5c', operation='DELETE', pgid='pgtrigger_relation_before_delete_a2a34', table='persons_relations', when='AFTER')),
-        ),
     ]

@@ -4,8 +4,6 @@ from attendees.persons.models import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -35,42 +33,4 @@ class Migration(migrations.Migration):
             bases=(models.Model, Utility),
         ),
         migrations.RunSQL(Utility.default_sql('whereabouts_campuses')),
-        migrations.AddIndex(
-            model_name='campus',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='campus_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='CampusesHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='whereabouts.campus')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('organization', models.ForeignKey(db_constraint=False, help_text='which organization use this?', on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.organization', verbose_name='used by')),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"hostname": "where the app deployed"}. Please keep {} here even no data', null=True)),
-                ('slug', models.SlugField(db_index=False)),
-                ('display_name', models.CharField(max_length=50)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'whereabouts_campuseshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_campuseshistory', original_model_table='whereabouts_campuses')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='campus',
-            trigger=pgtrigger.compiler.Trigger(name='campus_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_campuseshistory" ("id", "created", "modified", "is_removed", "organization_id", "infos", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."organization_id", NEW."infos", NEW."slug", NEW."display_name", NOW(), \'campus.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='f7ee894d4bea4ff6dd9a656041a28db93983072f', operation='INSERT', pgid='pgtrigger_campus_snapshot_insert_03a50', table='whereabouts_campuses', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='campus',
-            trigger=pgtrigger.compiler.Trigger(name='campus_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."organization_id" IS DISTINCT FROM NEW."organization_id" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."slug" IS DISTINCT FROM NEW."slug" OR OLD."display_name" IS DISTINCT FROM NEW."display_name")', func='INSERT INTO "whereabouts_campuseshistory" ("id", "created", "modified", "is_removed", "organization_id", "infos", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."organization_id", NEW."infos", NEW."slug", NEW."display_name", NOW(), \'campus.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='af63123096c68c63e78644b7d48b3b8814da3a14', operation='UPDATE', pgid='pgtrigger_campus_snapshot_update_a55d9', table='whereabouts_campuses', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='campus',
-            trigger=pgtrigger.compiler.Trigger(name='campus_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_campuseshistory" ("id", "created", "modified", "is_removed", "organization_id", "infos", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."organization_id", OLD."infos", OLD."slug", OLD."display_name", NOW(), \'campus.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='66fbedf35cd437da9f5afdab1dd969f2b6961214', operation='DELETE', pgid='pgtrigger_campus_before_delete_276fe', table='whereabouts_campuses', when='AFTER')),
-        ),
     ]

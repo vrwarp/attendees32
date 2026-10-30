@@ -1,6 +1,6 @@
 # Attendees
 
-Attendees in Django 4.2
+Attendees in Django 5.2
 ## An app for general event management
 - Tracking who/when/where/what of any activities with attendance records.
 - Monolith architecture on docker [![Cookiecutter Django](https://img.shields.io/badge/built%20with-Cookiecutter%20Django-ff69b4.svg?logo=cookiecutter)](https://github.com/cookiecutter/cookiecutter-django/) and Javascript([DevExtreme](https://js.devexpress.com/Licensing/#NonCommercial)) with Postgres/PostGIS & Redis
@@ -161,6 +161,7 @@ https://dbdiagram.io/d/5d5ff66eced98361d6dddc48
 # DJANGO_READ_DOT_ENV_FILE=True
 DJANGO_SETTINGS_MODULE=config.settings.production
 DJANGO_SECRET_KEY=<<your django secret key>>
+DJANGO_HISTORY_CHAIN_KEY=<<your history chain key, see Audit history>>
 DJANGO_ADMIN_URL=<<any cryptic string as admin path>>
 DJANGO_ALLOWED_HOSTS=<<your domain name>>,127.0.0.1,localhost
 DJANGO_DEBUG=False
@@ -241,6 +242,9 @@ EMAIL_HOST=mailgun
 ```
 DJANGO_ALLOWED_HOSTS=your.domain.name,another.domain.name,127.0.0.1,localhost
 DJANGO_SECRET_KEY=<<production Django secret key>>
+DJANGO_HISTORY_CHAIN_KEY=<<production history chain key, kept with the recovery sheet>>
+DJANGO_HISTORY_ANCHOR_FILE=/data/history-anchors.txt
+DJANGO_HISTORY_ANCHOR_RECIPIENTS=<<officer@example.org,clerk@example.org>>
 ```
 * build and start the production machine by `docker-compose -f production.yml build`
 * migrate database by
@@ -259,6 +263,291 @@ DJANGO_SECRET_KEY=<<production Django secret key>>
 * For keeping the site surviving reboot, add starting of the Django upon system reboot, such as `sudo su user_name sh -c 'sleep 99 && cd ~user_name/repo_dir && docker-compose -f production.yml up -d' >> /tmp/attendee_startup.log` (need work)
 </details>
 * enter Redis-CLI by `docker exec -it redis redis-cli`
+
+## Running on SQLite
+
+The application runs on PostgreSQL (the default) or on SQLite with nothing but the database setting:
+
+```
+DATABASE_URL=sqlite:////data/attendees/attendees.sqlite3
+```
+
+The settings then open each connection with `transaction_mode=IMMEDIATE`, a 30 second busy timeout,
+WAL journaling and foreign keys on, and close it after every request, so one writer at a time proceeds
+while readers keep reading; only write requests open a transaction at all (see Phase 6 of the plan).
+`migrate` builds a new database from the same migrations as PostgreSQL. Expect one write at a time: a
+second writer waits up to the timeout, which suits an office of a few staff and a congregation of a
+few thousand, not a public site.
+
+What to know when operating it:
+
+- **Keep the file on local disk**, never on NFS, SMB or another network share: SQLite's locking is
+  not reliable there and a corrupted database is the usual result.
+- **Back up with SQLite's online backup**, not by copying the live file (a copy taken during a write is
+  inconsistent): `sqlite3 attendees.sqlite3 ".backup /backups/attendees-$(date +%F).sqlite3"`, or run
+  [Litestream](https://litestream.io/) beside the application for continuous replication. Encrypt the
+  copy before it leaves the machine, as for the PostgreSQL dumps.
+- **Run a few workers**, for example `gunicorn config.wsgi --workers 3`; more workers do not add
+  write throughput, since writes serialize on the file.
+- **Encryption at rest** is the disk's job (see the security track). SQLCipher for the file itself was
+  considered and deferred: build it only for a machine without disk encryption.
+- Two known differences are documented rather than worked around: names with non-ASCII characters can
+  sort differently (SQLite compares bytes; PostgreSQL uses a locale collation), and `icontains` on
+  ordinary text columns ignores case only for ASCII letters (the search column lowercases in Python,
+  so searches are unaffected).
+
+The history's replay (`history_replay --to file.sqlite3`) writes a SQLite file too, whatever the live
+database is.
+
+## Audit history
+
+Every change to a tracked record is an event in one table, `history_event`: which record, the whole
+record as it stood, who made the change (the request, the Celery task, or the shell and its
+operating-system user) and when. The writer is the application itself (`attendees.history`); nothing
+depends on database triggers, so the history is the same on every database backend. Each event is
+sealed onto a chain with an HMAC, which is what makes the trail tamper-evident.
+
+Settings, in the `.django` environment file:
+
+- `DJANGO_HISTORY_CHAIN_KEY` (required in production): the key of the chain. Generate it like a secret
+  key, keep it in the environment file on the encrypted volume, and write it on the recovery sheet with
+  the other secrets. Someone who copies the database without it cannot rewrite an event and recompute
+  the chain behind it. Losing it does not lose data: the events still read, but the seal can no longer be
+  checked.
+- `DJANGO_HISTORY_ANCHOR_FILE`: where the daily anchor is appended (a file on the encrypted volume).
+- `DJANGO_HISTORY_ANCHOR_RECIPIENTS`: the officers who are mailed each anchor.
+- `DJANGO_HISTORY_AUDIT_RECIPIENTS`: who is mailed when a verification fails (defaults to the admins).
+
+The daily routine, as management commands or the Celery tasks of the same names (schedule them with
+django-celery-beat in the admin):
+
+```bash
+python manage.py history_anchor        # once a day: append the head of the chain to the anchor file and mail it
+python manage.py verify_history        # once a night: chain, anchors and the replay against the live tables
+python manage.py verify_history --incremental   # any time: only the events since the last clean run
+```
+
+An anchor is the head of the chain (`seq`, `mac`, time): a few dozen characters that reveal nothing
+about the data. Once a month, copy the latest one into the board minutes. The verifier stores each run
+as a `HistoryAudit` (visible in the admin under History) and, on a failure, mails the first bad event,
+which also brackets when it happened: between the last anchor that still matches and the first that
+does not.
+
+Reading and using the history:
+
+- The admin's History button on any tracked record lists its events, who made each and what changed.
+- Admin > History > History events lists everything; filter by user and pick a period to see what one
+  person changed.
+- Restore: select one event in that list and run "Restore the record to this version". The record is
+  saved back through the normal path, so the restore is itself recorded with who did it.
+- `python manage.py history_replay --as-of 2026-03-01` counts the records as they stood on a day;
+  `--to /tmp/that-day.sqlite3` writes them into a SQLite file the normal queries can run against
+  (`Model.objects.using("history_replay")` after `attendees.history.replay.open_sqlite(path)`), with
+  nothing touched in the live database. `--diff` compares the replay with the live tables, which is how
+  a change made with no event (a direct `psql` edit) is found.
+
+What the history does not hold: passwords (left out of every snapshot on purpose), sessions, content
+types, Celery schedules, uploaded files (the path is recorded, the file is in the backups), and the
+events themselves. Erasing a person follows the written procedure through the normal screens, so the
+changes are ordinary events; earlier events keep the earlier values under the board's retention rule.
+
+## Security: what leaves the building, and what a stolen machine opens
+
+The design is sized to two threats: a stolen machine or backup, and a break-in through the
+application. Each paragraph below says what the code does and what the operator sets up.
+
+### Nothing readable leaves the building (S1)
+
+- **Error reports** go to Sentry without personal data: `send_default_pii` is off, local variables
+  are not collected, and a `before_send` hook strips the user, cookies, headers, query strings and
+  request bodies, so a report carries the stack trace and nothing that names a member. Self-hosting
+  GlitchTip on the church server is the alternative if even that is too much. The browser-side SDK
+  loads only when `SENTRY_FRONTEND_LIB` is set; leave it unset, since it would have members' browsers
+  fetch a script from Sentry's CDN and report to Sentry directly.
+- **Browser libraries** (DevExtreme, jQuery, Bootstrap, ExcelJS, JSZip, FileSaver, signature_pad)
+  are served from `static/vendor/` with their original integrity hashes, so a member's browser talks
+  to the church server alone; a packet capture of a session should show no other host.
+- **Geocoding** stays with Google's geocoder: about fifty new addresses a year, sent one street
+  address at a time with no name attached.
+- **Email**: the account emails are allauth's and carry a link and a username, nothing else; the
+  gathering and attendance reports carry counts. A local SMTP relay (Postfix on the server, forwarding
+  to the provider over TLS) lets the provider see envelopes rather than content; set `EMAIL_HOST` to
+  it.
+- **Logs** stay on the encrypted volume: container logs are bounded and rotated by Docker (five files
+  of 20 MB per service), and the application's own request and access lines have the query string
+  removed, so a search term or a person's key is never written to a log.
+- **Second factor**: staff and superuser accounts, the roles that see other people's records, must
+  enrol a second factor (an authenticator app or a passkey) on their next sign-in and cannot open any
+  page until they have; `DJANGO_MFA_ENFORCED=True` extends that to every account.
+- **Listening ports**: `production.yml` publishes gunicorn (8008) and Flower (5555) on the host's
+  loopback only, as Redis already was, so from outside only Traefik on 443 (and SSH from the local
+  network) listen. Confirm after a deploy with `ss -tlnp` on the host and a port scan from another
+  machine.
+- **HSTS** is a year (`DJANGO_SECURE_HSTS_SECONDS`, default 31536000); lower it only while changing
+  the TLS setup.
+
+### Encryption at rest and the recovery sheet (S2)
+
+Three layers, each answering one way a copy of the data could be taken:
+
+1. **The disk.** LUKS on the data volume with two keyslots: one bound through Clevis to a Tang
+   service on a small second device in another locked room, so the disk opens only on the church
+   network and a reboot after a power cut needs nobody present; the other a recovery passphrase on the
+   recovery sheet, for the day the Tang device dies. Never the TPM alone, which would let a stolen
+   machine unlock itself. A server carried out of the building stays ciphertext.
+   ```bash
+   # on the server, once; the Tang device serves http://tang.church.lan
+   sudo clevis luks bind -d /dev/sdX2 tang '{"url":"http://tang.church.lan"}'
+   sudo systemctl enable clevis-luks-askpass.path
+   # the second keyslot, typed from the sheet when asked
+   sudo cryptsetup luksAddKey /dev/sdX2
+   ```
+2. **Application secrets.** The only application-level key is the history chain key
+   (`DJANGO_HISTORY_CHAIN_KEY`). It lives in the environment file on the encrypted volume, readable by
+   the application user alone, and goes on the recovery sheet. There is no key service and no
+   per-person key. No column is encrypted: pastoral notes are not kept in the app, so a dump reveals
+   the directory and nothing written about anyone. If notes ever come in, `Note.body` gets an
+   encrypted field with one service key then, and the history writer encrypts the same field inside
+   its snapshots.
+3. **Backups.** The `backup` maintenance script of the postgres container encrypts the database dump
+   and a tarball of the file store to an `age` public key before either touches disk, copies both to a
+   cloud bucket with `rclone`, and removes local copies older than the retention period. It is
+   configured from the postgres environment file; the bucket's credentials go there too, as rclone's
+   environment form, so nothing is mounted into the container:
+   ```bash
+   # .envs/.production/.postgres
+   BACKUP_AGE_RECIPIENT=age1...        # the public key printed on the recovery sheet
+   BACKUP_RCLONE_REMOTE=church-bucket:attendees/backups
+   BACKUP_KEEP_DAYS=90
+   RCLONE_CONFIG_CHURCH_BUCKET_TYPE=s3           # or b2, azureblob, ...; see rclone's documentation
+   RCLONE_CONFIG_CHURCH_BUCKET_PROVIDER=Other
+   RCLONE_CONFIG_CHURCH_BUCKET_ENDPOINT=https://...
+   RCLONE_CONFIG_CHURCH_BUCKET_ACCESS_KEY_ID=...
+   RCLONE_CONFIG_CHURCH_BUCKET_SECRET_ACCESS_KEY=...
+   ```
+   Run it nightly from the host's crontab, since the container has no scheduler of its own:
+   ```
+   0 2 * * * cd /srv/attendees && docker compose -f production.yml exec -T postgres backup
+   ```
+   Without `BACKUP_AGE_RECIPIENT` the script still writes the plaintext dump it always did and warns;
+   without `BACKUP_RCLONE_REMOTE` the backup stays on the machine and warns. Give the bucket
+   versioning or an object lock and the credentials write-only rights (no delete), so a compromised
+   server cannot destroy its own backup history. The private key exists only on the recovery sheet.
+   Keep 90 days in the bucket; test a restore every quarter, on a machine that is not the server:
+   ```bash
+   rclone copy church-bucket:attendees/backups/backup_2026_03_01T02_00_00.sql.gz.age .
+   age -d -i recovery-sheet-key.txt backup_2026_03_01T02_00_00.sql.gz.age > backup_2026_03_01T02_00_00.sql.gz
+   docker compose -f local.yml exec postgres restore backup_2026_03_01T02_00_00.sql.gz   # or: gunzip | psql
+   ```
+   On SQLite the dump step is `sqlite3 attendees.sqlite3 ".backup /backups/attendees.sqlite3"` (the
+   online backup, never a copy of the live file) followed by the same `age` and `rclone` steps.
+
+**The recovery sheet** is one sheet of paper holding the `age` identity that opens the backups, the
+LUKS recovery passphrase and the history chain key, each as text beside a QR code, with the `age`
+public key printed alongside so `age-keygen -y` can confirm the sheet is intact. Print it offline on a
+church-owned laser printer, never through a website or an office copier that keeps print jobs. Before
+filing it, decrypt a real backup from the printed copy once, because printers substitute quotes and
+ligatures. Two copies: one in the church safe, one with an officer at home. Write down who holds them.
+Once a year, restore a backup on a laptop from the paper alone. A sheet alone opens nothing without a
+backup to apply it to, and the bucket has its own credentials. A lost sheet and a dead Tang device
+together mean lost data by design.
+
+### Who saw what: the access log (S3)
+
+Every detail page, export and print of personal data writes an `AccessLog` row: when, who, which
+record, through which endpoint, from which address, and how (a detail page, an export, a print). The
+person page and the single-person API log the person viewed; the directory report, the directory
+preview, the participation report and the envelopes log the job and its filters. Lists and datagrids
+are not logged. The rows are written after the response, in a transaction of their own, so a failed
+log line never turns a page into an error.
+
+The log is itself sensitive, since it shows who looked at whom. The model has only a view permission,
+`access.view_accesslog`: give it, in Admin > Groups, to the data owner's group alone (its members need
+`is_staff` to open the admin at all; superusers see it anyway), and agree with the board who reviews
+the log and why before switching the review on. Nobody adds, changes or deletes rows by hand: the admin
+page is read-only. Admin > Access log answers both questions: filter by model and key for who viewed a
+person, by user and date for what one person did, by "print" or "export" for who took the directory. A
+member viewing their own household is logged like anyone else and filtered out in the review when it
+does not matter. `python manage.py prune_access_log` deletes rows older than twelve months; schedule the
+Celery task of the same name nightly in Admin > Periodic tasks.
+
+### Erasure on request and data export (S4)
+
+No member has asked for either in the life of the system and no law requires it here, so this is a
+procedure, ready if the first request comes. It was walked through once on a copy of the golden
+database, and that walk-through is kept as a test (`attendees/tests/e2e/test_erasure_procedure.py`),
+so the steps below are known to leave what they promise to leave.
+
+**Export: what is held about a person.** Open, and print or save, in this order:
+
+1. Admin > Persons > Attendees: the record (names, birthday, gender, division, photo, the `infos`
+   contacts and preferences), and its History button for every past version.
+2. The person page (`/persons/attendee/<id>`): household memberships and roles, addresses (Places),
+   statuses and notes (Pasts), scheduling and emergency-contact links, participations (Attendings and
+   AttendingMeets), registrations and attendances.
+3. Admin > Users: the login, its groups, email addresses and second factors.
+4. Admin > Access log filtered by the person: who looked at their record.
+5. Admin > History > History events filtered by `persons.attendee` and the key: every change ever
+   recorded, with who made it.
+
+**Erasure.** Through the normal screens, so every step is an ordinary history event and the chain is
+untouched; earlier events keep the earlier values under the board's retention rule, which the
+requester is told. "Delete" on a screen marks a row removed and keeps it, which is what lets a slip
+be undone, so the procedure ends with one shell step that removes those rows for good.
+
+1. Confirm the request in writing and check the exceptions below.
+2. On the person page: delete the notes and statuses the page shows (a note addressed to one reader
+   shows only to them; the shell step below removes whatever the screens could not), the person's own
+   addresses, and the household memberships. A household of their own (a one-member folk) goes with
+   the membership; a shared household stays, so if its name carries the person's (a guardianship named
+   after its ward, say), rename it on the household page before removing them.
+3. On the same page, edit the record: first and last names to "Erased" and "member", the other names
+   blank, birthday, gender and date of death cleared, the `infos` contacts emptied (the names kept
+   there follow the record's name on save), and the scheduler and emergency-contact pickers emptied;
+   save.
+4. Keep the attendance, participation and registration rows: they now point at "Erased member" and
+   keep the counts and statistics right.
+5. Admin > Users: delete the login (or deactivate it if it must stay for the history's sake).
+6. The shell step, for the portrait file, the links in both directions (the person as somebody
+   else's scheduler or contact), and the rows the screens only marked as removed:
+   ```bash
+   docker compose -f production.yml run --rm django python manage.py shell
+   ```
+   ```python
+   from django.db.models import Q
+   from attendees.persons.models import Attendee, FolkAttendee, Note, Past
+   from attendees.persons.models.attendee_links import AttendeeEmergencyContact, AttendeeScheduler
+   from attendees.whereabouts.models import Place
+
+   def delete_place(place):
+       address = place.address
+       place.delete(soft=False)
+       if address and not Place.all_objects.filter(address=address).exists():
+           address.delete()
+
+   attendee = Attendee.objects.get(pk="<the record's key>")
+   attendee.photo.delete(save=True)
+   AttendeeScheduler.objects.filter(Q(attendee=attendee) | Q(scheduler=attendee)).delete()
+   AttendeeEmergencyContact.objects.filter(Q(attendee=attendee) | Q(contact=attendee)).delete()
+   for place in Place.all_objects.filter(attendee=attendee):
+       delete_place(place)
+   for membership in FolkAttendee.all_objects.filter(attendee=attendee).select_related("folk"):
+       folk = membership.folk  # a household of their own, removed on the page: its name and address go too
+       if folk.is_removed and not FolkAttendee.all_objects.filter(folk=folk).exclude(attendee=attendee).exists():
+           for place in Place.all_objects.filter(folk=folk):
+               delete_place(place)
+           folk.delete(soft=False)
+   FolkAttendee.all_objects.filter(attendee=attendee).delete()    # all_objects deletes for good;
+   Note.all_objects.filter(object_id=str(attendee.pk)).delete()    # objects would only mark removed
+   Past.all_objects.filter(object_id=str(attendee.pk)).delete()
+   ```
+   Every delete here is recorded as a `before_delete` event, like a delete on a screen.
+7. Record the date in the board's register. Backups within the 90-day retention still hold the person
+   and age out on their own; the history keeps the earlier values until the board's retention period
+   ends.
+
+**Exceptions** the church keeps regardless of a request: membership vote records and the counts they
+rest on, financial records, and anything under a legal hold. List them on the board's register.
 
 ## DB SQL Backup & Restore process (with production.yml)
 <details>
@@ -356,7 +645,7 @@ EMAIL_HOST=mailgun
 * create 2 superusers by `docker-compose -f local.yml run django python manage.py createsuperuser`
 * import the seed data by `docker-compose -f local.yml run django python manage.py loaddata fixtures/db_seed`, which was generated by:
   ```
-docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e pghistory.context -e pghistory.aggregateevent -e users.userhistory -e users.menushistory -e users.menuauthgroupshistory -e users.groupshistory -e users.grouppermissionshistory -e users.usergroupshistory -e users.userpermissionshistory -e users.emailaddresshistory -e users.emailconfirmationhistory -e whereabouts.organizationshistory -e whereabouts.divisionshistory -e whereabouts.placeshistory -e whereabouts.campuseshistory -e whereabouts.propertieshistory -e whereabouts.suiteshistory -e whereabouts.roomshistory -e whereabouts.countryhistory -e whereabouts.statehistory -e whereabouts.localityhistory -e whereabouts.addresshistory -e persons.categorieshistory -e persons.noteshistory -e persons.pastshistory -e persons.folkshistory -e persons.attendeeshistory -e persons.folkattendeeshistory -e persons.relationshistory -e persons.registrationshistory -e persons.attendingshistory -e persons.attendingmeetshistory -e occasions.assemblieshistory -e occasions.attendanceshistory -e occasions.charactershistory -e occasions.gatheringshistory -e occasions.meetshistory -e occasions.messagetemplateshistory -e occasions.priceshistory -e occasions.teamshistory -e occasions.calendarhistory -e occasions.calendarrelationhistory -e occasions.eventhistory -e occasions.eventrelationhistory -e occasions.occurrencehistory -e occasions.rulehistory -e occasions.periodictaskhistory -e occasions.crontabschedulehistory -e occasions.intervalschedulehistory -e users.permissionshistory -e users.grouppermissionproxy -e users.usergroupproxy -e users.userpermissionproxy --indent 2 > fixtures/db_seed.json
+docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e history.historyevent -e history.historycontext -e history.historyhead -e history.historyaudit --indent 2 > fixtures/db_seed.json
   ```
 * go to Django admin to add the first organization and all groups to the first user (superuser) at http://<<your domain name>>:8008/admin/users/user/
 * to see django log: `docker-compose -f local.yml logs django`
@@ -381,7 +670,7 @@ EMAIL_HOST=mailgun
 * create 2 superusers by `docker-compose -f local.yml run --rm django python manage.py createsuperuser`
 * import the seed data by `docker-compose -f local.yml run django python manage.py loaddata fixtures/db_seed`, which was generated by:
   ```
-docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e pghistory.context -e pghistory.aggregateevent -e users.userhistory -e users.menushistory -e users.menuauthgroupshistory -e users.groupshistory -e users.grouppermissionshistory -e users.usergroupshistory -e users.userpermissionshistory -e users.emailaddresshistory -e users.emailconfirmationhistory -e whereabouts.organizationshistory -e whereabouts.divisionshistory -e whereabouts.placeshistory -e whereabouts.campuseshistory -e whereabouts.propertieshistory -e whereabouts.suiteshistory -e whereabouts.roomshistory -e whereabouts.countryhistory -e whereabouts.statehistory -e whereabouts.localityhistory -e whereabouts.addresshistory -e persons.categorieshistory -e persons.noteshistory -e persons.pastshistory -e persons.folkshistory -e persons.attendeeshistory -e persons.folkattendeeshistory -e persons.relationshistory -e persons.registrationshistory -e persons.attendingshistory -e persons.attendingmeetshistory -e occasions.assemblieshistory -e occasions.attendanceshistory -e occasions.charactershistory -e occasions.gatheringshistory -e occasions.meetshistory -e occasions.messagetemplateshistory -e occasions.priceshistory -e occasions.teamshistory -e occasions.calendarhistory -e occasions.calendarrelationhistory -e occasions.eventhistory -e occasions.eventrelationhistory -e occasions.occurrencehistory -e occasions.rulehistory -e occasions.periodictaskhistory -e occasions.crontabschedulehistory -e occasions.intervalschedulehistory -e users.permissionshistory -e users.grouppermissionproxy -e users.usergroupproxy -e users.userpermissionproxy --indent 2 > fixtures/db_seed.json
+docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e history.historyevent -e history.historycontext -e history.historyhead -e history.historyaudit --indent 2 > fixtures/db_seed.json
   ```
 * go to Django admin to add the first organization and all groups to the first user (superuser) at http://localhost:8008/admin123/users/user/
 ```
@@ -422,7 +711,7 @@ EMAIL_HOST=mailhog
 * create 2 superusers by `docker compose -f local.yml run --rm django python manage.py createsuperuser`
 * import the seed data by `docker compose -f local.yml run django python manage.py loaddata fixtures/db_seed`, data were created by:
   ```
-docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e pghistory.context -e pghistory.aggregateevent -e users.userhistory -e users.menushistory -e users.menuauthgroupshistory -e users.groupshistory -e users.grouppermissionshistory -e users.usergroupshistory -e users.userpermissionshistory -e users.emailaddresshistory -e users.emailconfirmationhistory -e whereabouts.organizationshistory -e whereabouts.divisionshistory -e whereabouts.placeshistory -e whereabouts.campuseshistory -e whereabouts.propertieshistory -e whereabouts.suiteshistory -e whereabouts.roomshistory -e whereabouts.countryhistory -e whereabouts.statehistory -e whereabouts.localityhistory -e whereabouts.addresshistory -e persons.categorieshistory -e persons.noteshistory -e persons.pastshistory -e persons.folkshistory -e persons.attendeeshistory -e persons.folkattendeeshistory -e persons.relationshistory -e persons.registrationshistory -e persons.attendingshistory -e persons.attendingmeetshistory -e occasions.assemblieshistory -e occasions.attendanceshistory -e occasions.charactershistory -e occasions.gatheringshistory -e occasions.meetshistory -e occasions.messagetemplateshistory -e occasions.priceshistory -e occasions.teamshistory -e occasions.calendarhistory -e occasions.calendarrelationhistory -e occasions.eventhistory -e occasions.eventrelationhistory -e occasions.occurrencehistory -e occasions.rulehistory -e occasions.periodictaskhistory -e occasions.crontabschedulehistory -e occasions.intervalschedulehistory -e users.permissionshistory -e users.grouppermissionproxy -e users.usergroupproxy -e users.userpermissionproxy --indent 2 > fixtures/db_seed.json
+docker compose -f local.yml run --rm django python manage.py dumpdata --natural-foreign --natural-primary -e users.user -e admin.logentry -e sessions.session -e contenttypes.contenttype -e sites.site -e account.emailaddress -e account.emailconfirmation -e socialaccount.socialtoken -e auth.permission -e history.historyevent -e history.historycontext -e history.historyhead -e history.historyaudit --indent 2 > fixtures/db_seed.json
   ```
 * go to Django admin to add the first organization and all groups to the first user (superuser) at http://localhost:8008/admin123/users/user/
 * use browser to open http://localhost:8008/ and http://localhost:8025/
@@ -492,6 +781,17 @@ timeout 300 docker compose -f local.yml run django pytest
 C_PASSWORD=your_password_for_superuser_in_seed timeout 300 npx playwright test --workers=1
 ```
 Please also define the repository secret `C_PASSWORD` in Github for running e2e in CI/CD
+
+The `ci-seed` specs sign in as `jack`, the seed's superuser, and a superuser must have a second
+factor. Enrol him with an authenticator app once and pass its secret to the specs:
+```
+export C_TOTP_SECRET=$(python -c 'import base64, secrets; print(base64.b32encode(secrets.token_bytes(20)).decode())')
+python manage.py shell -c "import os; from allauth.mfa.totp.internal.auth import TOTP; from attendees.users.models import User; TOTP.activate(User.objects.get(username='jack'), os.environ['C_TOTP_SECRET'])"
+C_PASSWORD=... C_TOTP_SECRET=$C_TOTP_SECRET npx playwright test --project=ci-seed --workers=1
+```
+The CI jobs do the same with a secret made for the run. The golden suite (`--project=chromium`)
+needs nothing extra: `load_golden_data` enrols the golden superuser and writes the secret into the
+manifest.
 
 ## Todo & progress:
 
@@ -624,7 +924,7 @@ PermissionError: [Errno 13] Permission denied: '/usr/local/lib/python3.9/site-pa
   <summary>Click to expand all</summary>
 
 - [ ] for all users:
-   -[ ] show_secret in Relationship/Past are based on attendee id instead of user id, since secret relationship exists regardless of user accounts. For example, kid X bullied kid Y, and counsellors can configure kids parents & teachers to see it regardless of parent/teachers user accounts existence or switches.
+   -[x] the viewers of a secret relationship/past are attendees instead of users, since a secret relationship exists regardless of user accounts. For example, kid X bullied kid Y, and counsellors can configure kids parents & teachers to see it regardless of parent/teachers user accounts existence or switches.
    -[ ] There is no decision on display notes/infos of Relationships/FamilyAttendee/Past. Ordinary end users can see their families, so role-dependent showing/hiding notes columns need designs, such as storing allowed columns in Menu.infos read by User.allowed_url_names()?  Currently UI only expose separated sections on Past which conditionally show to ordinary end users.
    - [ ] let different meets/assemblies share the very same attending via attendingmeet and registration, since AttendingMeetService.flip_attendingmeet_by_existing_attending cannot know attendings from attendee update, and creating attending is by default when creating new attendee.  If force registration/attendingmeet validation, creating attendingmeet will be hard on UI.  Different attendings of the same attendee will be considered for summer meeting where registration with price involve. 
 </details>

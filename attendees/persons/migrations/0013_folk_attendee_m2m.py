@@ -3,8 +3,6 @@ from attendees.persons.models.utility import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 from private_storage.fields import PrivateFileField
 from private_storage.storage.files import PrivateFileSystemStorage
 
@@ -42,10 +40,6 @@ class Migration(migrations.Migration):
             name='folks',
             field=models.ManyToManyField(related_name='folks', through='persons.FolkAttendee', to='persons.Folk'),
         ),
-        migrations.AddIndex(
-            model_name='folkattendee',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='folkattendee_infos_gin'),
-        ),
         migrations.AddConstraint(
             model_name='folkattendee',
             constraint=models.UniqueConstraint(fields=('folk', 'attendee'), condition=models.Q(is_removed=False), name='folk_attendee'),
@@ -55,44 +49,6 @@ class Migration(migrations.Migration):
             name='attendees',
             field=models.ManyToManyField(related_name='attendees', through='persons.FolkAttendee',
                                          to='persons.Attendee'),
-        ),
-        migrations.CreateModel(
-            name='FolkAttendeesHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='persons.folkattendee')),
-                ('id', models.BigIntegerField()),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('display_order', models.SmallIntegerField(default=1, help_text='0 will be first family')),
-                ('folk', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.folk')),
-                ('attendee', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.attendee')),
-                ('role', models.ForeignKey(db_constraint=False, help_text='[Title] the family role of the attendee?', on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.relation', verbose_name='attendee is')),
-                ('file', PrivateFileField(blank=True, null=True, storage=PrivateFileSystemStorage(), upload_to='folk_attendee_file', verbose_name='file')),
-                ('start', models.DateField(blank=True, help_text='date joining folk', null=True)),
-                ('finish', models.DateField(blank=True, help_text='date leaving folk', null=True)),
-                ('infos', models.JSONField(blank=True, default=Utility.relationship_infos, help_text='Example: {"show_secret": {"attendee1id": true, "attendee2id": false}}. Please keep {} here even no data', null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'persons_folk_attendeeshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_folk_attendeeshistory', original_model_table='persons_folk_attendees')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='folkattendee',
-            trigger=pgtrigger.compiler.Trigger(name='folkattendee_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_folk_attendeeshistory" ("id", "created", "modified", "is_removed", "display_order", "folk_id", "attendee_id", "role_id", "file", "start", "finish", "infos", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."folk_id", NEW."attendee_id", NEW."role_id", NEW."file", NEW."start", NEW."finish", NEW."infos", NOW(), \'folkattendee.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='37420d152ac14827d33eed3ca43edb386ae8cbfa', operation='INSERT', pgid='pgtrigger_folkattendee_snapshot_insert_c56b5', table='persons_folk_attendees', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='folkattendee',
-            trigger=pgtrigger.compiler.Trigger(name='folkattendee_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."display_order" IS DISTINCT FROM NEW."display_order" OR OLD."folk_id" IS DISTINCT FROM NEW."folk_id" OR OLD."attendee_id" IS DISTINCT FROM NEW."attendee_id" OR OLD."role_id" IS DISTINCT FROM NEW."role_id" OR OLD."file" IS DISTINCT FROM NEW."file" OR OLD."start" IS DISTINCT FROM NEW."start" OR OLD."finish" IS DISTINCT FROM NEW."finish" OR OLD."infos" IS DISTINCT FROM NEW."infos")', func='INSERT INTO "persons_folk_attendeeshistory" ("id", "created", "modified", "is_removed", "display_order", "folk_id", "attendee_id", "role_id", "file", "start", "finish", "infos", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."display_order", NEW."folk_id", NEW."attendee_id", NEW."role_id", NEW."file", NEW."start", NEW."finish", NEW."infos", NOW(), \'folkattendee.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='706b7d1c1f7bfb52f14c5876322874a990c19e6d', operation='UPDATE', pgid='pgtrigger_folkattendee_snapshot_update_38722', table='persons_folk_attendees', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='folkattendee',
-            trigger=pgtrigger.compiler.Trigger(name='folkattendee_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_folk_attendeeshistory" ("id", "created", "modified", "is_removed", "display_order", "folk_id", "attendee_id", "role_id", "file", "start", "finish", "infos", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."display_order", OLD."folk_id", OLD."attendee_id", OLD."role_id", OLD."file", OLD."start", OLD."finish", OLD."infos", NOW(), \'folkattendee.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='2091fb1f2cb6b9dcbaee5caca0de85e1722ac0d4', operation='DELETE', pgid='pgtrigger_folkattendee_before_delete_64cf1', table='persons_folk_attendees', when='AFTER')),
         ),
     ]
 

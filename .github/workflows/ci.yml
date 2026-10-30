@@ -61,3 +61,40 @@ jobs:
 
       - name: Tear down the Stack
         run:  docker compose -f local.yml down
+
+  # The same suite on SQLite, without Docker. The application runs on either backend from the
+  # database setting alone; this job is what keeps that true.
+  pytest-sqlite:
+    runs-on: ubuntu-latest
+    env:
+      DJANGO_SETTINGS_MODULE: config.settings.test
+      DATABASE_URL: sqlite:////tmp/attendees-ci.sqlite3
+      CELERY_BROKER_URL: memory://
+      USE_DOCKER: "no"
+
+    steps:
+
+      - name: Checkout Code Repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.10"
+          cache: pip
+          cache-dependency-path: requirements/*.txt
+
+      - name: Install system libraries (psycopg2 builds against libpq; WeasyPrint needs Pango)
+        run: sudo apt-get update && sudo apt-get install -y --no-install-recommends libpq-dev gdal-bin libpango-1.0-0 libpangoft2-1.0-0
+
+      - name: Install Python requirements
+        run: pip install -r requirements/local.txt
+
+      - name: Build a database from the migrations
+        run: python manage.py migrate
+
+      - name: The models and the migrations agree
+        run: python manage.py makemigrations --check --dry-run
+
+      - name: Run Django Tests on SQLite
+        run: timeout 900 pytest

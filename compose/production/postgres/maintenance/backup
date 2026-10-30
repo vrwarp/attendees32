@@ -1,10 +1,18 @@
 #!/usr/bin/env bash
 
 
-### Create a database backup.
+### Create a database backup, encrypted to the church's age key and copied off the machine.
 ###
 ### Usage:
-###     $ docker-compose -f <environment>.yml (exec |run --rm) postgres backup
+###     $ docker compose -f <environment>.yml (exec |run --rm) postgres backup
+###
+### The dump is encrypted before it touches disk when BACKUP_AGE_RECIPIENT (an age public key, the
+### one printed on the recovery sheet) is set, and uploaded when BACKUP_RCLONE_REMOTE names an rclone
+### remote and path (for example "church-bucket:attendees/backups"); the bucket should keep versions
+### or an object lock and the credentials should be allowed to write but not to delete, so a
+### compromised server cannot destroy its own backup history. Local copies older than
+### BACKUP_KEEP_DAYS (90) are removed. The private key exists only on the recovery sheet; see the
+### README's security section for the sheet and the restore drill.
 
 
 set -o errexit
@@ -12,7 +20,7 @@ set -o pipefail
 set -o nounset
 
 
-working_dir="$(dirname ${0})"
+working_dir="$(dirname "${0}")"
 source "${working_dir}/_sourced/constants.sh"
 source "${working_dir}/_sourced/messages.sh"
 
@@ -31,8 +39,38 @@ export PGUSER="${POSTGRES_USER}"
 export PGPASSWORD="${POSTGRES_PASSWORD}"
 export PGDATABASE="${POSTGRES_DB}"
 
-backup_filename="${BACKUP_FILE_PREFIX}_$(date +'%Y_%m_%dT%H_%M_%S').sql.gz"
-pg_dump | gzip > "${BACKUP_DIR_PATH}/${backup_filename}"
+stamp="$(date +'%Y_%m_%dT%H_%M_%S')"
+recipient="${BACKUP_AGE_RECIPIENT:-}"
+remote="${BACKUP_RCLONE_REMOTE:-}"
+keep_days="${BACKUP_KEEP_DAYS:-90}"
 
+if [[ -n "${recipient}" ]]; then
+    backup_filename="${BACKUP_FILE_PREFIX}_${stamp}.sql.gz.age"
+    pg_dump | gzip | age -r "${recipient}" > "${BACKUP_DIR_PATH}/${backup_filename}"
+    message_success "'${POSTGRES_DB}' encrypted backup '${backup_filename}' has been created and placed in '${BACKUP_DIR_PATH}'."
+else
+    backup_filename="${BACKUP_FILE_PREFIX}_${stamp}.sql.gz"
+    pg_dump | gzip > "${BACKUP_DIR_PATH}/${backup_filename}"
+    message_warning "BACKUP_AGE_RECIPIENT is not set: '${backup_filename}' is a plaintext dump. Set the key from the recovery sheet before this leaves the machine."
+fi
 
-message_success "'${POSTGRES_DB}' database backup '${backup_filename}' has been created and placed in '${BACKUP_DIR_PATH}'."
+if [[ -d "${MEDIA_DIR_PATH:-/app/attendees/media}" ]]; then
+    media_filename="media_${stamp}.tar.gz${recipient:+.age}"
+    if [[ -n "${recipient}" ]]; then
+        tar -C "${MEDIA_DIR_PATH:-/app/attendees/media}" -czf - . | age -r "${recipient}" > "${BACKUP_DIR_PATH}/${media_filename}"
+    else
+        tar -C "${MEDIA_DIR_PATH:-/app/attendees/media}" -czf "${BACKUP_DIR_PATH}/${media_filename}" .
+    fi
+    message_success "The file store is in '${media_filename}'."
+fi
+
+if [[ -n "${remote}" ]]; then
+    rclone copy --include "*_${stamp}.*" "${BACKUP_DIR_PATH}" "${remote}"
+    message_success "Copied to '${remote}'."
+else
+    message_warning "BACKUP_RCLONE_REMOTE is not set: the backup stays on this machine only."
+fi
+
+find "${BACKUP_DIR_PATH}" -maxdepth 1 -type f -mtime "+${keep_days}" -name "${BACKUP_FILE_PREFIX}_*" -delete
+find "${BACKUP_DIR_PATH}" -maxdepth 1 -type f -mtime "+${keep_days}" -name "media_*" -delete
+message_info "Local copies older than ${keep_days} days are removed; the bucket keeps its own versions."

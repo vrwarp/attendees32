@@ -5,7 +5,7 @@ per organization and two API rows, which would be dead links now, and its
 tables hold nothing the rest of the system refers to. Both go here. A
 database that never ran pcosync has none of them, and nothing happens.
 """
-from django.db import migrations
+from django.db import connection, migrations
 
 URL_NAMES = ("pco_sync_view", "ApiPcoSyncRunsViewSet", "ApiPcoDivergencesViewSet")
 TABLES = (
@@ -27,6 +27,9 @@ def forget_menus(apps, schema_editor):
     menus.delete()
 
 
+CASCADE = " CASCADE" if connection.vendor == "postgresql" else ""  # SQLite drops without the word
+
+
 class Migration(migrations.Migration):
     dependencies = [
         ("users", "0013_remove_emailaddressproxy_emailaddress_snapshot_update_and_more"),
@@ -35,7 +38,7 @@ class Migration(migrations.Migration):
     operations = [
         migrations.RunPython(forget_menus, migrations.RunPython.noop),
         migrations.RunSQL(
-            [f"DROP TABLE IF EXISTS {table} CASCADE;" for table in TABLES],
+            [f"DROP TABLE IF EXISTS {table}{CASCADE};" for table in TABLES],
             migrations.RunSQL.noop,
         ),
     ]

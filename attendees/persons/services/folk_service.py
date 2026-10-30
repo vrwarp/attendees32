@@ -1,6 +1,5 @@
 from collections import defaultdict
 from datetime import datetime, timezone
-from django.contrib.postgres.aggregates.general import  ArrayAgg
 from django.db.models import Max, OuterRef, Q, Subquery, Count
 
 from attendees.occasions.models import Meet
@@ -198,7 +197,7 @@ class FolkService:
                 ),
             ).distinct().order_by('householder_last_name', 'householder_first_name', 'householder_first_name2')
 
-            folk_attendees = FolkAttendee.objects.filter(
+            folk_attendees = list(FolkAttendee.objects.filter(
                 is_removed=False,
                 attendee__division__slug__in=division_slugs,
                 attendee__deathday__isnull=True,
@@ -213,10 +212,10 @@ class FolkService:
             ).annotate(
                 attendingmeet_id=Max('attendee__attendings__attendingmeet__id', filter=Q(attendee__attendings__attendingmeet__meet=meet)),
                 attendingmeet_category=Max('attendee__attendings__attendingmeet__category', filter=Q(attendee__attendings__attendingmeet__meet=meet)),
-                attendingmeet_note=ArrayAgg('attendee__attendings__attendingmeet__infos__note',
-                                             filter=(Q(attendee__attendings__attendingmeet__meet=meet) & Q(attendee__attendings__attendingmeet__infos__note__isnull=False)),
-                                             distinct=True, default=None),
-            )
+            ))
+            notes = FolkService.enrollment_notes(meet, {fa['attendee__id'] for fa in folk_attendees})
+            for fa in folk_attendees:
+                fa['attendingmeet_note'] = notes.get(fa['attendee__id'])
 
             attendees_by_family = {}
             for fa in folk_attendees:
@@ -275,6 +274,20 @@ class FolkService:
                     families[family.id] = family_attrs
 
         return families.values()
+
+    @staticmethod
+    def enrollment_notes(meet, attendee_ids):
+        """Each attendee's distinct notes on their enrollments in the meet, alphabetically, for the
+        participation report; an attendee without a note is absent. One query, in place of the
+        array aggregate that used to collect them in SQL."""
+        notes = defaultdict(set)
+        rows = AttendingMeet.objects.filter(
+            attending__attendee_id__in=attendee_ids, meet=meet, infos__note__isnull=False
+        ).values_list("attending__attendee_id", "infos__note")
+        for attendee_id, note in rows:
+            if note is not None:
+                notes[attendee_id].add(note if isinstance(note, str) else str(note))
+        return {attendee_id: sorted(found) for attendee_id, found in notes.items()}
 
     @staticmethod
     def folk_addresses_in_participations(meet_slug, user_organization, show_paused, division_slugs):

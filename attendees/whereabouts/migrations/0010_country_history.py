@@ -2,63 +2,14 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import pgtrigger.compiler
-import pgtrigger.migrations
-from attendees.persons.models import Utility
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('pghistory', '0004_auto_20220906_1625'),
         ('address', '0005_address_extra'),
         ('whereabouts', '0009_add_fields_to_place'),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='CountryProxy',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('address.country',),
-        ),
-        migrations.CreateModel(
-            name='CountryHistory',
-            fields=[
-                ('pgh_id', models.AutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='address.country')),
-                ('id', models.IntegerField()),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('name', models.CharField(blank=True, max_length=40)),
-                ('code', models.CharField(blank=True, max_length=2)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_countryhistory', index_on_id=True, original_model_table='address_country')),
-        migrations.AlterField(
-            model_name='countryhistory',
-            name='pgh_obj',
-            field=models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='history', to='whereabouts.countryproxy'),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='countryproxy',
-            trigger=pgtrigger.compiler.Trigger(name='country_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_countryhistory" ("name", "code", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."code", NEW."id", NOW(), \'country.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='46351ad2cc7653f399590ef23695267de0731fb2', operation='INSERT', pgid='pgtrigger_country_snapshot_insert_c24db', table='address_country', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='countryproxy',
-            trigger=pgtrigger.compiler.Trigger(name='country_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."name" IS DISTINCT FROM NEW."name" OR OLD."code" IS DISTINCT FROM NEW."code" OR OLD."id" IS DISTINCT FROM NEW."id")', func='INSERT INTO "whereabouts_countryhistory" ("name", "code", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."code", NEW."id", NOW(), \'country.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='8829433fff7df48083fbcf5f872db1520b6109a3', operation='UPDATE', pgid='pgtrigger_country_snapshot_update_549a4', table='address_country', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='countryproxy',
-            trigger=pgtrigger.compiler.Trigger(name='country_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_countryhistory" ("name", "code", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."name", OLD."code", OLD."id", NOW(), \'country.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='a0bac2d083268cf2c7b6a3b48e04dab18817049e', operation='DELETE', pgid='pgtrigger_country_before_delete_3f317', table='address_country', when='AFTER')),
-        ),
     ]

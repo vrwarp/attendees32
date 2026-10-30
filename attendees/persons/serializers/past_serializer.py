@@ -2,8 +2,10 @@ from rest_framework import serializers
 
 from attendees.persons.models import Past
 
+from .confidential import ConfidentialSerializerMixin
 
-class PastSerializer(serializers.ModelSerializer):
+
+class PastSerializer(ConfidentialSerializerMixin, serializers.ModelSerializer):
     class Meta:  # It is critical not to have organization in the fields, to let perform_create set it
         model = Past
         fields = (

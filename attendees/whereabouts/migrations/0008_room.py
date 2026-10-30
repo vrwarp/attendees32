@@ -4,8 +4,6 @@ from attendees.persons.models import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -34,43 +32,4 @@ class Migration(migrations.Migration):
             bases=(models.Model, Utility),
         ),
         migrations.RunSQL(Utility.default_sql('whereabouts_rooms')),
-        migrations.AddIndex(
-            model_name='room',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='room_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='RoomsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='whereabouts.room')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('slug', models.SlugField(db_index=False)),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"accessibility": 3}. Please keep {} here even no data', null=True)),
-                ('suite', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.suite')),
-                ('display_name', models.CharField(max_length=50)),
-                ('label', models.CharField(blank=True, null=True, max_length=20)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'whereabouts_roomshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_roomshistory', original_model_table='whereabouts_rooms')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='room',
-            trigger=pgtrigger.compiler.Trigger(name='room_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_roomshistory" ("created", "modified", "is_removed", "slug", "id", "infos", "suite_id", "display_name", "label", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."slug", NEW."id", NEW."infos", NEW."suite_id", NEW."display_name", NEW."label", NOW(), \'room.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='9e2f8a6e510731d45ca0d6219b4a611ad8d645d4', operation='INSERT', pgid='pgtrigger_room_snapshot_insert_6e9e9', table='whereabouts_rooms', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='room',
-            trigger=pgtrigger.compiler.Trigger(name='room_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."slug" IS DISTINCT FROM NEW."slug" OR OLD."id" IS DISTINCT FROM NEW."id" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."suite_id" IS DISTINCT FROM NEW."suite_id" OR OLD."display_name" IS DISTINCT FROM NEW."display_name" OR OLD."label" IS DISTINCT FROM NEW."label")', func='INSERT INTO "whereabouts_roomshistory" ("created", "modified", "is_removed", "slug", "id", "infos", "suite_id", "display_name", "label", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."created", NEW."modified", NEW."is_removed", NEW."slug", NEW."id", NEW."infos", NEW."suite_id", NEW."display_name", NEW."label", NOW(), \'room.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='23b0042b5f3960fc530d2b93f766856e013d79b5', operation='UPDATE', pgid='pgtrigger_room_snapshot_update_76efb', table='whereabouts_rooms', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='room',
-            trigger=pgtrigger.compiler.Trigger(name='room_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_roomshistory" ("created", "modified", "is_removed", "slug", "id", "infos", "suite_id", "display_name", "label", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."created", OLD."modified", OLD."is_removed", OLD."slug", OLD."id", OLD."infos", OLD."suite_id", OLD."display_name", OLD."label", NOW(), \'room.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='0a718077b7c8997ae5177580c9c7a8e63f36f091', operation='DELETE', pgid='pgtrigger_room_before_delete_74a9e', table='whereabouts_rooms', when='AFTER')),
-        ),
     ]

@@ -2,8 +2,6 @@
 
 from attendees.persons.models import Utility
 from django.db import migrations, models
-import pgtrigger.compiler
-import pgtrigger.migrations
 import django.utils.timezone
 import model_utils.fields
 
@@ -39,44 +37,5 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name='attending',
             constraint=models.UniqueConstraint(fields=('attendee', 'registration'), condition=models.Q(is_removed=False), name='attending_attendee_registration'),
-        ),
-        migrations.AddIndex(
-            model_name='attending',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='attending_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='AttendingsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='persons.attending')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('attendee', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.attendee')),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"grade": 5, "age": 11, "bed_needs": 1, "mobility": 300}. Please keep {} here even no data', null=True)),
-                ('category', models.CharField(default='normal', help_text='normal, not_going, coworker, etc', max_length=20)),
-                ('price', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.price')),
-                ('registration', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.registration')),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'persons_attendingshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_attendingshistory', original_model_table='persons_attendings')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='attending',
-            trigger=pgtrigger.compiler.Trigger(name='attending_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_attendingshistory" ("id", "created", "modified", "is_removed", "attendee_id", "infos", "category", "price_id", "registration_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."attendee_id", NEW."infos", NEW."category", NEW."price_id", NEW."registration_id", NOW(), \'attending.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='266d394bb594ef8d304c939df28639c49ece5c54', operation='INSERT', pgid='pgtrigger_attending_snapshot_insert_386b3', table='persons_attendings', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='attending',
-            trigger=pgtrigger.compiler.Trigger(name='attending_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."attendee_id" IS DISTINCT FROM NEW."attendee_id" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."category" IS DISTINCT FROM NEW."category" OR OLD."price_id" IS DISTINCT FROM NEW."price_id" OR OLD."registration_id" IS DISTINCT FROM NEW."registration_id")', func='INSERT INTO "persons_attendingshistory" ("id", "created", "modified", "is_removed", "attendee_id", "infos", "category", "price_id", "registration_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."attendee_id", NEW."infos", NEW."category", NEW."price_id", NEW."registration_id", NOW(), \'attending.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='ab2994070a4bd73ab0c084c7824ecd6504ceae56', operation='UPDATE', pgid='pgtrigger_attending_snapshot_update_c98f6', table='persons_attendings', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='attending',
-            trigger=pgtrigger.compiler.Trigger(name='attending_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_attendingshistory" ("id", "created", "modified", "is_removed", "attendee_id", "infos", "category", "price_id", "registration_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."attendee_id", OLD."infos", OLD."category", OLD."price_id", OLD."registration_id", NOW(), \'attending.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='572e8d9a331747a882d80659630ea406815fb271', operation='DELETE', pgid='pgtrigger_attending_before_delete_3ebbe', table='persons_attendings', when='AFTER')),
         ),
     ]

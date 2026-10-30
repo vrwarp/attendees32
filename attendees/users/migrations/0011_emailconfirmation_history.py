@@ -3,9 +3,6 @@
 from django.db import migrations, models
 import django.db.models.deletion
 import django.utils.timezone
-import pgtrigger.compiler
-import pgtrigger.migrations
-from attendees.persons.models import Utility
 
 
 class Migration(migrations.Migration):
@@ -15,57 +12,9 @@ class Migration(migrations.Migration):
     """
 
     dependencies = [
-        ('pghistory', '0004_auto_20220906_1625'),
         ('account', '0002_email_max_length'),
         ('users', '0010_emailaddress_history'),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='EmailConfirmationProxy',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('account.emailconfirmation',),
-        ),
-        migrations.CreateModel(
-            name='EmailConfirmationHistory',
-            fields=[
-                ('pgh_id', models.AutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='account.emailconfirmation')),
-                ('id', models.IntegerField()),
-                ('created', models.DateTimeField(default=django.utils.timezone.now, verbose_name='created')),
-                ('sent', models.DateTimeField(null=True, verbose_name='sent')),
-                ('key', models.CharField(max_length=64, verbose_name='key')),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('email_address', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='account.emailaddress', verbose_name='e-mail address')),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_emailconfirmationhistory', original_model_table='account_emailconfirmation')),
-        migrations.AlterField(
-            model_name='emailconfirmationhistory',
-            name='pgh_obj',
-            field=models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='history', to='users.emailconfirmationproxy'),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='emailconfirmationproxy',
-            trigger=pgtrigger.compiler.Trigger(name='emailconfirmation_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_emailconfirmationhistory" ("email_address_id", "created", "sent", "key", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."email_address_id", NEW."created", NEW."sent", NEW."key", NEW."id", NOW(), \'emailconfirmation.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='5fa26bdc55dc5fa759b5d7396622b9a60e7872a0', operation='INSERT', pgid='pgtrigger_emailconfirmation_snapshot_insert_4e516', table='account_emailconfirmation', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='emailconfirmationproxy',
-            trigger=pgtrigger.compiler.Trigger(name='emailconfirmation_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."email_address_id" IS DISTINCT FROM NEW."email_address_id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."sent" IS DISTINCT FROM NEW."sent" OR OLD."key" IS DISTINCT FROM NEW."key" OR OLD."id" IS DISTINCT FROM NEW."id")', func='INSERT INTO "users_emailconfirmationhistory" ("email_address_id", "created", "sent", "key", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."email_address_id", NEW."created", NEW."sent", NEW."key", NEW."id", NOW(), \'emailconfirmation.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='df8fef27710b25902aa87a97abe2e27ec0cded9a', operation='UPDATE', pgid='pgtrigger_emailconfirmation_snapshot_update_fb7b9', table='account_emailconfirmation', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='emailconfirmationproxy',
-            trigger=pgtrigger.compiler.Trigger(name='emailconfirmation_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_emailconfirmationhistory" ("email_address_id", "created", "sent", "key", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."email_address_id", OLD."created", OLD."sent", OLD."key", OLD."id", NOW(), \'emailconfirmation.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='673ab8e974af34690d8f6ae493963145d7c7f1ec', operation='DELETE', pgid='pgtrigger_emailconfirmation_before_delete_1158b', table='account_emailconfirmation', when='AFTER')),
-        ),
     ]

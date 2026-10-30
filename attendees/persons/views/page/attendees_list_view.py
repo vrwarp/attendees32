@@ -28,9 +28,11 @@ class AttendeesListView(RouteGuard, ListView):
             url_name="datagrid_user_organization_attendances"
         ).first()
 
-        filters = Q(assembly__division__organization=self.request.user.organization).add(
-            Q(infos__allowed_models__regex='attendingmeet'), Q.AND).add(
-            Q(infos__allowed_groups__regex=fr"({'|'.join([name for name in user_groups])})"), Q.AND)
+        filters = (
+            Q(assembly__division__organization=self.request.user.organization)
+            & Meet.listed_on("attendingmeet")
+            & Meet.allowed_to_any_of(user_groups)
+        )
 
         filters.add((Q(finish__isnull=True)
                      |

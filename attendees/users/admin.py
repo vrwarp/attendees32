@@ -9,7 +9,7 @@ from django_json_widget.widgets import JSONEditorWidget
 from mptt.admin import MPTTModelAdmin
 from django.contrib.auth.models import Group
 from django.contrib.auth.admin import GroupAdmin
-from attendees.persons.models import PgHistoryPage
+from attendees.history.admin import HistoryPage
 from attendees.users.forms import UserChangeForm, UserCreationForm
 
 from .models import Menu, MenuAuthGroup
@@ -26,19 +26,19 @@ admin.site.unregister(Group)
 
 
 @admin.register(Group)
-class GroupAdmin(PgHistoryPage, GroupAdmin):
-    pass  # to make original model admin shows PgHistoryPage
+class GroupAdmin(HistoryPage, GroupAdmin):
+    pass  # to make original model admin shows HistoryPage
 
 # from allauth.account.admin import EmailAddressAdmin
 # from allauth.account.models import EmailAddress
 # admin.site.unregister(EmailAddress)
 # @admin.register(EmailAddress)   # Somehow Admin UI shows no history
-# class EmailAddressAdmin(PgHistoryPage, EmailAddressAdmin):
-#     pass  # to make original model admin shows PgHistoryPage
+# class EmailAddressAdmin(HistoryPage, EmailAddressAdmin):
+#     pass  # to make original model admin shows HistoryPage
 
 
 @admin.register(User)
-class UserAdmin(PgHistoryPage, auth_admin.UserAdmin):
+class UserAdmin(HistoryPage, auth_admin.UserAdmin):
     change_list_template = "admin/user_change_list.html"
     form = UserChangeForm
     add_form = UserCreationForm
@@ -185,13 +185,13 @@ class UserAdmin(PgHistoryPage, auth_admin.UserAdmin):
             return qs.filter(organization=request.user.organization)
 
 
-class MenuAuthGroupInline(PgHistoryPage, admin.TabularInline):
+class MenuAuthGroupInline(HistoryPage, admin.TabularInline):
     model = MenuAuthGroup
     extra = 0
 
 
 @admin.register(Menu)
-class MenuAdmin(PgHistoryPage, MPTTModelAdmin):
+class MenuAdmin(HistoryPage, MPTTModelAdmin):
     search_fields = ["urn", "url_name", "display_name"]
     readonly_fields = ["id", "created", "modified"]
     formfield_overrides = {
@@ -224,7 +224,7 @@ class MenuAdmin(PgHistoryPage, MPTTModelAdmin):
 
 
 @admin.register(MenuAuthGroup)
-class MenuAuthGroupAdmin(PgHistoryPage, admin.ModelAdmin):
+class MenuAuthGroupAdmin(HistoryPage, admin.ModelAdmin):
 
     list_display = (
         "auth_group",

@@ -127,11 +127,12 @@ def test_perform_update(view):
 @patch("attendees.persons.views.api.organization_meet_character_attendingmeets.Utility")
 def test_perform_destroy(mock_utility, mock_attendance, view):
     mock_instance = MagicMock()
-    mock_instance.meet.infos = {'allowed_groups': ['some_group', 'organization_participant']}
+    mock_instance.meet.allowed_groups.exclude.return_value.values_list.return_value = ['some_group']
     mock_utility.now_with_timezone.return_value = "now"
     
     view.perform_destroy(mock_instance)
     
+    mock_instance.meet.allowed_groups.exclude.assert_called_once_with(name="organization_participant")
     view.request.user.belongs_to_groups_of.assert_called_once_with(['some_group'])
     mock_attendance.objects.filter.assert_called_once_with(
         gathering__meet=mock_instance.meet,
@@ -146,8 +147,8 @@ def test_perform_destroy(mock_utility, mock_attendance, view):
 def test_perform_destroy_permission_denied(mock_sleep, view):
     view.request.user.belongs_to_groups_of.return_value = False
     mock_instance = MagicMock()
-    mock_instance.meet.infos = {'allowed_groups': ['some_group']}
-    
+    mock_instance.meet.allowed_groups.exclude.return_value.values_list.return_value = ['some_group']
+
     with pytest.raises(PermissionDenied):
         view.perform_destroy(mock_instance)
         

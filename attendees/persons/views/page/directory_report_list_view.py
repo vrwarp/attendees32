@@ -10,6 +10,7 @@ from django.views.generic import ListView
 from attendees.persons.services import FolkService
 from attendees.users.authorization import RouteGuard
 from attendees.whereabouts.models import Division
+from attendees.access import PRINT, record
 
 logger = logging.getLogger(__name__)
 
@@ -21,6 +22,7 @@ class DirectoryReportListView(RouteGuard, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        record(self.request, how=PRINT, details=dict(self.request.GET.lists()))
         division_ids = self.request.GET.getlist('divisionSelector', [])
         index_row_per_page = int(self.request.GET.get("indexRowPerPage", '26'))
         page_breaks_before_index = int(self.request.GET.get("pageBreaksBeforeIndex", '2'))

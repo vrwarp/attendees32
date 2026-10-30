@@ -42,14 +42,13 @@ class TestUtility:
 
     def test_meet_infos(self):
         infos = Utility.meet_infos()
-        assert "allowed_models" in infos
-        assert infos["allowed_models"] == ['gathering', 'attendingmeet', 'attendance', 'eventrelation']
+        assert "allowed_models" not in infos  # the pages a meet is listed on are MeetAllowedModel rows
         assert "default_time_zone" in infos
         assert infos["default_time_zone"] == settings.CLIENT_DEFAULT_TIME_ZONE
 
     def test_relationship_infos(self):
         infos = Utility.relationship_infos()
-        assert "show_secret" in infos
+        assert "show_secret" not in infos  # who may see a record is its viewers
         assert "updating_attendees" in infos
 
     def test_forever(self):

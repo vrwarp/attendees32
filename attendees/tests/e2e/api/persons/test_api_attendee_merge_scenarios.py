@@ -91,9 +91,9 @@ class Records:
             photo="attendee_portrait/samuel.jpg",
             infos={"fixed": {"grade": 16, "food_pref": "peanut allergy", "insurer": "Blue Shield"},
                    "contacts": {"phone1": "+15105550199", "phone2": "+15105550107",
-                                "email1": "sam2@example.org", "wechat": "sam_t", "line1": "samtsai"},
-                   "schedulers": {str(self.parent.id): True}},
+                                "email1": "sam2@example.org", "wechat": "sam_t", "line1": "samtsai"}},
         )
+        self.samuel.schedulers.set([self.parent])
         self.login = User.objects.create(username="samuel-tsai-login", email="samuel@example.org")
         Attendee.objects.filter(pk=self.samuel.pk).update(user=self.login)
         self._member(self.family, self.samuel, Relations.SON)  # the same family as Sam
@@ -109,8 +109,7 @@ class Records:
         self._past(self.samuel, "believer")
         self.registration = Registration.objects.create(registrant=self.samuel, assembly=self.meet.assembly)
         Attending.objects.create(attendee=self.samuel, registration=self.registration)
-        self.child.infos["emergency_contacts"] = {str(self.samuel.id): True}
-        self.child.save()
+        self.child.emergency_contacts.set([self.samuel])
 
         self.sammy = self._attendee(
             "Sammy", "Tsai", gender="MALE",
@@ -157,7 +156,7 @@ class Records:
         )
 
     def _place(self, attendee, address, display_name):
-        return self._linked(Place, attendee, address=address, display_name=display_name)
+        return Place.objects.create(attendee=attendee, organization=self.organization, address=address, display_name=display_name)
 
     def _note(self, attendee, body):
         return self._linked(Note, attendee, category=Note.objects.first().category, body=body)
@@ -176,7 +175,7 @@ class Records:
         return sorted(FolkAttendee.objects.filter(attendee=attendee).exclude(role_id=Relations.HIDDEN).values_list("folk__display_name", flat=True))
 
     def places(self, attendee):
-        return sorted(Place.objects.filter(content_type=self.attendee_type, object_id=str(attendee.id)).values_list("display_name", flat=True))
+        return sorted(Place.objects.filter(attendee=attendee).values_list("display_name", flat=True))
 
     def linked(self, model, attendee):
         return model.objects.filter(content_type=self.attendee_type, object_id=str(attendee.id)).count()
@@ -231,8 +230,8 @@ class TestMergingRecordsThatCarryEverything:
         }
         assert sam.infos["contacts"] == after_first
         assert sam.user_id == r.login.id
-        assert sam.infos["schedulers"] == {str(r.parent.id): True}
-        assert _fresh(r.child).infos["emergency_contacts"] == {str(sam.id): True}
+        assert list(sam.schedulers.all()) == [r.parent]
+        assert list(_fresh(r.child).emergency_contacts.all()) == [sam]
         assert r.enrollments(sam) == [r.meet.display_name]
         assert r.check_ins(sam) == [r.gatherings[0].start, r.gatherings[1].start]
         assert r.folks(sam) == ["Peter's friends", "Tsai household", "Tsai household 2"]

@@ -1,0 +1,56 @@
+{% extends "admin/object_history.html" %}
+{% load i18n %}
+
+{% block content %}
+  <script>
+    function toggleDisplay(elementSelector) {
+      const element = document.querySelector(elementSelector);
+      element.style.display = element.style.display === "none" ? "" : "none";
+    }
+  </script>
+
+  <table id="change-history">
+    <thead>
+      <tr>
+        <th scope="col">Time</th>
+        <th scope="col">Event</th>
+        <th scope="col" style="text-align:center">Trace</th>
+      </tr>
+    </thead>
+    <tbody>
+      {% for row in object_history %}
+        <tr>
+          <th scope="row" style="width: 20%;">{{ row.event.created_at|date:"DATETIME_FORMAT" }}
+            <br>
+            {% if row.who %}by {{ row.who }}{% else %}no user recorded{% endif %}
+            {% if row.where %}<br><small>{{ row.where }}</small>{% endif %}
+          </th>
+          <td style="width: 10%;">#{{ row.event.seq }} {{ row.event.label }}</td>
+          <td align="right" style="width: 70%;">
+            <button class="button" style="padding: 3px;" onclick='toggleDisplay("#history-data-{{ forloop.counter0 }}")'>Data</button>
+            {% if row.changes %}
+              <button class="button" style="padding: 3px;" onclick='toggleDisplay("#history-diff-{{ forloop.counter0 }}")'>Changes</button>
+            {% endif %}
+            <div id="history-data-{{ forloop.counter0 }}" style="display: none; text-align:left">
+              <pre>{{ row.snapshot }}</pre>
+            </div>
+            {% if row.changes %}
+              <div id="history-diff-{{ forloop.counter0 }}" style="display: none; text-align:left">
+                <table style="width:100%">
+                  <thead>
+                    <tr><th scope="col">Field</th><th scope="col">Before</th><th scope="col">After</th></tr>
+                  </thead>
+                  {% for field, values in row.changes.items %}
+                    <tr><th>{{ field }}</th><td>{{ values.0 }}</td><td>{{ values.1 }}</td></tr>
+                  {% endfor %}
+                </table>
+              </div>
+            {% endif %}
+          </td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">{% translate "This object doesn't have a change history." %}</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+{% endblock %}

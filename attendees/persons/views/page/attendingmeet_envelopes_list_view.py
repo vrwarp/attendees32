@@ -7,6 +7,7 @@ from django.views.generic import ListView
 
 from attendees.persons.services import FolkService
 from attendees.users.authorization import RouteGuard
+from attendees.access import PRINT, record
 
 
 @method_decorator([login_required], name='dispatch')
@@ -16,6 +17,7 @@ class AttendingmeetEnvelopesListView(RouteGuard, ListView):
 
     def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
+        record(self.request, how=PRINT, details=dict(self.request.GET.lists()))
         show_paused = self.request.GET.get("showPaused")
         families = FolkService.folk_addresses_in_participations(
             meet_slug=self.request.GET.get("meet"),

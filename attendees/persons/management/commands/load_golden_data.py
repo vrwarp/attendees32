@@ -51,7 +51,7 @@ class Command(BaseCommand):
     @transaction.atomic
     def handle(self, *args, **options):
         if not options["force"] and Attendee.objects.filter(
-            infos__names__original__icontains="Zhongxin"
+            full_name__icontains="Zhongxin"
         ).exists():
             raise CommandError(
                 "golden data looks already loaded; pass --force to build anyway"
@@ -75,6 +75,7 @@ class Command(BaseCommand):
                 "personas": {
                     persona.username: {
                         "groups": list(persona.groups),
+                        "totp_secret": persona.totp_secret,
                         "attendee": (
                             str(dataset.attendee(persona.attendee_key).id)
                             if persona.attendee_key

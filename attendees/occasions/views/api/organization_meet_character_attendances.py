@@ -11,6 +11,7 @@ from attendees.occasions.models import Attendance
 from attendees.occasions.serializers import AttendanceEtcSerializer
 from attendees.occasions.services import AttendanceService
 from attendees.persons.models import Utility
+from attendees.persons.services.search_service import SearchService
 
 
 class ApiOrganizationMeetCharacterAttendancesViewSet(viewsets.ModelViewSet):
@@ -55,13 +56,13 @@ class ApiOrganizationMeetCharacterAttendancesViewSet(viewsets.ModelViewSet):
                     filters.add(Q(character__slug__in=characters), Q.AND)
 
                 if isinstance(search_value, str):
-                    filters.add((Q(attending__registration__registrant__infos__icontains=search_value)
+                    filters.add((SearchService.contains("attending__registration__registrant__search_text", search_value)
                                  |
-                                 Q(attending__attendee__infos__icontains=search_value)
+                                 SearchService.contains("attending__attendee__search_text", search_value)
                                  |
                                  Q(gathering__display_name__icontains=search_value)
                                  |
-                                 Q(infos__icontains=search_value)), Q.AND)
+                                 SearchService.contains("search_text", search_value)), Q.AND)
 
                 counters = Attendance.objects.filter(filters).values(group_column).order_by(group_column).annotate(count=Count('*'))  # Count(group_column) won't count null values
                 return Response(Utility.group_count(group_column, counters))

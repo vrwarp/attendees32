@@ -85,3 +85,6 @@ CELERY_TASK_EAGER_PROPAGATES = True
 # Your stuff...
 # ------------------------------------------------------------------------------
 MFA_WEBAUTHN_ALLOW_INSECURE_ORIGIN = env.bool("DJANGO_MFA_WEBAUTHN_INSECURE", True)
+
+# The history chain key of a development or test database; production takes it from the environment.
+HISTORY_CHAIN_KEY = env("DJANGO_HISTORY_CHAIN_KEY", default="development-history-chain-key-not-a-secret")

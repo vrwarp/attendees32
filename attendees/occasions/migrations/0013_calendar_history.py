@@ -2,63 +2,14 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import pgtrigger.compiler
-import pgtrigger.migrations
-from attendees.persons.models import Utility
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('pghistory', '0004_auto_20220906_1625'),
         ('schedule', '0014_use_autofields_for_pk'),
         ('occasions', '0012_periodic_task_history'),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='CalendarProxy',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('schedule.calendar',),
-        ),
-        migrations.CreateModel(
-            name='CalendarHistory',
-            fields=[
-                ('pgh_id', models.AutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='schedule.calendar')),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('id', models.IntegerField()),
-                ('slug', models.SlugField(db_index=False, max_length=200, verbose_name='slug')),
-                ('name', models.CharField(max_length=200, verbose_name='name')),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_calendarhistory', index_on_id=True, original_model_table='schedule_calendar')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='calendarproxy',
-            trigger=pgtrigger.compiler.Trigger(name='calendar_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_calendarhistory" ("name", "slug", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."slug", NEW."id", NOW(), \'calendar.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='3e81f7cd7bbef8022bb1d621878ae86be7a79091', operation='INSERT', pgid='pgtrigger_calendar_snapshot_insert_608f9', table='schedule_calendar', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='calendarproxy',
-            trigger=pgtrigger.compiler.Trigger(name='calendar_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."name" IS DISTINCT FROM NEW."name" OR OLD."slug" IS DISTINCT FROM NEW."slug" OR OLD."id" IS DISTINCT FROM NEW."id")', func='INSERT INTO "occasions_calendarhistory" ("name", "slug", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."slug", NEW."id", NOW(), \'calendar.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='15c814b2b85dbed014431c3ad49ae4da99141305', operation='UPDATE', pgid='pgtrigger_calendar_snapshot_update_c7ecc', table='schedule_calendar', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='calendarproxy',
-            trigger=pgtrigger.compiler.Trigger(name='calendar_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_calendarhistory" ("name", "slug", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."name", OLD."slug", OLD."id", NOW(), \'calendar.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='93a563a974356e8be8717b83be7d1d74231a8ea3', operation='DELETE', pgid='pgtrigger_calendar_before_delete_dcf4b', table='schedule_calendar', when='AFTER')),
-        ),
-        migrations.AlterField(
-            model_name='calendarhistory',
-            name='pgh_obj',
-            field=models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='history', to='occasions.calendarproxy'),
-        ),
     ]

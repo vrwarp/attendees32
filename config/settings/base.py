@@ -41,7 +41,20 @@ LOCALE_PATHS = [str(ROOT_DIR / "locale")]
 # ------------------------------------------------------------------------------
 # https://docs.djangoproject.com/en/dev/ref/settings/#databases
 DATABASES = {"default": env.db("DATABASE_URL")}
-DATABASES["default"]["ATOMIC_REQUESTS"] = True
+# Only write requests run in a transaction (attendees.middleware.AtomicWritesMiddleware, last in
+# MIDDLEWARE); a read holds none, which is what lets reads run alongside a writer on SQLite.
+DATABASES["default"]["ATOMIC_REQUESTS"] = False
+if DATABASES["default"]["ENGINE"] == "django.db.backends.sqlite3":
+    # One writer at a time, readers alongside it: write transactions start IMMEDIATE so they queue
+    # instead of failing late, WAL lets reads proceed during a write, and a fresh connection per
+    # request keeps the file's locks short. The file must live on local disk (see the README).
+    DATABASES["default"]["CONN_MAX_AGE"] = 0
+    DATABASES["default"]["OPTIONS"] = {
+        **DATABASES["default"].get("OPTIONS", {}),
+        "transaction_mode": "IMMEDIATE",
+        "timeout": 30,
+        "init_command": "PRAGMA journal_mode=WAL; PRAGMA synchronous=NORMAL; PRAGMA foreign_keys=ON;",
+    }
 # https://docs.djangoproject.com/en/stable/ref/settings/#std:setting-DEFAULT_AUTO_FIELD
 DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
@@ -86,11 +99,11 @@ THIRD_PARTY_APPS = [
     # "django_readonly_field",
     "address",
     "django_db_comments",
-    "pgtrigger",
-    "pghistory",  # django-pghistory can version a superset of models
 ]
 
 LOCAL_APPS = [
+    "attendees.history.apps.HistoryConfig",
+    "attendees.access.apps.AccessConfig",
     "attendees.users",
     # Your stuff: custom apps go here
     "attendees.whereabouts.apps.WhereaboutsConfig",
@@ -156,10 +169,17 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # Staff and superusers without a second factor get only the enrolment pages (see the README's
+    # security section); it runs once the user is known and before any page of ours.
+    "attendees.middleware.MFARequiredMiddleware",
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
-    "pghistory.middleware.HistoryMiddleware",
+    "attendees.history.middleware.HistoryContextMiddleware",
     "attendees.middleware.TimezoneMiddleware",
+    # Writes the request's access entries after the response, outside the request's own
+    # transaction, so it sits just outside AtomicWritesMiddleware.
+    "attendees.access.middleware.AccessLogMiddleware",
+    "attendees.middleware.AtomicWritesMiddleware",
 ]
 
 # STATIC
@@ -308,11 +328,15 @@ LOGGING = {
             "%(process)d %(thread)d %(message)s"
         }
     },
+    # No personal data in the logs: the query string (a search term, a person's key) is cut from
+    # every URL a log line carries, so a line says which page was opened and not for whom.
+    "filters": {"strip_query_string": {"()": "attendees.utils.logging.StripQueryString"}},
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
+            "filters": ["strip_query_string"],
         }
     },
     "root": {"level": "INFO", "handlers": ["console"]},
@@ -474,12 +498,30 @@ if SENTRY_DSN:
         level=logging.INFO,  # Capture info and above as breadcrumbs
         event_level=logging.ERROR  # Send errors as events
     )
+    from attendees.utils.sentry import strip_personal_data
+
+    # Error reports leave the building, so they carry the stack trace and nothing that names a
+    # member: no user, no cookies, no headers, no query string, no request body (see
+    # attendees.utils.sentry). Self-hosting GlitchTip is the alternative if even that is too much.
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration(), sentry_logging],
-        send_default_pii=True,
+        send_default_pii=False,
+        include_local_variables=False,
+        before_send=strip_personal_data,
         traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=1.0),
         environment=env("DJANGO_SETTINGS_MODULE", default="development").split('.')[-1],
     )
 SENTRY_ARTIFICIAL_API_DEBUG = env.bool("SENTRY_ARTIFICIAL_API_DEBUG", default=False)
 SENTRY_FRONTEND_LIB = env("SENTRY_FRONTEND_LIB", default="")
+
+# HISTORY
+# ------------------------------------------------------------------------------
+# The audit history (attendees.history): every tracked write is an event sealed into a chain.
+# The chain key never leaves the server's environment file and the printed recovery sheet.
+HISTORY_CHAIN_KEY = env("DJANGO_HISTORY_CHAIN_KEY", default="")
+# Where the daily anchor (head of the chain) is appended, and who is mailed a copy of it.
+HISTORY_ANCHOR_FILE = env("DJANGO_HISTORY_ANCHOR_FILE", default="")
+HISTORY_ANCHOR_RECIPIENTS = env.list("DJANGO_HISTORY_ANCHOR_RECIPIENTS", default=[])
+# Who is mailed when the nightly verification fails.
+HISTORY_AUDIT_RECIPIENTS = env.list("DJANGO_HISTORY_AUDIT_RECIPIENTS", default=[email for _name, email in ADMINS])

@@ -5,34 +5,42 @@ from attendees.persons.views.api.datagrid_data_attendee import ApiDatagridDataAt
 
 
 class TestApiDatagridDataAttendeeViewSet:
-    @patch('attendees.persons.views.api.datagrid_data_attendee.Attendee.all_objects.annotate')
-    def test_get_queryset_with_pk(self, mock_annotate):
+    @patch('attendees.persons.views.api.datagrid_data_attendee.Attendee.all_objects.select_related')
+    def test_get_queryset_with_pk(self, mock_select_related):
+        """One attendee, tombstones included, with the organization joined for its slug; the
+        attendings column is built in get_object(), not annotated here."""
         view = ApiDatagridDataAttendeeViewSet()
         view.request = MagicMock()
         view.kwargs = {"pk": "1"}
         view.request.query_params = {}
-        
         mock_qs = MagicMock()
-        mock_annotate.return_value.filter.return_value = mock_qs
-        
+        mock_select_related.return_value.filter.return_value = mock_qs
+
         view.get_queryset()
-        
-        mock_annotate.assert_called_once()
+
+        mock_select_related.assert_called_once_with("division__organization")
+        mock_select_related.return_value.filter.assert_called_once_with(
+            division__organization=view.request.user.organization, pk="1"
+        )
         mock_qs.filter.assert_called_once()
 
+    @patch('attendees.persons.views.api.datagrid_data_attendee.SearchService.search')
     @patch('attendees.persons.views.api.datagrid_data_attendee.Attendee.objects.filter')
-    def test_get_queryset_with_term(self, mock_filter):
+    def test_get_queryset_with_term(self, mock_filter, mock_search):
         view = ApiDatagridDataAttendeeViewSet()
         view.request = MagicMock()
         view.kwargs = {}
         view.request.query_params = {"searchValue": "term"}
-        
+
         mock_qs = MagicMock()
         mock_filter.return_value = mock_qs
-        
+        mock_search.return_value = mock_qs
+
         view.get_queryset()
-        
+
+        # the organisation's people go to the search service, and its result is filtered again
         mock_filter.assert_called_once()
+        mock_search.assert_called_once_with(mock_qs, "term")
         mock_qs.filter.assert_called_once()
 
     @patch('attendees.persons.views.api.datagrid_data_attendee.Attendee.objects.order_by')

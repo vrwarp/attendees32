@@ -8,6 +8,7 @@ from django.db.models import Q
 
 from attendees.occasions.models import Gathering
 from attendees.whereabouts.models import Room, Suite, Property, Campus, Division, Organization
+from attendees.persons.services.search_service import SearchService
 
 
 class GatheringService:
@@ -68,7 +69,7 @@ class GatheringService:
         if search_value and search_operation == 'contains' and search_expression in ['display_name', 'gathering_label']:  # for searching in drop down of popup editor
             extra_filters.add((Q(display_name__icontains=search_value)
                                |
-                               Q(infos__icontains=search_value)), Q.AND)
+                               SearchService.contains("search_text", search_value)), Q.AND)
 
         if filter:  # [["meet","=",1],"or",["meet","=",2]] is already filtered by slugs above
             filter_term = json.loads(filter)  # [["display_name","contains","207"],"or",["site","contains","207"]]
@@ -76,7 +77,7 @@ class GatheringService:
                 search_term = filter_term[0][2]
                 if search_term:  # for searching in the upper right search bar of datagrid
                     search_filters = Q(display_name__icontains=search_term)    # Gathering level
-                    search_filters.add(Q(infos__icontains=search_term), Q.OR)  # Gathering level
+                    search_filters.add(SearchService.contains("search_text", search_term), Q.OR)  # Gathering level
 
                     for site, field in GatheringService.SITE_SEARCHING_PROPERTIES.items():
                         site_filter = {f"{field}__icontains": search_term}

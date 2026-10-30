@@ -8,6 +8,7 @@ from rest_framework.utils import json
 
 from attendees.occasions.models import Meet, Character
 from attendees.persons.models import AttendingMeet, Attending, Utility
+from attendees.persons.services.search_service import SearchService
 
 logger = logging.getLogger(__name__)
 
@@ -88,22 +89,22 @@ class AttendingMeetService:
                                Q(attending__registration__registrant=current_user.attendee)), Q.AND)
 
         if search_value and search_operation == 'contains' and search_expression == 'attending_label':  # for searching in drop down of popup editor
-            extra_filters.add((Q(attending__registration__registrant__infos__icontains=search_value)
+            extra_filters.add((SearchService.contains("attending__registration__registrant__search_text", search_value)
                                |
-                               Q(attending__attendee__infos__icontains=search_value)), Q.AND)
+                               SearchService.contains("attending__attendee__search_text", search_value)), Q.AND)
         if filter:  # only support single/double level so far
             filter_list = json.loads(filter)
             search_term = (filter_list[-1][-1]
                            if filter_list[1] == 'or'
                            else filter_list[0][0][-1]) if isinstance(filter_list[-1], list) else filter_list[-1]
             if isinstance(search_term, str):  # for searching in the upper right search bar of datagrid
-                extra_filters.add((Q(attending__registration__registrant__infos__icontains=search_term)
+                extra_filters.add((SearchService.contains("attending__registration__registrant__search_text", search_term)
                                    |
                                    Q(category__display_name__icontains=search_term)
                                    |
-                                   Q(infos__icontains=search_term)
+                                   SearchService.contains("search_text", search_term)
                                    |
-                                   Q(attending__attendee__infos__icontains=search_term)), Q.AND)
+                                   SearchService.contains("attending__attendee__search_text", search_term)), Q.AND)
         if start:
             extra_filters.add((Q(finish__isnull=True) | Q(finish__gte=start)), Q.AND)
         if finish:
@@ -119,7 +120,7 @@ class AttendingMeetService:
             ),
             registrant_attendee_id=F("attending__registration__registrant_id"),
             attendee_id=F("attending__attendee_id"),
-            attendee_name=F("attending__attendee__infos__names__original"),
+            attendee_name=F("attending__attendee__full_name"),
             attendee_grade=F("attending__attendee__infos__fixed__grade"),
             # attendee_name=Trim(
             #     Concat(
@@ -144,7 +145,8 @@ class AttendingMeetService:
             # 'team': 'team__display_name',  # cannot convert column for sort, or items will be out of order on grouping, since grouping use id and order using name!!
             'category': 'category__display_name',
             'character': 'character__display_name',
-            'attending__attendee': 'attending__attendee__infos__names__original',
+            'attending__attendee': 'attending__attendee__full_name',
+            'attending__registration__registrant__infos__names__original': 'attending__registration__registrant__full_name',
         }
 
         for orderby_dict in orderbys:

@@ -2,13 +2,15 @@ from datetime import datetime
 
 import pytz
 from django.conf import settings
-from django.db.models import F, Q, CharField, Value, When, Case, Count
+from collections import defaultdict
+
+from django.db.models import F, Q, CharField, Min, Value, When, Case, Count
 from django.db.models.functions import Concat, Trim
-from django.contrib.postgres.aggregates.general import StringAgg
 from rest_framework.utils import json
 from attendees.occasions.models import Attendance, Meet
 from attendees.persons.models import AttendingMeet
 from attendees.persons.services import AttendeeService
+from attendees.persons.services.search_service import SearchService
 
 
 class AttendanceService:
@@ -148,9 +150,9 @@ class AttendanceService:
                                Q(attending__registration__registrant=current_user.attendee)), Q.AND)
 
         if search_value and search_operation == 'contains' and search_expression == 'attending_label':  # only contains supported now
-            extra_filters.add((Q(attending__registration__registrant__infos__icontains=search_value)
+            extra_filters.add((SearchService.contains("attending__registration__registrant__search_text", search_value)
                                |
-                               Q(attending__attendee__infos__icontains=search_value)), Q.AND)
+                               SearchService.contains("attending__attendee__search_text", search_value)), Q.AND)
         if start:   # warning: attendance start&finish is optional, so limiting on gathering is needed in datagrid
             # extra_filters.add((Q(finish__isnull=True) | Q(finish__gte=start)), Q.AND)
             extra_filters.add(Q(gathering__finish__gte=start), Q.AND)
@@ -169,13 +171,13 @@ class AttendanceService:
             searching_by_panel = isinstance(search_term, str) and filter.count(search_term) == 3
 
             if isinstance(search_term, str) and searching_by_panel:
-                extra_filters.add((Q(attending__registration__registrant__infos__icontains=search_term)
+                extra_filters.add((SearchService.contains("attending__registration__registrant__search_text", search_term)
                                    |
                                    Q(gathering__display_name__icontains=search_term)
                                    |
-                                   Q(infos__icontains=search_term)
+                                   SearchService.contains("search_text", search_term)
                                    |
-                                   Q(attending__attendee__infos__icontains=search_term)), Q.AND)
+                                   SearchService.contains("attending__attendee__search_text", search_term)), Q.AND)
             elif not searching_by_panel:  # it's grouping
                 filters = AttendeeService.filter_parser(filter_list, Meet.objects.filter(slug__in=meet_slugs), current_user)
                 extra_filters.add(filters, Q.AND)
@@ -245,19 +247,15 @@ class AttendanceService:
         return Attendance.objects.annotate(**annotations).filter(extra_filters).order_by(*orderby_list)
 
     @staticmethod
-    def attendance_count(user_organization, meet_slugs, character_slugs, team_ids, category_ids, start, finish, orderbys, name_search=[[None]]):
-        orderby_list = AttendanceService.orderby_parser(orderbys)
-
+    def attendance_count_filters(user_organization, meet_slugs, character_slugs, team_ids, category_ids, start, finish, name_search=[[None]]):
+        """The attendances a statistics request counts: those of the meets, organization and
+        categories asked for, narrowed by the name, the gathering window, characters and teams."""
         filters = Q(gathering__meet__slug__in=meet_slugs).add(
             Q(gathering__meet__assembly__division__organization=user_organization), Q.AND).add(
             Q(category__in=category_ids), Q.AND)
 
         if name_search[-1][-1]:
-            filters.add(Q(Q(attending__attendee__infos__names__original__icontains=name_search[-1][-1])
-                          |
-                          Q(attending__attendee__infos__names__traditional__icontains=name_search[-1][-1])
-                          |
-                          Q(attending__attendee__infos__names__simplified__icontains=name_search[-1][-1])), Q.AND)
+            filters.add(SearchService.contains("attending__attendee__search_text", name_search[-1][-1]), Q.AND)
 
         if start:
             filters.add((Q(gathering__finish__gte=start)), Q.AND)
@@ -267,6 +265,16 @@ class AttendanceService:
             filters.add(Q(character__slug__in=character_slugs), Q.AND)
         if team_ids:
             filters.add(Q(team__in=team_ids), Q.AND)
+        return filters
+
+    @staticmethod
+    def attendance_count(user_organization, meet_slugs, character_slugs, team_ids, category_ids, start, finish, orderbys, name_search=[[None]]):
+        """One row per attendee (and registrant), with how many attendances matched. The characters
+        and teams columns are filled per page by attach_characters_and_teams()."""
+        orderby_list = AttendanceService.orderby_parser(orderbys)
+        filters = AttendanceService.attendance_count_filters(
+            user_organization, meet_slugs, character_slugs, team_ids, category_ids, start, finish, name_search
+        )
 
         attendee_name = Trim(
             Concat(
@@ -290,20 +298,15 @@ class AttendanceService:
             )
         )
 
-        return Attendance.objects.select_related(
-            "character",
-            "team",
-            "attending",
-            "gathering",
-            "attending__attendee",
-        ).filter(filters).values(
+        return Attendance.objects.filter(filters).values(
             'attending__attendee',
-            'attending__attendee__infos__names__original',
+            'attending__attendee__full_name',
             'attending__registration__registrant_id',
         ).annotate(
             count=Count('attending__attendee'),
-            characters=StringAgg('character__display_name', delimiter=", ", distinct=True, default=None),
-            teams=StringAgg('team__display_name', delimiter=", ", distinct=True, default=None),
+            # the first names alphabetically, which the characters and teams columns sort by
+            first_character=Min('character__display_name'),
+            first_team=Min('team__display_name'),
             attending_name=Case(
                 When(attending__registration__isnull=True, then=attendee_name),
                 When(attending__attendee=F('attending__registration__registrant'), then=attendee_name),
@@ -316,6 +319,30 @@ class AttendanceService:
                 output_field=CharField()
             ),
         ).order_by(*(orderby_list or ['attending_name']))
+
+    @staticmethod
+    def attach_characters_and_teams(rows, filters):
+        """Fill the characters and teams columns of a page of attendance_count() rows: the distinct
+        character and team names of the attendances counted, alphabetically, comma separated, or
+        None when there were none. One query for the page, in place of the string aggregates."""
+        rows = list(rows)
+        characters, teams = defaultdict(set), defaultdict(set)
+        pairs = Attendance.objects.filter(
+            filters, attending__attendee_id__in={row['attending__attendee'] for row in rows}
+        ).values_list(
+            'attending__attendee_id', 'attending__registration__registrant_id',
+            'character__display_name', 'team__display_name',
+        ).distinct()
+        for attendee_id, registrant_id, character, team in pairs:
+            if character:
+                characters[(attendee_id, registrant_id)].add(character)
+            if team:
+                teams[(attendee_id, registrant_id)].add(team)
+        for row in rows:
+            key = (row['attending__attendee'], row['attending__registration__registrant_id'])
+            row['characters'] = ", ".join(sorted(characters[key])) or None
+            row['teams'] = ", ".join(sorted(teams[key])) or None
+        return rows
 
     @staticmethod
     def batch_create(begin, end, meet_slug, meet, user_time_zone, attendee_id=None):
@@ -425,8 +452,11 @@ class AttendanceService:
         field_converter = {
             'gathering': 'gathering__display_name',
             'character': 'character__display_name',
-            'attending': 'attending__attendee__infos__names__original',
-            # 'attending_name': 'attending__attendee__infos__names__original',
+            'attending': 'attending__attendee__full_name',
+            'attending__attendee__infos__names__original': 'attending__attendee__full_name',
+            # 'attending_name': 'attending__attendee__full_name',
+            'characters': 'first_character',  # the statistics grid's columns, see attendance_count()
+            'teams': 'first_team',
         }
 
         for orderby in orderbys:

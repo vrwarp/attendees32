@@ -5,8 +5,6 @@ from django.contrib.postgres.indexes import GinIndex
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -47,46 +45,5 @@ class Migration(migrations.Migration):
             model_name='gathering',
             index=models.Index(condition=models.Q(('is_removed', False)), fields=['site_type', 'site_id'], name='gathering_sites'),
         ),
-        migrations.AddIndex(
-            model_name='Gathering',
-            index=GinIndex(fields=['infos'], name='gathering_infos_gin'),
-        ),
         migrations.RunSQL(Utility.default_sql('occasions_gatherings')),
-        migrations.CreateModel(
-            name='GatheringsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='occasions.gathering')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('meet', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.meet')),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('start', models.DateTimeField()),
-                ('finish', models.DateTimeField(help_text='Required for user to filter by time')),
-                ('site_type', models.ForeignKey(db_constraint=False, help_text='site: django_content_type id for table name', on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='contenttypes.contenttype')),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"LG_location": "F207", "link": "https://..."}. Please keep {} here even no data', null=True)),
-                ('site_id', models.CharField(default='0', max_length=36)),
-                ('display_name', models.CharField(blank=True, help_text='02/09/2020, etc', max_length=255, null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'occasions_gatheringshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_gatheringshistory', original_model_table='occasions_gatherings')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='gathering',
-            trigger=pgtrigger.compiler.Trigger(name='gathering_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_gatheringshistory" ("id", "meet_id", "created", "modified", "is_removed", "start", "finish", "site_type_id", "infos", "site_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."meet_id", NEW."created", NEW."modified", NEW."is_removed", NEW."start", NEW."finish", NEW."site_type_id", NEW."infos", NEW."site_id", NEW."display_name", NOW(), \'gathering.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='42fe1de8e1786707f55b9cef8b68b4e214b2c595', operation='INSERT', pgid='pgtrigger_gathering_snapshot_insert_cc35c', table='occasions_gatherings', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='gathering',
-            trigger=pgtrigger.compiler.Trigger(name='gathering_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."meet_id" IS DISTINCT FROM NEW."meet_id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."start" IS DISTINCT FROM NEW."start" OR OLD."finish" IS DISTINCT FROM NEW."finish" OR OLD."site_type_id" IS DISTINCT FROM NEW."site_type_id" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."site_id" IS DISTINCT FROM NEW."site_id" OR OLD."display_name" IS DISTINCT FROM NEW."display_name")', func='INSERT INTO "occasions_gatheringshistory" ("id", "meet_id", "created", "modified", "is_removed", "start", "finish", "site_type_id", "infos", "site_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."meet_id", NEW."created", NEW."modified", NEW."is_removed", NEW."start", NEW."finish", NEW."site_type_id", NEW."infos", NEW."site_id", NEW."display_name", NOW(), \'gathering.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='cf8d488d31f29515c750a4980e75fe516afa5258', operation='UPDATE', pgid='pgtrigger_gathering_snapshot_update_56e8f', table='occasions_gatherings', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='gathering',
-            trigger=pgtrigger.compiler.Trigger(name='gathering_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_gatheringshistory" ("id", "meet_id", "created", "modified", "is_removed", "start", "finish", "site_type_id", "infos", "site_id", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."meet_id", OLD."created", OLD."modified", OLD."is_removed", OLD."start", OLD."finish", OLD."site_type_id", OLD."infos", OLD."site_id", OLD."display_name", NOW(), \'gathering.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='c4de1de5fca4f9566579ccb4de09e77423cc5490', operation='DELETE', pgid='pgtrigger_gathering_before_delete_3203b', table='occasions_gatherings', when='AFTER')),
-        ),
     ]

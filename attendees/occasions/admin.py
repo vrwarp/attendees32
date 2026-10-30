@@ -8,61 +8,63 @@ from django_json_widget.widgets import JSONEditorWidget
 from schedule.admin import CalendarAdmin, CalendarRelationAdmin, EventAdmin, EventRelationAdmin, RuleAdmin
 from schedule.models import Calendar, CalendarRelation, Event, EventRelation, Rule
 
-from attendees.occasions.models import Attendance, MessageTemplate, Assembly, Price, Character, Meet, Gathering, Team
+from attendees.occasions.models import Attendance, MessageTemplate, Assembly, Price, Character, Meet, Gathering, Team, \
+    MeetAllowedModel
 from django.conf import settings
-from attendees.persons.models import PgHistoryPage, Category
+from attendees.persons.models import Category
+from attendees.history.admin import HistoryPage
 from attendees.whereabouts.models import Organization, Division
 
 
 admin.site.unregister(CrontabSchedule)
 @admin.register(CrontabSchedule)
-class CrontabScheduleAdmin(PgHistoryPage, admin.ModelAdmin):
-    pass  # to make original model admin shows PgHistoryPage
+class CrontabScheduleAdmin(HistoryPage, admin.ModelAdmin):
+    pass  # to make original model admin shows HistoryPage
 
 
 # from django_celery_beat.models import IntervalSchedule
 # admin.site.unregister(IntervalSchedule)
 # @admin.register(IntervalSchedule)   # Somehow Admin UI shows no history
-# class IntervalScheduleAdmin(PgHistoryPage, admin.ModelAdmin):
-#     pass  # to make original model admin shows PgHistoryPage
+# class IntervalScheduleAdmin(HistoryPage, admin.ModelAdmin):
+#     pass  # to make original model admin shows HistoryPage
 
 
 # from django_celery_beat.models import PeriodicTask
 # from django_celery_beat.admin import PeriodicTaskAdmin
 # admin.site.unregister(PeriodicTask)
 # @admin.register(PeriodicTask)       # Somehow Admin UI shows no history
-# class PeriodicTaskAdmin(PgHistoryPage, PeriodicTaskAdmin):
-#     pass  # to make original model admin shows PgHistoryPage
+# class PeriodicTaskAdmin(HistoryPage, PeriodicTaskAdmin):
+#     pass  # to make original model admin shows HistoryPage
 
 
 admin.site.unregister(Calendar)
 @admin.register(Calendar)
-class CalendarAdmin(PgHistoryPage, CalendarAdmin):
-    pass  # to make original model admin shows PgHistoryPage
+class CalendarAdmin(HistoryPage, CalendarAdmin):
+    pass  # to make original model admin shows HistoryPage
 
 
 admin.site.unregister(CalendarRelation)
 @admin.register(CalendarRelation)
-class CalendarAdmin(PgHistoryPage, CalendarRelationAdmin):
-    pass  # to make original model admin shows PgHistoryPage
+class CalendarAdmin(HistoryPage, CalendarRelationAdmin):
+    pass  # to make original model admin shows HistoryPage
 
 
 admin.site.unregister(Rule)
 @admin.register(Rule)
-class CalendarAdmin(PgHistoryPage, RuleAdmin):
-    pass  # to make original model admin shows PgHistoryPage
+class CalendarAdmin(HistoryPage, RuleAdmin):
+    pass  # to make original model admin shows HistoryPage
 
 
 admin.site.unregister(Event)
 @admin.register(Event)
-class CalendarAdmin(PgHistoryPage, EventAdmin):
-    pass  # to make original model admin shows PgHistoryPage
+class CalendarAdmin(HistoryPage, EventAdmin):
+    pass  # to make original model admin shows HistoryPage
 
 
 admin.site.unregister(EventRelation)
 @admin.register(EventRelation)
-class CalendarAdmin(PgHistoryPage, EventRelationAdmin):
-    pass  # to make original model admin shows PgHistoryPage
+class CalendarAdmin(HistoryPage, EventRelationAdmin):
+    pass  # to make original model admin shows HistoryPage
 
 # class AssemblyContactAdmin(admin.ModelAdmin):
 #     readonly_fields = ['id', 'created', 'modified']
@@ -74,7 +76,7 @@ class CalendarAdmin(PgHistoryPage, EventRelationAdmin):
 #     extra = 0
 
 
-class MessageTemplateAdmin(PgHistoryPage, admin.ModelAdmin):
+class MessageTemplateAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -107,7 +109,7 @@ class MessageTemplateAdmin(PgHistoryPage, admin.ModelAdmin):
             return qs.filter(organization=request.user.organization)
 
 
-class AssemblyAdmin(PgHistoryPage, admin.ModelAdmin):
+class AssemblyAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -142,7 +144,7 @@ class AssemblyAdmin(PgHistoryPage, admin.ModelAdmin):
             return qs.filter(division__organization=request.user.organization)
 
 
-class PriceAdmin(PgHistoryPage, admin.ModelAdmin):
+class PriceAdmin(HistoryPage, admin.ModelAdmin):
     list_display = ("display_name", "price_type", "start", "price_value", "modified")
 
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
@@ -168,7 +170,7 @@ class PriceAdmin(PgHistoryPage, admin.ModelAdmin):
             return qs.filter(assembly__division__organization=request.user.organization)
 
 
-class AttendanceAdmin(PgHistoryPage, admin.ModelAdmin):
+class AttendanceAdmin(HistoryPage, admin.ModelAdmin):
     autocomplete_fields = ('attending', 'gathering',)
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
@@ -258,7 +260,7 @@ class AttendanceInline(admin.StackedInline):
     #     return qs[:10]  # does not work
 
 
-class CharacterAdmin(PgHistoryPage, admin.ModelAdmin):
+class CharacterAdmin(HistoryPage, admin.ModelAdmin):
     prepopulated_fields = {"slug": ("display_name",)}
     list_filter = ("assembly", "type")
     readonly_fields = ["id", "created", "modified"]
@@ -292,7 +294,7 @@ class CharacterAdmin(PgHistoryPage, admin.ModelAdmin):
         js = ["js/admin/list_filter_collapse.js"]
 
 
-class TeamAdmin(PgHistoryPage, admin.ModelAdmin):
+class TeamAdmin(HistoryPage, admin.ModelAdmin):
     prepopulated_fields = {"slug": ("display_name",)}
     readonly_fields = ["id", "created", "modified"]
     list_display_links = ("display_name",)
@@ -321,11 +323,20 @@ class TeamAdmin(PgHistoryPage, admin.ModelAdmin):
             return qs.filter(meet__assembly__division__organization=request.user.organization)
 
 
-class MeetAdmin(PgHistoryPage, admin.ModelAdmin):
+class MeetAllowedModelInline(admin.TabularInline):
+    model = MeetAllowedModel
+    extra = 0
+    verbose_name = "page the meet is listed on"
+    verbose_name_plural = "pages the meet is listed on"
+
+
+class MeetAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
     prepopulated_fields = {"slug": ("display_name",)}
+    filter_horizontal = ("allowed_groups",)
+    inlines = (MeetAllowedModelInline,)
     search_fields = ("display_name",)
     list_filter = ("assembly",)
     list_display_links = ("display_name",)
@@ -346,6 +357,7 @@ class MeetAdmin(PgHistoryPage, admin.ModelAdmin):
                             "audience_editable",
                         ]
                     ),
+                    tuple(["allowed_groups"]),
                     tuple(["site_type", "assembly", "site_id"]),
                     tuple(["id", "created", "modified"]),
                     tuple(["schedule_text"]),
@@ -385,7 +397,7 @@ class MeetAdmin(PgHistoryPage, admin.ModelAdmin):
         js = ["js/admin/list_filter_collapse.js"]
 
 
-class GatheringAdmin(PgHistoryPage, admin.ModelAdmin):
+class GatheringAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }

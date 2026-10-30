@@ -76,7 +76,7 @@ class TestAttendingMeetService:
         result = AttendingMeetService.orderby_parser(orderbys)
         expected = [
             "category__display_name",
-            "-attending__attendee__infos__names__original",
+            "-attending__attendee__full_name",
             "character__display_name",
             "-custom_field"
         ]

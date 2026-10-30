@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+import { signInAsJack } from './seed';
+
 test.describe('Defensive and Standard 404 Error Pages', () => {
 
   test('Should render lightweight 404 page without base navbar before login (no session cookie)', async ({ page }) => {
@@ -29,26 +31,7 @@ test.describe('Defensive and Standard 404 Error Pages', () => {
 
   test('Should render lightweight 404 page even after login (with session cookie) to prevent DB exhaustion', async ({ page }) => {
     // 1. Perform login flow to establish a session and session cookie
-    console.log('--- STARTING LOGIN FLOW FOR AUTHENTICATED 404 TEST ---');
-    await page.goto('/accounts/login/');
-    await page.fill('input[name="login"]', 'jack');
-    const password = process.env.C_PASSWORD || 'your_password_for_superuser_in_seed';
-
-    await page.locator('input[name="password"]').evaluate((el, val) => {
-      (el as HTMLInputElement).value = val;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    }, password);
-
-    await page.click('button[type="submit"]');
-
-    try {
-      await page.waitForURL('**/users/jack/**', { timeout: 10000 });
-      console.log('--- LOGIN SUCCESSFUL ---');
-    } catch (error) {
-      console.error('--- LOGIN FAILED ---');
-      throw error;
-    }
+    await signInAsJack(page);
 
     const profileUrl = page.url();
 

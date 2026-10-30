@@ -5,8 +5,6 @@ from django.conf import settings
 from django.contrib.postgres.indexes import GinIndex
 from django.utils import timezone
 from django.contrib.auth import validators
-import pgtrigger.compiler
-import pgtrigger.migrations
 from attendees.persons.models import Utility
 
 
@@ -15,7 +13,6 @@ class Migration(migrations.Migration):
     dependencies = [
         ('whereabouts', '0003_organization'),
         ('users', '0001_initial'),
-        ('pghistory', '0004_auto_20220906_1625'),
     ]
     operations = [
         migrations.AddField(
@@ -31,48 +28,6 @@ class Migration(migrations.Migration):
         migrations.AlterModelOptions(
             name='user',
             options={},
-        ),
-        migrations.AddIndex(
-            model_name='user',
-            index=GinIndex(fields=['infos'], name='user_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='UserHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('id', models.IntegerField(db_index=True)),
-                ('is_superuser', models.BooleanField(default=False, help_text='Designates that this user has all permissions without explicitly assigning them.', verbose_name='superuser status')),
-                ('is_staff', models.BooleanField(default=False, help_text='Designates whether the user can log into this admin site.', verbose_name='staff status')),
-                ('is_active', models.BooleanField(default=True, help_text='Designates whether this user should be treated as active. Unselect this instead of deleting accounts.', verbose_name='active')),
-                ('organization', models.ForeignKey(blank=True, db_constraint=False, default=None, help_text='Primary organization of the user', null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.organization')),
-                ('date_joined', models.DateTimeField(default=timezone.now, verbose_name='date joined')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to=settings.AUTH_USER_MODEL)),
-                # ('password', models.CharField(max_length=128, verbose_name='password')),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('username', models.CharField(error_messages={'unique': 'A user with that username already exists.'}, help_text='Required. 150 characters or fewer. Letters, digits and @/./+/-/_ only.', max_length=150, validators=[validators.UnicodeUsernameValidator()], verbose_name='username')),
-                ('last_login', models.DateTimeField(blank=True, null=True, verbose_name='last login')),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-                ('email', models.EmailField(blank=True, max_length=254, verbose_name='email address')),
-                ('name', models.CharField(blank=True, max_length=255, verbose_name='Name of User')),
-                ('infos', models.JSONField(blank=True, default=Utility.user_infos, help_text="please keep {} here even there's no data", null=True)),
-            ],
-            options={
-                'db_table': 'users_userhistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('users_userhistory', original_model_table='users_user')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='user',
-            trigger=pgtrigger.compiler.Trigger(name='user_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_userhistory" ("id", "is_superuser", "is_staff", "is_active", "organization_id", "date_joined", "username", "last_login", "email", "infos", "name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."is_superuser", NEW."is_staff", NEW."is_active", NEW."organization_id", NEW."date_joined", NEW."username", NEW."last_login", NEW."email", NEW."infos", NEW."name", NOW(), \'user.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='2c1a4e6104bd6ee9cc253ccd37751277344ff47d', operation='INSERT', pgid='pgtrigger_user_snapshot_insert_17e40', table='users_user', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='user',
-            trigger=pgtrigger.compiler.Trigger(name='user_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."is_superuser" IS DISTINCT FROM NEW."is_superuser" OR OLD."is_staff" IS DISTINCT FROM NEW."is_staff" OR OLD."is_active" IS DISTINCT FROM NEW."is_active" OR OLD."organization_id" IS DISTINCT FROM NEW."organization_id" OR OLD."date_joined" IS DISTINCT FROM NEW."date_joined" OR OLD."username" IS DISTINCT FROM NEW."username" OR OLD."last_login" IS DISTINCT FROM NEW."last_login" OR OLD."email" IS DISTINCT FROM NEW."email" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."name" IS DISTINCT FROM NEW."name")', func='INSERT INTO "users_userhistory" ("id", "is_superuser", "is_staff", "is_active", "organization_id", "date_joined", "username", "last_login", "email", "infos", "name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."is_superuser", NEW."is_staff", NEW."is_active", NEW."organization_id", NEW."date_joined", NEW."username", NEW."last_login", NEW."email", NEW."infos", NEW."name", NOW(), \'user.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='fb667bc3078e63e1b0122f8ce32ace782cf125c6', operation='UPDATE', pgid='pgtrigger_user_snapshot_update_61c01', table='users_user', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='user',
-            trigger=pgtrigger.compiler.Trigger(name='user_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "users_userhistory" ("id", "is_superuser", "is_staff", "is_active", "organization_id", "date_joined", "username", "last_login", "email", "infos", "name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."is_superuser", OLD."is_staff", OLD."is_active", OLD."organization_id", OLD."date_joined", OLD."username", OLD."last_login", OLD."email", OLD."infos", OLD."name", NOW(), \'user.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='7c74b4d830444aa2dbf02fc61ef4624a04db0c02', operation='DELETE', pgid='pgtrigger_user_before_delete_3f613', table='users_user', when='AFTER')),
         ),
     ]
 

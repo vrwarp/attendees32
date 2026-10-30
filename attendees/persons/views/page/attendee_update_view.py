@@ -15,6 +15,7 @@ from attendees.users.authorization import RouteAndSpyGuard
 from attendees.users.models import Menu
 from attendees.utils.view_helpers import get_object_or_delayed_403
 from attendees.whereabouts.models import Division
+from attendees.access import record as record_access
 
 
 @method_decorator([login_required], name='dispatch')
@@ -45,6 +46,8 @@ class AttendeeUpdateView(RouteAndSpyGuard, UpdateView):
         targeting_attendee_id = self.kwargs.get(
             "attendee_id", self.request.user.attendee_uuid_str()
         )  # if more logic needed when create new, a new view will be better
+        if targeting_attendee_id:
+            record_access(self.request, Attendee(pk=targeting_attendee_id))
         can_merge = self.request.user.can_see_all_organizational_meets_attendees()
         # The records merged into this one, newest first, for the chip by the
         # title and the list it opens. Only a user who may merge sees them.

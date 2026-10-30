@@ -4,13 +4,7 @@ from uuid import uuid4
 import opencc
 from django.conf import settings
 from django.contrib.contenttypes.fields import GenericRelation
-import pghistory
-import django.utils.timezone
-import model_utils.fields
-import partial_date.fields
 # import private_storage.fields
-from private_storage.storage.files import PrivateFileSystemStorage
-from django.contrib.postgres.indexes import GinIndex
 from django.core.exceptions import ValidationError
 from django.db import models
 from django.db.models import Q
@@ -20,10 +14,16 @@ from model_utils.models import SoftDeletableModel, TimeStampedModel
 from private_storage.fields import PrivateFileField
 from unidecode import unidecode
 
-from . import GenderEnum, Note, Utility
+from attendees.utils.search_text import ATTENDEE_SEARCHED_SECTIONS, attendee_full_name
+
+from . import GenderEnum, Note, Searchable, Utility
+from .attendee_links import AttendeeScheduler
+from attendees.history import track
+from attendees.history.querysets import TrackedSoftDeletable
 
 
-class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
+@track
+class Attendee(TrackedSoftDeletable, Searchable, Utility, TimeStampedModel, SoftDeletableModel):
     FAMILY_CATEGORY = 0
     NON_FAMILY_CATEGORY = 25
     PAUSED_CATEGORY = 27
@@ -35,7 +35,6 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
     # AS_PARENT_KEYWORDS = ['notifier', 'caregiver']
     # BE_LISTED_KEYWORDS = ['care receiver']  # let the attendee's attendance showed in their parent/caregiver account
     pasts = GenericRelation("persons.Past")
-    places = GenericRelation("whereabouts.Place")
     notes = GenericRelation(Note)
     # related_ones = models.ManyToManyField('self',through='Relationship',symmetrical=False,related_name='related_to')
     id = models.UUIDField(default=uuid4, primary_key=True, editable=False, serialize=False)
@@ -61,6 +60,14 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
     last_name = models.CharField(max_length=25, db_index=True, null=True, blank=True)
     first_name2 = models.CharField(max_length=12, db_index=True, null=True, blank=True)
     last_name2 = models.CharField(max_length=8, db_index=True, null=True, blank=True)
+    full_name = models.CharField(
+        max_length=80,
+        blank=True,
+        default="",
+        editable=False,
+        db_index=True,
+        help_text="Derived on save: the western name then the eastern one; what lists sort by.",
+    )
     gender = models.CharField(
         max_length=11,
         blank=False,
@@ -90,6 +97,24 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         default=Utility.attendee_infos,
         help_text='Example: {"fixed": {"food_pref": "peanut allergy", "nick_name": "John"}}.'
                   'Please keep {} here even no data',
+    )
+    schedulers = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        through="persons.AttendeeScheduler",
+        through_fields=("attendee", "scheduler"),
+        related_name="scheduling",
+        blank=True,
+        help_text="who may see and change this person's activities: a parent for a child, a guardian for a ward",
+    )
+    emergency_contacts = models.ManyToManyField(
+        "self",
+        symmetrical=False,
+        through="persons.AttendeeEmergencyContact",
+        through_fields=("attendee", "contact"),
+        related_name="emergency_contact_for",
+        blank=True,
+        help_text="who to call about this person in an emergency",
     )
 
     @property
@@ -207,16 +232,7 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         )
 
     def get_relative_emergency_contacts(self):
-        return self.__class__.objects.filter(
-            pk__in=[
-                k for (k, v) in self.infos.get("emergency_contacts", {}).items() if v
-            ]
-        )
-        # self.related_ones.filter(
-        #     to_attendee__relation__relative=True,
-        #     to_attendee__relation__emergency_contact=True,
-        #     to_attendee__finish__gte=datetime.now(timezone.utc),
-        # )
+        return self.emergency_contacts.all()
 
     def under_same_org_with(self, other_attendee_id):
         if other_attendee_id:
@@ -226,48 +242,24 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         return False
 
     def can_be_scheduled_by(self, other_attendee_id):
-        if str(self.id) == other_attendee_id:
+        if str(self.id) == str(other_attendee_id):
             return True
-        return Attendee.objects.filter(
-            pk=self.id, infos__schedulers__contains={other_attendee_id: True}
-        ).exists()
+        return self.schedulers.filter(pk=other_attendee_id).exists()
 
     def can_schedule_attendee(self, other_attendee_id):
-        if str(self.id) == other_attendee_id:
+        if str(self.id) == str(other_attendee_id):
             return True
-        return Attendee.objects.filter(
-            pk=other_attendee_id, infos__schedulers__contains={str(self.id): True}
-        ).exists()
-        # self.__class__.objects.filter(
-        #     (Q(from_attendee__finish__isnull=True) | Q(from_attendee__finish__gt=Utility.now_with_timezone())),
-        #     from_attendee__to_attendee__id=self.id,
-        #     from_attendee__from_attendee__id=other_attendee_id,
-        #     from_attendee__scheduler=True,
-        #     from_attendee__is_removed=False,
-        # ).exists()
+        return self.scheduling.filter(pk=other_attendee_id).exists()
 
     def scheduling_attendees(self, include_self=True):
-        """
-        :return: all attendees that can be scheduled by the attendee. For example, if a kid specified its
-        parent by "scheduler" is true in its infos__schedulers, when calling parent_attendee.scheduling_attendees(),
-        the kid will be returned, means the parent can change/see schedule of the kid.
-        """
-        filters = Q(infos__schedulers__contains={str(self.id): True})
-
+        """The attendees this one may see and change the schedule of: those who list this
+        attendee as a scheduler (a child its parent), and the attendee itself unless told not to.
+        A subquery rather than a join, so nobody comes out twice."""
+        scheduled = AttendeeScheduler.objects.filter(scheduler=self).values("attendee_id")
+        filters = Q(pk__in=scheduled)
         if include_self:
-            filters.add(Q(id=self.id), Q.OR)
-
+            filters |= Q(pk=self.pk)
         return self.__class__.objects.filter(filters)
-        # self.__class__.objects.filter(
-        #     Q(id=self.id)
-        #     |
-        #     Q(
-        #         (Q(from_attendee__finish__isnull=True) | Q(from_attendee__finish__gt=Utility.now_with_timezone())),
-        #         from_attendee__to_attendee__id=self.id,
-        #         from_attendee__scheduler=True,
-        #         from_attendee__is_removed=False,
-        #     )
-        # ).distinct()
 
     @cached_property
     def parents_notifiers_names(self):
@@ -277,7 +269,7 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         return ", ".join(
             list(
                 self.get_relative_emergency_contacts().values_list(
-                    "infos__names__original", flat=True
+                    "full_name", flat=True
                 )
             )
         )
@@ -316,13 +308,6 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
     class Meta:
         db_table = "persons_attendees"
         ordering = ["last_name", "first_name"]
-        indexes = [
-            GinIndex(
-                fields=["infos"],
-                name="attendee_infos_gin",
-            ),
-            # GinIndex(fields=['progressions'], name='attendee_progressions_gin', ),
-        ]
 
     def name1(self):
         return f"{self.first_name or ''} {self.last_name or ''}".strip()
@@ -332,17 +317,18 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
 
     def save(self, *args, **kwargs):
         self.estimated_birthday = Utility.presence(self.estimated_birthday)
-        # Every section of infos is read somewhere (names below, schedulers and
-        # emergency_contacts in AttendeeService), so an infos that arrived
-        # without some of them, or as null, is completed here rather than
-        # failing in each of those places.
+        # Every section of infos is read somewhere (names below, contacts and
+        # fixed by the search text), so an infos that arrived without some of
+        # them, or as null, is completed here rather than failing in each of
+        # those places.
         infos = self.infos if self.infos is not None else {}
         for section, default in Utility.attendee_infos().items():
             infos.setdefault(section, default)
         self.infos = infos
-        name = self.name1()
-        name2 = self.name2()
-        both_names = f"{name} {name2}".strip()
+        both_names = attendee_full_name(
+            self.first_name, self.last_name, self.last_name2, self.first_name2
+        )
+        self.full_name = both_names
         self.infos["names"]["original"] = both_names
         self.infos["names"]["romanization"] = unidecode(
             both_names
@@ -359,10 +345,24 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
         # even when the caller limits update_fields -- as update_or_create()
         # does since Django 4.2 -- or the searchable names keep the old spelling.
         update_fields = kwargs.get("update_fields")
-        if update_fields is not None and "infos" not in update_fields:
-            kwargs["update_fields"] = {*update_fields, "infos"}
+        if update_fields is not None and not {"infos", "full_name"} <= set(update_fields):
+            kwargs["update_fields"] = {*update_fields, "infos", "full_name"}
 
         super(Attendee, self).save(*args, **kwargs)
+
+    def search_text_parts(self):
+        """Names in every form, contacts and the fixed facts: what a person is looked up by.
+
+        The other sections of infos hold ids, flags and timestamps.
+        """
+        infos = self.infos or {}
+        return [
+            self.first_name,
+            self.last_name,
+            self.last_name2,
+            self.first_name2,
+            *(infos.get(section) for section in ATTENDEE_SEARCHED_SECTIONS),
+        ]
 
     def all_names(self):
         return [
@@ -378,49 +378,4 @@ class Attendee(Utility, TimeStampedModel, SoftDeletableModel):
 
 # class TestModel(models.Model):
 #     ...
-# @pghistory.track(
-#     pghistory.Snapshot('attendee.snapshot')
 # )
-
-
-class AttendeesHistory(pghistory.get_event_model(
-    Attendee,
-    pghistory.Snapshot('attendee.snapshot'),
-    pghistory.BeforeDelete('attendee.before_delete'),
-    name='AttendeesHistory',
-    related_name='history',
-)):
-    pgh_id = models.BigAutoField(primary_key=True, serialize=False)
-    pgh_created_at = models.DateTimeField(auto_now_add=True)
-    created = model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')
-    modified = model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')
-    is_removed = models.BooleanField(default=False)
-    pgh_obj = models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='history', to='persons.attendee')
-    id = models.UUIDField(db_index=True, default=uuid4, editable=False, serialize=False)
-    division = models.ForeignKey(db_constraint=False, default=0, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.division')
-    gender = models.CharField(choices=GenderEnum.choices(), default=GenderEnum['UNSPECIFIED'], max_length=11)
-    pgh_label = models.TextField(help_text='The event label.')
-    user = models.ForeignKey(blank=True, db_constraint=False, default=None, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to=settings.AUTH_USER_MODEL)
-    pgh_context = models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')
-    infos = models.JSONField(blank=True, default=Utility.attendee_infos, help_text='Example: {"fixed": {"food_pref": "peanut allergy", "nick_name": "John"}}.Please keep {} here even no data', null=True)
-    first_name = models.CharField(blank=True, max_length=25, null=True)
-    last_name = models.CharField(blank=True, max_length=25, null=True)
-    first_name2 = models.CharField(blank=True, max_length=12, null=True)
-    last_name2 = models.CharField(blank=True, max_length=8, null=True)
-    photo = PrivateFileField(blank=True, null=True, storage=PrivateFileSystemStorage(), upload_to='attendee_portrait', verbose_name='Photo')
-    actual_birthday = models.DateField(blank=True, null=True)
-    estimated_birthday = partial_date.fields.PartialDateField(blank=True, help_text='1998, 1998-12 or 1992-12-31, please enter 1800 if year not known', null=True)
-    deathday = models.DateField(blank=True, null=True)
-    merged_into = models.ForeignKey(
-        blank=True,
-        db_constraint=False,
-        default=None,
-        help_text="Set when this attendee was merged into another; the row stays as a tombstone so the old id can still be followed.",
-        null=True,
-        on_delete=django.db.models.deletion.DO_NOTHING,
-        related_name="+",
-        to="persons.attendee",
-    )
-
-    class Meta:
-        db_table = "persons_attendeeshistory"

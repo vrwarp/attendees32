@@ -9,62 +9,14 @@ from itertools import groupby
 from operator import itemgetter
 from collections import defaultdict
 
-import pghistory
 import pytz
 from django.conf import settings
-from django.contrib.admin.utils import unquote
-from django.contrib.auth import get_user_model
 from django.contrib.contenttypes.models import ContentType
 
 # from schedule.models.events import EventRelation
 from partial_date import PartialDate
 
 
-class PgHistoryPage:
-    object_history_template = 'pghistory_template.html'
-
-    def history_view(self, request, object_id, extra_context=None):
-        """
-        Adds additional context for the custom history template.
-        """
-        extra_context = extra_context or {}
-        try:
-            target_obj = self.model(pk=unquote(object_id))
-            events = list(
-                pghistory.models.AggregateEvent.objects
-                    .target(target_obj)
-                    .order_by('pgh_created_at')
-                    .select_related('pgh_context')
-            )
-            user_ids = {
-                e.pgh_context.metadata.get('user')
-                for e in events
-                if e.pgh_context and e.pgh_context.metadata and e.pgh_context.metadata.get('user')
-            }
-            valid_ids = [int(uid) for uid in user_ids if str(uid).isdigit()]
-            if valid_ids:
-                User = get_user_model()
-                users = {
-                    u.pk: u
-                    for u in User.objects.filter(pk__in=valid_ids)
-                }
-                for e in events:
-                    uid = e.pgh_context.metadata.get('user') if (e.pgh_context and e.pgh_context.metadata) else None
-                    try:
-                        e.context_user = users.get(int(uid)) if uid is not None else None
-                    except (ValueError, TypeError):
-                        e.context_user = None
-            else:
-                for e in events:
-                    e.context_user = None
-
-            extra_context['object_history'] = events
-        except Exception:
-            extra_context.setdefault('object_history', [])
-
-        return super().history_view(
-            request, object_id, extra_context=extra_context
-        )
 
 
 
@@ -96,21 +48,19 @@ class Utility:
     def all_notes(self):  # return self.notes.all()
         return self.notes.all() if callable(getattr(self, "notes", None)) else []
 
-    @staticmethod
-    def pgh_default_sql(history_table_name, table_comment='pgh_obj_id is indexed id/pk', index_on_id=False, original_model_table=''):
-        if not original_model_table:
-            original_model_table = history_table_name.replace('history', '')
-
-        results = f"""
-                ALTER TABLE {history_table_name} ALTER COLUMN pgh_created_at SET DEFAULT CURRENT_TIMESTAMP;
-                COMMENT ON TABLE {history_table_name} IS 'History table: {table_comment} of {original_model_table}';
-                """
-        if index_on_id:
-            results += f"""CREATE INDEX idx_{history_table_name}_id ON {history_table_name}(id);"""
-        return results
 
     @staticmethod
     def default_sql(table_name):
+        """Column defaults for the timestamp and soft-delete columns, for rows written outside Django.
+
+        Only PostgreSQL takes ALTER COLUMN ... SET DEFAULT, and Django fills these
+        columns itself, so on any other database the old migrations that call
+        this run nothing.
+        """
+        from django.db import connection
+
+        if connection.vendor != "postgresql":
+            return ""
         return f"""
                 ALTER TABLE {table_name} ALTER COLUMN created SET DEFAULT CURRENT_TIMESTAMP;
                 ALTER TABLE {table_name} ALTER COLUMN modified SET DEFAULT CURRENT_TIMESTAMP;
@@ -177,9 +127,7 @@ class Utility:
                 "mobility": 2,
             },  # also for food_pref and grade, etc
             "contacts": {},
-            "emergency_contacts": {},
             "progressions": {},
-            "schedulers": {},
             "updating_attendees": {},
         }
 
@@ -192,8 +140,6 @@ class Utility:
     @staticmethod
     def meet_infos():
         return {
-            'allowed_models': ['gathering', 'attendingmeet', 'attendance', 'eventrelation'],  # suppress believe/baptize meets shows up in attendances, etc.
-            'allowed_groups': [],
             'default_attendingmeet_in_weeks': 99999,  # 1886 years, for setting new attendingmeet's finish
             "automatic_creation": {
               "Gathering": True,
@@ -207,7 +153,6 @@ class Utility:
     @staticmethod
     def relationship_infos():
         return {
-            "show_secret": {},
             "updating_attendees": {},
             "comment": None,
             "body": None,

@@ -3,8 +3,6 @@
 from attendees.persons.models import Utility
 from django.contrib.postgres.indexes import GinIndex
 from django.db import migrations, models
-import pgtrigger.compiler
-import pgtrigger.migrations
 import django.utils.timezone
 import model_utils.fields
 
@@ -41,46 +39,5 @@ class Migration(migrations.Migration):
             model_name='Team',
             index=models.Index(condition=models.Q(('is_removed', False)), fields=['site_type', 'site_id'], name='team_sites'),
         ),
-        migrations.AddIndex(
-            model_name='Team',
-            index=GinIndex(fields=['infos'], name='team_infos_gin'),
-        ),
         migrations.RunSQL(Utility.default_sql('occasions_teams')),
-        migrations.CreateModel(
-            name='TeamsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='occasions.team')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('meet', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.meet')),
-                ('display_order', models.SmallIntegerField(default=0)),
-                ('site_type', models.ForeignKey(db_constraint=False, help_text='site: django_content_type id for table name', on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='contenttypes.contenttype')),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"link": "https://..."}. Please keep {} here even no data', null=True)),
-                ('site_id', models.CharField(default='0', max_length=36)),
-                ('slug', models.SlugField(db_index=False)),
-                ('display_name', models.CharField(blank=True, max_length=50, null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'occasions_teamshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_teamshistory', original_model_table='occasions_teams')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='team',
-            trigger=pgtrigger.compiler.Trigger(name='team_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_teamshistory" ("id", "created", "modified", "is_removed", "meet_id", "display_order", "site_type_id", "infos", "site_id", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."meet_id", NEW."display_order", NEW."site_type_id", NEW."infos", NEW."site_id", NEW."slug", NEW."display_name", NOW(), \'team.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='8dca2b915c586d41eee32259a7061f07f93757a9', operation='INSERT', pgid='pgtrigger_team_snapshot_insert_fdbd6', table='occasions_teams', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='team',
-            trigger=pgtrigger.compiler.Trigger(name='team_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."meet_id" IS DISTINCT FROM NEW."meet_id" OR OLD."display_order" IS DISTINCT FROM NEW."display_order" OR OLD."site_type_id" IS DISTINCT FROM NEW."site_type_id" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."site_id" IS DISTINCT FROM NEW."site_id" OR OLD."slug" IS DISTINCT FROM NEW."slug" OR OLD."display_name" IS DISTINCT FROM NEW."display_name")', func='INSERT INTO "occasions_teamshistory" ("id", "created", "modified", "is_removed", "meet_id", "display_order", "site_type_id", "infos", "site_id", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."meet_id", NEW."display_order", NEW."site_type_id", NEW."infos", NEW."site_id", NEW."slug", NEW."display_name", NOW(), \'team.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='f1fae987bad68963f00488016ec0015e89cf1d53', operation='UPDATE', pgid='pgtrigger_team_snapshot_update_1befd', table='occasions_teams', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='team',
-            trigger=pgtrigger.compiler.Trigger(name='team_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_teamshistory" ("id", "created", "modified", "is_removed", "meet_id", "display_order", "site_type_id", "infos", "site_id", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."meet_id", OLD."display_order", OLD."site_type_id", OLD."infos", OLD."site_id", OLD."slug", OLD."display_name", NOW(), \'team.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='eaa1440fb77df9e94dba3a236d8640e795b89003', operation='DELETE', pgid='pgtrigger_team_before_delete_721e1', table='occasions_teams', when='AFTER')),
-        ),
     ]

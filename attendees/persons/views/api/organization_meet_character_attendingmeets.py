@@ -11,6 +11,7 @@ from attendees.occasions.models import Attendance
 from attendees.persons.models import Utility, AttendingMeet
 from attendees.persons.serializers import AttendingMeetEtcSerializer
 from attendees.persons.services import AttendingMeetService
+from attendees.persons.services.search_service import SearchService
 
 
 class ApiOrganizationMeetCharacterAttendingMeetsViewSet(viewsets.ModelViewSet):
@@ -45,11 +46,11 @@ class ApiOrganizationMeetCharacterAttendingMeetsViewSet(viewsets.ModelViewSet):
                     filters.add((Q(start__isnull=True) | Q(start__lte=finish)), Q.AND)
 
                 if search_value:
-                    filters.add((Q(attending__registration__registrant__infos__icontains=search_value)
+                    filters.add((SearchService.contains("attending__registration__registrant__search_text", search_value)
                                 |
-                                Q(attending__attendee__infos__icontains=search_value)
+                                SearchService.contains("attending__attendee__search_text", search_value)
                                 |
-                                Q(infos__icontains=search_value)), Q.AND)
+                                SearchService.contains("search_text", search_value)), Q.AND)
 
                 counters = AttendingMeet.objects.filter(filters).values(group_column).order_by(group_column).annotate(count=Count(group_column))
                 return Response(Utility.group_count(group_column, counters))
@@ -119,7 +120,9 @@ class ApiOrganizationMeetCharacterAttendingMeetsViewSet(viewsets.ModelViewSet):
         instance.attending.attendee.save(update_fields=['modified'])
 
     def perform_destroy(self, instance):
-        allowed_groups = [group for group in instance.meet.infos.get('allowed_groups', []) if group != "organization_participant"]  # intentionally forbid user to delete him/herself
+        allowed_groups = list(
+            instance.meet.allowed_groups.exclude(name="organization_participant").values_list("name", flat=True)
+        )  # intentionally forbid user to delete him/herself
         if self.request.user.belongs_to_groups_of(allowed_groups):
             Attendance.objects.filter(
                 gathering__meet=instance.meet,

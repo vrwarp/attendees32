@@ -25,8 +25,8 @@ def household():
     Category.objects.get_or_create(
         pk=Attendee.NON_FAMILY_CATEGORY, defaults={"type": "folk", "display_name": "other", "infos": {}}
     )
-    Relation.objects.get_or_create(pk=Attendee.HIDDEN_ROLE, defaults={"title": "hidden", "gender": GenderEnum.UNSPECIFIED.value, "reciprocal_ids": []})
-    role, _ = Relation.objects.get_or_create(title="child", defaults={"gender": GenderEnum.UNSPECIFIED.value, "reciprocal_ids": []})
+    Relation.objects.get_or_create(pk=Attendee.HIDDEN_ROLE, defaults={"title": "hidden", "gender": GenderEnum.UNSPECIFIED.value})
+    role, _ = Relation.objects.get_or_create(title="child", defaults={"gender": GenderEnum.UNSPECIFIED.value})
     folk = Folk.objects.create(division=division, category=category, display_name="Doe family", infos={})
     attendee = Attendee.objects.create(division=division, first_name="Jane", last_name="Doe", gender=GenderEnum.UNSPECIFIED.value)
     return {"folk": folk, "attendee": attendee, "role": role}

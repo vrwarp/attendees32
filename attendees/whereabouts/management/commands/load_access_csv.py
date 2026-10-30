@@ -7,8 +7,9 @@ from django.contrib.contenttypes.models import ContentType
 from django.core.files import File
 from django.core.exceptions import ValidationError
 from django.core.management.base import BaseCommand, CommandError
+from django.db import transaction
 
-from address.models import Locality, State, Address
+from address.models import Locality, State
 
 from attendees.occasions.models import Assembly, Meet, Gathering, Attendance, Team, Character
 from attendees.persons.models import Utility, GenderEnum, Folk, Relation, Attendee, FolkAttendee, \
@@ -101,7 +102,7 @@ class Command(BaseCommand):
                 self.stdout.write(f'Number of households successfully imported/updated: {upserted_household_id_count}')
                 self.stdout.write(f'Initial family count: {initial_family_count}. final family count: {Folk.objects.filter(category=Attendee.FAMILY_CATEGORY).count()}', ending="\n\n")
 
-                place_with_family_count = Place.objects.filter(content_type=ContentType.objects.get_for_model(Folk)).count()
+                place_with_family_count = Place.objects.filter(folk__isnull=False).count()
                 self.stdout.write(f'Number of place(address) successfully associated with family (originally 0): {place_with_family_count}')
 
                 self.stdout.write(f'Number of people successfully imported/updated: {upserted_attendee_count}')
@@ -145,8 +146,10 @@ class Command(BaseCommand):
 
         self.stdout.write("\n\nRunning import_addresses:\n")
         successfully_processed_count = 0  # addresses.line_num always advances despite of processing success
-        address_content_type = ContentType.objects.get_for_model(Address)  # ContentType.objects.get(model='address')
         organization = Division.objects.get(slug=division1_slug).organization
+        # Addresses with no place yet wait here for the household that lives at them: a place
+        # must name its subject, so none is written until the household is known.
+        self.staged_places = {}
         for address_dict in addresses:
             try:
                 self.stdout.write('.', ending='')
@@ -199,14 +202,7 @@ class Command(BaseCommand):
                             address.save()
                             place.save()
                     else:
-                        Place.objects.update_or_create(
-                            infos__access_address_id=address_id,  # str
-                            defaults={
-                                **contact_values,
-                                'content_type': address_content_type,
-                                'object_id': str(address_id),  # will update later.  Remember some address are duplicated
-                            }
-                        )
+                        self.staged_places[address_id] = contact_values  # some addresses are shared by households
 
                 else:
                     self.stdout.write(f'Is the address completed or in California? address not good for processing: {address_dict}')
@@ -232,7 +228,6 @@ class Command(BaseCommand):
             'CH': division1,
             'EN': division2,
         }
-        folk_content_type = ContentType.objects.get_for_model(Folk)
         self.stdout.write("\n\nRunning import_households:\n")
         successfully_processed_count = 0  # households.line_num always advances despite of processing success
         pdt = pytz.timezone('America/Los_Angeles')
@@ -278,15 +273,16 @@ class Command(BaseCommand):
                         # old_contact = Place.objects.filter(infos__access_address_id=address_id).first()
                         # address = old_contact.address if old_contact else None
                         saved_place = folk.places.first() or Place.objects.filter(infos__access_address_id=address_id).first()
+                        staged = getattr(self, 'staged_places', {}).get(address_id)
 
-                        if saved_place:
+                        if saved_place or staged:
                             potential_new_place_id = None
 
-                            if saved_place.subject == folk or saved_place.content_type != folk_content_type:
+                            if saved_place and saved_place.folk_id == folk.id:
                                 potential_new_place_id = saved_place.id
-                            address = saved_place.address
+                            address = saved_place.address if saved_place else staged['address']
 
-                            if address and not address.name:
+                            if address and not isinstance(address, dict) and not address.name:
                                 full_address_name = display_name + ' family: ' + address.raw
                                 address.name = display_name
                                 # address.raw = str(folk.id)  # Todo 20220902 double check if folk id needed
@@ -299,8 +295,8 @@ class Command(BaseCommand):
                                 defaults={
                                     'address': address,
                                     'display_name':  display_name,
-                                    'content_type': folk_content_type,
-                                    'object_id': folk.id,
+                                    'folk': folk,
+                                    'organization': folk.division.organization,
                                     'infos': {
                                         'access_address_id': address_id,  # str
                                         'contacts': {
@@ -449,7 +445,7 @@ class Command(BaseCommand):
                             'contacts': contacts,
                             'names': {},
                             'progressions': {attendee_header: Utility.boolean_or_datetext_or_original(people.get(access_header)) for (access_header, attendee_header) in progression_converter.items() if Utility.presence(people.get(access_header)) is not None},
-                            'emergency_contacts': {}, 'schedulers': {}, 'updating_attendees': {},
+                            'updating_attendees': {},
                             'created_reason': 'CFCCH member/directory registration from importer',  # the word "importer" can skip signal
                         }
                     }
@@ -561,9 +557,7 @@ class Command(BaseCommand):
                                 'fixed': {**attendee.infos.get('fixed', {}), **some_household_values},
                                 'contacts': contacts,
                                 'names': attendee.infos.get('names', {}),
-                                'emergency_contacts': attendee.infos.get('emergency_contacts', {}),
                                 'progressions': attendee.infos.get('progressions', {}),
-                                'schedulers': attendee.infos.get('schedulers', {}),
                                 'updating_attendees': attendee.infos.get('updating_attendees', {}),
                             }
 
@@ -714,9 +708,9 @@ class Command(BaseCommand):
                     if not husband:
                         self.stdout.write(f"715, no husband found, here is potential_primary_phone: {potential_primary_phone}")
 
-                    if husband and wife:  # depend on save by save_two_phones()
-                        husband.infos['emergency_contacts'][str(wife.id)] = True
-                        wife.infos['emergency_contacts'][str(husband.id)] = True
+                    if husband and wife:
+                        husband.emergency_contacts.add(wife)
+                        wife.emergency_contacts.add(husband)
 
                     self.save_two_phones(husband, potential_primary_phone or potential_secondary_phone)
                     self.save_two_phones(wife, potential_secondary_phone or potential_primary_phone)
@@ -805,10 +799,10 @@ class Command(BaseCommand):
                 #     )
                 for child in children:
                     for parent in parents:
-                        child.infos['emergency_contacts'][str(parent.id)] = True
-    
+                        child.emergency_contacts.add(parent)
+
                         if child.age() and child.age() < 18:
-                            child.infos['schedulers'][str(parent.id)] = True
+                            child.schedulers.add(parent)
 
                     people_note = child.infos.get('fixed', {}).get('access_people_values', {}).get('PeopleNote')
                     character_id = child.infos.get('fixed', {}).get('access_people_values', {}).get('CharacterId')
@@ -861,10 +855,12 @@ class Command(BaseCommand):
                             title__in=['child', 'son', 'daughter'],
                             gender=child.gender,
                         )
-                        parent.infos['emergency_contacts'][str(child.id)] = child_role.emergency_contact
-                        child.infos['emergency_contacts'][str(parent.id)] = parent_role.emergency_contact
-                        if child.age() and child.age() < 18:
-                            child.infos['schedulers'][str(parent.id)] = parent_role.scheduler
+                        if child_role.emergency_contact:
+                            parent.emergency_contacts.add(child)
+                        if parent_role.emergency_contact:
+                            child.emergency_contacts.add(parent)
+                        if child.age() and child.age() < 18 and parent_role.scheduler:
+                            child.schedulers.add(parent)
                         # Relationship.objects.update_or_create(
                         #     from_attendee=parent,
                         #     to_attendee=child,
@@ -1310,6 +1306,7 @@ class Command(BaseCommand):
         parser.add_argument('rock_meet_slug')
         parser.add_argument('foot_meet_slug')
 
+    @transaction.atomic
     def handle(self, *args, **options):
         self.stdout.write("Running load_access_csv.py... with arguments: ")
         self.stdout.write(f"Reading household_csv_file: {options.get('household_csv_file')}")

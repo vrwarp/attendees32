@@ -190,8 +190,21 @@ class TestAttendanceService:
         assert qs.count() == 1
         first_item = qs.first()
         assert first_item['count'] == 1
-        assert "Test Char" in first_item['characters']
-        assert "Test Team" in first_item['teams']
+        assert "characters" not in first_item, "the names are filled per page, not aggregated in SQL"
+        rows = AttendanceService.attach_characters_and_teams(
+            qs,
+            AttendanceService.attendance_count_filters(
+                user_organization=self.organization,
+                meet_slugs=[self.meet.slug],
+                character_slugs=[self.character.slug],
+                team_ids=[self.team.id],
+                category_ids=[self.category.id],
+                start=self.now - timedelta(days=1),
+                finish=self.now + timedelta(days=1),
+            ),
+        )
+        assert "Test Char" in rows[0]['characters']
+        assert "Test Team" in rows[0]['teams']
 
     def test_batch_create(self):
         # We delete existing attendance to let batch_create make one

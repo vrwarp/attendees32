@@ -19,8 +19,8 @@ class TestApiCategorizedPastsViewSet:
         mock_target_attendee = MagicMock()
         mock_get_object_or_404.return_value = mock_target_attendee
         view.request.user.is_counselor.return_value = True
-        view.request.user.attendee_uuid_str.return_value = "123"
-        
+        view.request.user.attendee_uuid_str.return_value = "6d2a8b5e-1f3c-4a7b-9e2d-0c1b2a3f4e5d"
+
         view.get_queryset()
         mock_target_attendee.pasts.filter.assert_called()
 

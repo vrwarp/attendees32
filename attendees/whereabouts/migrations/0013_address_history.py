@@ -2,72 +2,14 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import pgtrigger.compiler
-import pgtrigger.migrations
-from attendees.persons.models import Utility
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('pghistory', '0004_auto_20220906_1625'),
         ('address', '0005_address_extra'),
         ('whereabouts', '0012_locality_history'),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='AddressProxy',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('address.address',),
-        ),
-        migrations.CreateModel(
-            name='AddressHistory',
-            fields=[
-                ('pgh_id', models.AutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='address.address')),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('id', models.IntegerField()),
-                ('raw', models.CharField(max_length=200)),
-                ('locality', models.ForeignKey(blank=True, db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='address.locality')),
-                ('street_number', models.CharField(blank=True, max_length=20)),
-                ('extra', models.CharField(blank=True, default=None, max_length=20, null=True)),
-                ('name', models.CharField(blank=True, default=None, max_length=40, null=True)),
-                ('type', models.CharField(blank=True, default=None, max_length=20, null=True)),
-                ('hash', models.CharField(blank=True, default=None, max_length=20, null=True)),
-                ('route', models.CharField(blank=True, max_length=100)),
-                ('formatted', models.CharField(blank=True, max_length=200)),
-                ('latitude', models.FloatField(blank=True, null=True)),
-                ('longitude', models.FloatField(blank=True, null=True)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_addresshistory', index_on_id=True, original_model_table='address_address')),
-        migrations.AlterField(
-            model_name='addresshistory',
-            name='pgh_obj',
-            field=models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='history', to='whereabouts.addressproxy'),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='addressproxy',
-            trigger=pgtrigger.compiler.Trigger(name='address_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_addresshistory" ("street_number", "route", "extra", "name", "type", "hash", "locality_id", "raw", "formatted", "latitude", "longitude", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."street_number", NEW."route", NEW."extra", NEW."name", NEW."type", NEW."hash", NEW."locality_id", NEW."raw", NEW."formatted", NEW."latitude", NEW."longitude", NEW."id", NOW(), \'address.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='fc2428a0e89bbe7151590ccb1e2a91e8149a2949', operation='INSERT', pgid='pgtrigger_address_snapshot_insert_48739', table='address_address', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='addressproxy',
-            trigger=pgtrigger.compiler.Trigger(name='address_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."street_number" IS DISTINCT FROM NEW."street_number" OR OLD."route" IS DISTINCT FROM NEW."route" OR OLD."extra" IS DISTINCT FROM NEW."extra" OR OLD."name" IS DISTINCT FROM NEW."name" OR OLD."type" IS DISTINCT FROM NEW."type" OR OLD."hash" IS DISTINCT FROM NEW."hash" OR OLD."locality_id" IS DISTINCT FROM NEW."locality_id" OR OLD."raw" IS DISTINCT FROM NEW."raw" OR OLD."formatted" IS DISTINCT FROM NEW."formatted" OR OLD."latitude" IS DISTINCT FROM NEW."latitude" OR OLD."longitude" IS DISTINCT FROM NEW."longitude" OR OLD."id" IS DISTINCT FROM NEW."id")', func='INSERT INTO "whereabouts_addresshistory" ("street_number", "route", "extra", "name", "type", "hash", "locality_id", "raw", "formatted", "latitude", "longitude", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."street_number", NEW."route", NEW."extra", NEW."name", NEW."type", NEW."hash", NEW."locality_id", NEW."raw", NEW."formatted", NEW."latitude", NEW."longitude", NEW."id", NOW(), \'address.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='b04e6b875069187f2fbb94ff1c2a94c60306a041', operation='UPDATE', pgid='pgtrigger_address_snapshot_update_0c833', table='address_address', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='addressproxy',
-            trigger=pgtrigger.compiler.Trigger(name='address_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_addresshistory" ("street_number", "route", "extra", "name", "type", "hash", "locality_id", "raw", "formatted", "latitude", "longitude", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."street_number", OLD."route", OLD."extra", OLD."name", OLD."type", OLD."hash", OLD."locality_id", OLD."raw", OLD."formatted", OLD."latitude", OLD."longitude", OLD."id", NOW(), \'address.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='6c2753644318c6ec1b4232ad541e2cb7915d3a8e', operation='DELETE', pgid='pgtrigger_address_before_delete_c0bde', table='address_address', when='AFTER')),
-        ),
     ]

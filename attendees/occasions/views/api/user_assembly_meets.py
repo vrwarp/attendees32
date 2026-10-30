@@ -8,7 +8,7 @@ from rest_framework import viewsets
 from rest_framework.exceptions import AuthenticationFailed
 from schedule.models import EventRelation
 
-from attendees.occasions.models import Meet
+from attendees.occasions.models import Meet, MeetAllowedModel
 from attendees.occasions.serializers.meet import MeetSerializer
 from attendees.persons.models import Attendee, AttendingMeet
 
@@ -36,7 +36,7 @@ class ApiUserAssemblyMeetsViewSet(viewsets.ModelViewSet):
                 "HTTP_X_TARGET_ATTENDEE_ID", current_user.attendee_uuid_str() or None
             ),
         )
-        # Todo 20200530: filter meets by user's group like Meet.objects.filter(infos__allowed_groups__0__in=['children_coworker', 'hi']) if infos = {'allowed_groups': ['children_coworker', 'data_organizer']}
+        # Todo 20200530: filter meets by the user's groups, as organization_meets does with Meet.allowed_to_any_of()
         if hasattr(current_user, 'attendee') and current_user_organization:
             filters = {"assembly__division__organization": current_user_organization}
             model = self.request.query_params.get("model")
@@ -52,7 +52,7 @@ class ApiUserAssemblyMeetsViewSet(viewsets.ModelViewSet):
                 filters["assembly__in"] = assemblies
 
             if model:
-                filters["infos__allowed_models__regex"] = fr'({model})'
+                filters["pk__in"] = MeetAllowedModel.objects.filter(model=model).values("meet_id")
 
             event_relations_prefetch = Prefetch(
                 'event_relations',

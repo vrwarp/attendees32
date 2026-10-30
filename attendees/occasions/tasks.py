@@ -1,15 +1,17 @@
 from datetime import datetime
 
-import pghistory
 import pytz
 from celery.utils.log import get_task_logger
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
 from django.core.mail import send_mail
+from django.db import transaction
 
 from attendees.occasions.models import Meet, MessageTemplate
 from attendees.occasions.services import AttendanceService
 from config import celery_app
+
+from attendees.history import context
 
 from .services.gathering_service import GatheringService
 
@@ -34,7 +36,7 @@ def mail_result(mail_variables):
 
 
 @celery_app.task()
-@pghistory.context(modifier='batch create gatherings')
+@context("batch create gatherings")
 def batch_create_gatherings(meet_infos):
     """
     A Celery task to periodically generate gatherings taking arguments from model of "periodic task"
@@ -134,14 +136,15 @@ def batch_create_gatherings(meet_infos):
             return results
 
         end = datetime.utcnow() + relativedelta(months=+meet_info["months_adding"])
-        gathering_results = GatheringService.batch_create(
-            begin=begin.isoformat(sep="T", timespec="milliseconds") + "Z",
-            end=end.isoformat(sep="T", timespec="milliseconds") + "Z",
-            meet_slug=meet_info["meet_slug"],
-            duration=0,
-            meet=meet,
-            user_time_zone=time_zone,
-        )
+        with transaction.atomic():  # one meet's batch is all or nothing
+            gathering_results = GatheringService.batch_create(
+                begin=begin.isoformat(sep="T", timespec="milliseconds") + "Z",
+                end=end.isoformat(sep="T", timespec="milliseconds") + "Z",
+                meet_slug=meet_info["meet_slug"],
+                duration=0,
+                meet=meet,
+                user_time_zone=time_zone,
+            )
 
         results["begin"] = gathering_results["begin"]
         results["end"] = gathering_results["end"]
@@ -159,7 +162,7 @@ def batch_create_gatherings(meet_infos):
 
 
 @celery_app.task()
-@pghistory.context(modifier='batch create attendances')
+@context("batch create attendances")
 def batch_create_attendances(meet_infos):
     """
     A Celery task to periodically generate attendances taking arguments from model of "periodic task"
@@ -260,13 +263,14 @@ def batch_create_attendances(meet_infos):
             return results
 
         end = datetime.utcnow() + relativedelta(months=+meet_info["months_adding"])
-        attendance_results = AttendanceService.batch_create(
-            begin=begin.isoformat(sep="T", timespec="milliseconds") + "Z",
-            end=end.isoformat(sep="T", timespec="milliseconds") + "Z",
-            meet_slug=meet_info["meet_slug"],
-            meet=meet,
-            user_time_zone=time_zone,
-        )
+        with transaction.atomic():  # one meet's batch is all or nothing
+            attendance_results = AttendanceService.batch_create(
+                begin=begin.isoformat(sep="T", timespec="milliseconds") + "Z",
+                end=end.isoformat(sep="T", timespec="milliseconds") + "Z",
+                meet_slug=meet_info["meet_slug"],
+                meet=meet,
+                user_time_zone=time_zone,
+            )
 
         results["begin"] = attendance_results["begin"]
         results["end"] = attendance_results["end"]

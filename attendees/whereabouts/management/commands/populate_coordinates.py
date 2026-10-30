@@ -2,7 +2,7 @@ import time
 import logging
 from django.conf import settings
 from django.core.management.base import BaseCommand
-from django.db.models import Q
+from django.db.models import Min, Q
 from address.models import Address
 from attendees.whereabouts.models import Place
 from attendees.whereabouts.services.coordinates_service import CoordinatesService
@@ -45,11 +45,19 @@ class Command(BaseCommand):
             .exclude(Q(route__isnull=True) | Q(route=''))
         )
 
-        # Optimize by getting only distinct combinations of street_number, route, locality
-        # to feed into the service, minimizing the loop size.
-        distinct_addresses = missing_coords_addresses.order_by(
-            'street_number', 'route', 'locality_id'
-        ).distinct(
+        # Optimize by getting only one representative address per distinct combination of
+        # street_number, route and locality, minimizing the loop size. Postgres could say this
+        # as DISTINCT ON, but that is Postgres-only syntax; grouping and taking the lowest id
+        # per combination is the same choice — the service updates every sibling anyway, so any
+        # representative does — and runs on both backends. order_by() first, or the model's
+        # default ordering would leak into the GROUP BY.
+        representative_ids = (
+            missing_coords_addresses.order_by()
+            .values('street_number', 'route', 'locality_id')
+            .annotate(representative_id=Min('id'))
+            .values_list('representative_id', flat=True)
+        )
+        distinct_addresses = Address.objects.filter(id__in=representative_ids).order_by(
             'street_number', 'route', 'locality_id'
         )
 

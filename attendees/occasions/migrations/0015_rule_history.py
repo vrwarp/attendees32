@@ -2,62 +2,16 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import pgtrigger.compiler
-import pgtrigger.migrations
 from schedule.models import freqs
 
-from attendees.persons.models import Utility
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
         ('schedule', '0014_use_autofields_for_pk'),
-        ('pghistory', '0004_auto_20220906_1625'),
         ('occasions', '0014_calendarrelation_history'),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='RuleProxy',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('schedule.rule',),
-        ),
-        migrations.CreateModel(
-            name='RuleHistory',
-            fields=[
-                ('pgh_id', models.AutoField(primary_key=True, serialize=False)),
-                ('id', models.IntegerField()),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='history', to='occasions.ruleproxy')),
-                ('description', models.TextField(verbose_name='description')),
-                ('params', models.TextField(blank=True, verbose_name='params')),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=django.db.models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-                ('frequency', models.CharField(choices=freqs, max_length=10, verbose_name='frequency')),
-                ('name', models.CharField(max_length=32, verbose_name='name')),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('occasions_rulehistory', index_on_id=True, original_model_table='schedule_rule')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='ruleproxy',
-            trigger=pgtrigger.compiler.Trigger(name='rule_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_rulehistory" ("name", "description", "frequency", "params", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."description", NEW."frequency", NEW."params", NEW."id", NOW(), \'rule.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='02645fd4d6448ea42e2491cb0099cc282fe715ba', operation='INSERT', pgid='pgtrigger_rule_snapshot_insert_cd822', table='schedule_rule', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='ruleproxy',
-            trigger=pgtrigger.compiler.Trigger(name='rule_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."name" IS DISTINCT FROM NEW."name" OR OLD."description" IS DISTINCT FROM NEW."description" OR OLD."frequency" IS DISTINCT FROM NEW."frequency" OR OLD."params" IS DISTINCT FROM NEW."params" OR OLD."id" IS DISTINCT FROM NEW."id")', func='INSERT INTO "occasions_rulehistory" ("name", "description", "frequency", "params", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."description", NEW."frequency", NEW."params", NEW."id", NOW(), \'rule.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='af78cd2307a9ae6713b2f315d7633cf99a6c938e', operation='UPDATE', pgid='pgtrigger_rule_snapshot_update_46a42', table='schedule_rule', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='ruleproxy',
-            trigger=pgtrigger.compiler.Trigger(name='rule_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "occasions_rulehistory" ("name", "description", "frequency", "params", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."name", OLD."description", OLD."frequency", OLD."params", OLD."id", NOW(), \'rule.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='0bb3d09ca0eaace4db9c60ebcc88ee3e57f46c83', operation='DELETE', pgid='pgtrigger_rule_before_delete_6a82e', table='schedule_rule', when='AFTER')),
-        ),
     ]

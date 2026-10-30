@@ -2,64 +2,14 @@
 
 from django.db import migrations, models
 import django.db.models.deletion
-import pgtrigger.compiler
-import pgtrigger.migrations
-from attendees.persons.models import Utility
 
 
 class Migration(migrations.Migration):
 
     dependencies = [
-        ('pghistory', '0004_auto_20220906_1625'),
         ('address', '0005_address_extra'),
         ('whereabouts', '0010_country_history'),
     ]
 
     operations = [
-        migrations.CreateModel(
-            name='StateProxy',
-            fields=[
-            ],
-            options={
-                'proxy': True,
-                'indexes': [],
-                'constraints': [],
-            },
-            bases=('address.state',),
-        ),
-        migrations.CreateModel(
-            name='StateHistory',
-            fields=[
-                ('pgh_id', models.AutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='address.state')),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('id', models.IntegerField()),
-                ('country', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='address.country')),
-                ('code', models.CharField(blank=True, max_length=8)),
-                ('name', models.CharField(blank=True, max_length=165)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'abstract': False,
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_statehistory', index_on_id=True, original_model_table='address_state')),
-        migrations.AlterField(
-            model_name='statehistory',
-            name='pgh_obj',
-            field=models.ForeignKey(db_constraint=False, on_delete=django.db.models.deletion.DO_NOTHING, related_name='history', to='whereabouts.stateproxy'),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='stateproxy',
-            trigger=pgtrigger.compiler.Trigger(name='state_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_statehistory" ("name", "code", "country_id", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."code", NEW."country_id", NEW."id", NOW(), \'state.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='3cb37399b2d0e164363ed86d46723fae83163adf', operation='INSERT', pgid='pgtrigger_state_snapshot_insert_f7f69', table='address_state', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='stateproxy',
-            trigger=pgtrigger.compiler.Trigger(name='state_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."name" IS DISTINCT FROM NEW."name" OR OLD."code" IS DISTINCT FROM NEW."code" OR OLD."country_id" IS DISTINCT FROM NEW."country_id" OR OLD."id" IS DISTINCT FROM NEW."id")', func='INSERT INTO "whereabouts_statehistory" ("name", "code", "country_id", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."name", NEW."code", NEW."country_id", NEW."id", NOW(), \'state.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='ffa9cf840e7522e361f5af536fa2f58451a58aea', operation='UPDATE', pgid='pgtrigger_state_snapshot_update_5b5db', table='address_state', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='stateproxy',
-            trigger=pgtrigger.compiler.Trigger(name='state_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_statehistory" ("name", "code", "country_id", "id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."name", OLD."code", OLD."country_id", OLD."id", NOW(), \'state.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='67e752693e483a84b3a2c8f71028fa0f950f3f3a', operation='DELETE', pgid='pgtrigger_state_before_delete_8d5c5', table='address_state', when='AFTER')),
-        ),
     ]

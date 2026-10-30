@@ -9,6 +9,7 @@ from attendees.persons.models import Attendee
 from attendees.whereabouts.models import Place
 from attendees.whereabouts.serializers import PlaceSerializer
 from attendees.whereabouts.services.coordinates_service import CoordinatesService
+from attendees.access import record
 
 
 class ApiDatagridDataPlaceViewSet(
@@ -25,6 +26,8 @@ class ApiDatagridDataPlaceViewSet(
         place = Place.objects.filter(
             pk=place_id, organization=request.user.organization
         ).first()
+        if place is not None:
+            record(request, place)
         serializer = PlaceSerializer(place)
         return Response(serializer.data)
 

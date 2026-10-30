@@ -4,8 +4,6 @@ from attendees.persons.models import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -34,43 +32,4 @@ class Migration(migrations.Migration):
             bases=(models.Model, Utility),
         ),
         migrations.RunSQL(Utility.default_sql('whereabouts_divisions')),
-        migrations.AddIndex(
-            model_name='division',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='division_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='DivisionsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='whereabouts.division')),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('id', models.BigIntegerField(db_index=True)),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('organization', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='whereabouts.organization')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('audience_auth_group', models.ForeignKey(db_constraint=False, help_text='which auth group does the joining general participant belong to?', on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='auth.group')),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"show_attendee_infos": {"insurer": true}}. Please keep {} here even no data', null=True)),
-                ('slug', models.SlugField(db_index=False)),
-                ('display_name', models.CharField(help_text='"Junior Ministry" is a magic word to show certain Attendee infos in attendee_update_view.js', max_length=50)),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'whereabouts_divisionshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('whereabouts_divisionshistory', original_model_table='whereabouts_divisions')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='division',
-            trigger=pgtrigger.compiler.Trigger(name='division_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_divisionshistory" ("id", "created", "modified", "organization_id", "is_removed", "audience_auth_group_id", "infos", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."organization_id", NEW."is_removed", NEW."audience_auth_group_id", NEW."infos", NEW."slug", NEW."display_name", NOW(), \'division.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='1290ce62c57a609b1fa094affa02efe4e8b0d714', operation='INSERT', pgid='pgtrigger_division_snapshot_insert_8d6d6', table='whereabouts_divisions', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='division',
-            trigger=pgtrigger.compiler.Trigger(name='division_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."organization_id" IS DISTINCT FROM NEW."organization_id" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."audience_auth_group_id" IS DISTINCT FROM NEW."audience_auth_group_id" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."slug" IS DISTINCT FROM NEW."slug" OR OLD."display_name" IS DISTINCT FROM NEW."display_name")', func='INSERT INTO "whereabouts_divisionshistory" ("id", "created", "modified", "organization_id", "is_removed", "audience_auth_group_id", "infos", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."organization_id", NEW."is_removed", NEW."audience_auth_group_id", NEW."infos", NEW."slug", NEW."display_name", NOW(), \'division.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='6ac466c0e5b291633ef071067557f8d36bea1d93', operation='UPDATE', pgid='pgtrigger_division_snapshot_update_655b3', table='whereabouts_divisions', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='division',
-            trigger=pgtrigger.compiler.Trigger(name='division_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "whereabouts_divisionshistory" ("id", "created", "modified", "organization_id", "is_removed", "audience_auth_group_id", "infos", "slug", "display_name", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."organization_id", OLD."is_removed", OLD."audience_auth_group_id", OLD."infos", OLD."slug", OLD."display_name", NOW(), \'division.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='0ab74b96af3f5d93946c49ea7dbb39ebff6fc0d4', operation='DELETE', pgid='pgtrigger_division_before_delete_10eee', table='whereabouts_divisions', when='AFTER')),
-        ),
     ]

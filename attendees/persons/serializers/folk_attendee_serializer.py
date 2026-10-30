@@ -3,6 +3,8 @@ from rest_framework import serializers
 from attendees.persons.models import Folk, FolkAttendee
 from attendees.persons.serializers import FolkSerializer
 
+from .confidential import ConfidentialSerializerMixin
+
 
 class FolkField(serializers.PrimaryKeyRelatedField):
     """
@@ -21,7 +23,7 @@ class FolkField(serializers.PrimaryKeyRelatedField):
         return FolkSerializer(value, context=self.context).data
 
 
-class FolkAttendeeSerializer(serializers.ModelSerializer):
+class FolkAttendeeSerializer(ConfidentialSerializerMixin, serializers.ModelSerializer):
     folk = FolkField(queryset=Folk.objects.all())
     file_path = serializers.SerializerMethodField(required=False, read_only=True)
 

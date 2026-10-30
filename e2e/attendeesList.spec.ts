@@ -1,40 +1,12 @@
 import { test, expect } from '@playwright/test';
 
+import { signInAsJack } from './seed';
+
 test.describe('Attendee List Page', () => {
 
   // Global login before each test (mimicking your neighbor.spec.ts setup)
   test.beforeEach(async ({ page }) => {
-    // Listen for browser logs and page errors
-    page.on('console', msg => {
-      console.log(`BROWSER LOG [${msg.type()}]: ${msg.text()}`);
-    });
-    page.on('pageerror', err => {
-      console.error(`BROWSER ERROR: ${err.message}`);
-    });
-
-    console.log('--- STARTING LOGIN FLOW ---');
-    console.log('Navigating to login page: /accounts/login/...');
-    await page.goto('/accounts/login/');
-    
-    await page.fill('input[name="login"]', 'jack'); // Try user 'jack'
-    const password = process.env.C_PASSWORD || 'your_password_for_superuser_in_seed';
-    
-    // Set the password directly via DOM evaluation to avoid logging it in Playwright reports
-    await page.locator('input[name="password"]').evaluate((el, val) => {
-      (el as HTMLInputElement).value = val;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    }, password);
-    
-    await page.click('button[type="submit"]');
-
-    try {
-      await page.waitForURL('**/users/jack/**', { timeout: 10000 });
-      console.log(`--- LOGIN SUCCESSFUL ---`);
-    } catch (error) {
-      console.error(`--- LOGIN FAILED ---`);
-      throw error;
-    } 
+    await signInAsJack(page);
   });
 
   test('Should show more than one attendee in attendeeDatagrid at div.dataAttendees', async ({ page }) => {

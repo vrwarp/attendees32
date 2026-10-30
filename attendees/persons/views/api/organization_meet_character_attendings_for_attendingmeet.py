@@ -8,6 +8,7 @@ from rest_framework.response import Response
 
 from attendees.persons.models import Utility, Attending
 from attendees.persons.serializers.attending_minimal_serializer import AttendingMinimalSerializer
+from attendees.persons.services.search_service import SearchService
 
 
 class ApiOrganizationMeetCharacterAttendingsViewSetForAttendingMeet(LoginRequiredMixin, viewsets.ModelViewSet):
@@ -54,9 +55,9 @@ class ApiOrganizationMeetCharacterAttendingsViewSetForAttendingMeet(LoginRequire
             else:  # user might never join any meets before
                 filters = Q(attendee__division__organization=current_user.organization)
                 if search_value and search_operation == 'contains' and search_expression == 'attending_label':  # for searching in drop down of popup editor
-                    filters.add((Q(registration__registrant__infos__icontains=search_value)
+                    filters.add((SearchService.contains("registration__registrant__search_text", search_value)
                                    |
-                                   Q(attendee__infos__icontains=search_value)), Q.AND)
+                                   SearchService.contains("attendee__search_text", search_value)), Q.AND)
 
                 return Attending.objects.filter(filters).order_by('attendee__last_name')
 

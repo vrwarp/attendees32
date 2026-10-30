@@ -4,8 +4,6 @@ from attendees.persons.models import Utility
 from django.db import migrations, models
 import django.utils.timezone
 import model_utils.fields
-import pgtrigger.compiler
-import pgtrigger.migrations
 
 
 class Migration(migrations.Migration):
@@ -46,47 +44,5 @@ class Migration(migrations.Migration):
         migrations.AddConstraint(
             model_name='attendingmeet',
             constraint=models.UniqueConstraint(fields=("meet", "attending", "character", "team"), condition=models.Q(is_removed=False), name='attending_meet_uniq'),
-        ),
-        migrations.AddIndex(
-            model_name='attendingmeet',
-            index=django.contrib.postgres.indexes.GinIndex(fields=['infos'], name='attendingmeet_infos_gin'),
-        ),
-        migrations.CreateModel(
-            name='AttendingMeetsHistory',
-            fields=[
-                ('pgh_id', models.BigAutoField(primary_key=True, serialize=False)),
-                ('pgh_created_at', models.DateTimeField(auto_now_add=True)),
-                ('pgh_label', models.TextField(help_text='The event label.')),
-                ('pgh_obj', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='history', to='persons.attendingmeet')),
-                ('id', models.BigIntegerField()),
-                ('created', model_utils.fields.AutoCreatedField(default=django.utils.timezone.now, editable=False, verbose_name='created')),
-                ('modified', model_utils.fields.AutoLastModifiedField(default=django.utils.timezone.now, editable=False, verbose_name='modified')),
-                ('is_removed', models.BooleanField(default=False)),
-                ('start', models.DateTimeField(default=Utility.now_with_timezone)),
-                ('finish', models.DateTimeField(help_text='Required for user to filter by time')),
-                ('infos', models.JSONField(blank=True, default=dict, help_text='Example: {"kid_points": 5, "pdf_folks": ["uuid1"]}. Please keep {} here even no data', null=True)),
-                ('meet', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.meet')),
-                ('attending', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='persons.attending')),
-                ('character', models.ForeignKey(db_constraint=False, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.character')),
-                ('category', models.ForeignKey(db_constraint=False, default=1, help_text='primary, secondary, etc (primary will be displayed first)', on_delete=models.SET(1), related_name='+', related_query_name='+', to='persons.category')),
-                ('team', models.ForeignKey(blank=True, db_constraint=False, default=None, help_text='empty for main meet', null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', related_query_name='+', to='occasions.team')),
-                ('pgh_context', models.ForeignKey(db_constraint=False, null=True, on_delete=models.deletion.DO_NOTHING, related_name='+', to='pghistory.context')),
-            ],
-            options={
-                'db_table': 'persons_attending_meetshistory',
-            },
-        ),
-        migrations.RunSQL(Utility.pgh_default_sql('persons_attending_meetshistory', original_model_table='persons_attending_meets')),
-        pgtrigger.migrations.AddTrigger(
-            model_name='attendingmeet',
-            trigger=pgtrigger.compiler.Trigger(name='attendingmeet_snapshot_insert', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_attending_meetshistory" ("id", "created", "modified", "is_removed", "start", "finish", "infos", "meet_id", "attending_id", "character_id", "category_id", "team_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."start", NEW."finish", NEW."infos", NEW."meet_id", NEW."attending_id", NEW."character_id", NEW."category_id", NEW."team_id", NOW(), \'attendingmeet.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='43f8830cdd08b06e9f09a405412dda0f6a0d145c', operation='INSERT', pgid='pgtrigger_attendingmeet_snapshot_insert_cf2ce', table='persons_attending_meets', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='attendingmeet',
-            trigger=pgtrigger.compiler.Trigger(name='attendingmeet_snapshot_update', sql=pgtrigger.compiler.UpsertTriggerSql(condition='WHEN (OLD."id" IS DISTINCT FROM NEW."id" OR OLD."created" IS DISTINCT FROM NEW."created" OR OLD."modified" IS DISTINCT FROM NEW."modified" OR OLD."is_removed" IS DISTINCT FROM NEW."is_removed" OR OLD."start" IS DISTINCT FROM NEW."start" OR OLD."finish" IS DISTINCT FROM NEW."finish" OR OLD."infos" IS DISTINCT FROM NEW."infos" OR OLD."meet_id" IS DISTINCT FROM NEW."meet_id" OR OLD."attending_id" IS DISTINCT FROM NEW."attending_id" OR OLD."character_id" IS DISTINCT FROM NEW."character_id" OR OLD."category_id" IS DISTINCT FROM NEW."category_id" OR OLD."team_id" IS DISTINCT FROM NEW."team_id")', func='INSERT INTO "persons_attending_meetshistory" ("id", "created", "modified", "is_removed", "start", "finish", "infos", "meet_id", "attending_id", "character_id", "category_id", "team_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (NEW."id", NEW."created", NEW."modified", NEW."is_removed", NEW."start", NEW."finish", NEW."infos", NEW."meet_id", NEW."attending_id", NEW."character_id", NEW."category_id", NEW."team_id", NOW(), \'attendingmeet.snapshot\', NEW."id", _pgh_attach_context()); RETURN NULL;', hash='3aacbb55bd2e99f8c78204d4979235e740d20e4c', operation='UPDATE', pgid='pgtrigger_attendingmeet_snapshot_update_2082d', table='persons_attending_meets', when='AFTER')),
-        ),
-        pgtrigger.migrations.AddTrigger(
-            model_name='attendingmeet',
-            trigger=pgtrigger.compiler.Trigger(name='attendingmeet_before_delete', sql=pgtrigger.compiler.UpsertTriggerSql(func='INSERT INTO "persons_attending_meetshistory" ("id", "created", "modified", "is_removed", "start", "finish", "infos", "meet_id", "attending_id", "character_id", "category_id", "team_id", "pgh_created_at", "pgh_label", "pgh_obj_id", "pgh_context_id") VALUES (OLD."id", OLD."created", OLD."modified", OLD."is_removed", OLD."start", OLD."finish", OLD."infos", OLD."meet_id", OLD."attending_id", OLD."character_id", OLD."category_id", OLD."team_id", NOW(), \'attendingmeet.before_delete\', OLD."id", _pgh_attach_context()); RETURN NULL;', hash='0bb5474c0f7352e5ff9ba123ef161c5935977b3d', operation='DELETE', pgid='pgtrigger_attendingmeet_before_delete_43c4c', table='persons_attending_meets', when='AFTER')),
         ),
     ]

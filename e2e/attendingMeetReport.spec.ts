@@ -1,27 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+import { signInAsJack } from './seed';
+
 test.describe('AttendingMeet Report List View', () => {
 
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => {
-      console.log(`BROWSER LOG [${msg.type()}]: ${msg.text()}`);
-    });
-    page.on('pageerror', err => {
-      console.error(`BROWSER ERROR: ${err.message}`);
-    });
-
-    await page.goto('/accounts/login/');
-    await page.fill('input[name="login"]', 'jack');
-
-    const password = process.env.C_PASSWORD || 'your_password_for_superuser_in_seed';
-    await page.locator('input[name="password"]').evaluate((el, val) => {
-      (el as HTMLInputElement).value = val;
-    }, password);
-    
-    await page.locator('input[name="password"]').dispatchEvent('input');
-    await page.click('button[type="submit"]');
-
-    await expect(page.locator('a[href="/accounts/logout/"]')).toBeVisible({ timeout: 15000 });
+    await signInAsJack(page);
   });
 
   test('David should be in same family as Abigail and Chileab, single and double clicks work', async ({ page }) => {

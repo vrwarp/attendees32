@@ -4,8 +4,9 @@ from django.db.models import Q
 from django_json_widget.widgets import JSONEditorWidget
 
 from attendees.occasions.models import Attendance, Meet, Team, Character, Assembly
-from attendees.persons.models import AttendingMeet, FolkAttendee, Category, Past, Note, Folk, Attendee, Registration, \
-    Attending, Relation, PgHistoryPage
+from attendees.persons.models import AttendingMeet, FolkAttendee, Category, Past, Note, Folk, Attendee, Registration, Attending, Relation
+from attendees.history.admin import HistoryPage
+from attendees.persons.models.attendee_links import AttendeeEmergencyContact, AttendeeScheduler
 
 
 # from attendees.occasions.models import *
@@ -36,9 +37,28 @@ class AttendingMeetInline(admin.StackedInline):
 class FolkAttendeeInline(admin.TabularInline):
     model = FolkAttendee
     extra = 0
+    autocomplete_fields = ("viewers",)
 
 
-class CategoryAdmin(PgHistoryPage, admin.ModelAdmin):
+class SchedulerInline(admin.TabularInline):
+    model = AttendeeScheduler
+    fk_name = "attendee"
+    extra = 0
+    autocomplete_fields = ("scheduler",)
+    verbose_name = "scheduler"
+    verbose_name_plural = "schedulers: who may see and change this person's activities"
+
+
+class EmergencyContactInline(admin.TabularInline):
+    model = AttendeeEmergencyContact
+    fk_name = "attendee"
+    extra = 0
+    autocomplete_fields = ("contact",)
+    verbose_name = "emergency contact"
+    verbose_name_plural = "emergency contacts"
+
+
+class CategoryAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
@@ -52,16 +72,18 @@ class CategoryAdmin(PgHistoryPage, admin.ModelAdmin):
         js = ["js/admin/list_filter_collapse.js"]
 
 
-class PastAdmin(PgHistoryPage, admin.ModelAdmin):
+class PastAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
-    # Todo 20210528  combine with NoteAdmin's show_secret
-    search_fields = ("id", "display_name", "infos")
+    search_fields = ("id", "display_name")
     readonly_fields = ["id", "created", "modified"]
     list_display = ("subject", "category", "display_order", "display_name", "when")
+    autocomplete_fields = ("viewers",)
 
     def get_queryset(self, request):
+        """A counselor sees every past but the counseling ones kept from them; anyone else sees
+        no counseling past and, of the rest, only those they may view."""
         qs = super().get_queryset(request)
         counseling_category = Category.objects.filter(
             type="note", display_name=Past.COUNSELING
@@ -72,39 +94,24 @@ class PastAdmin(PgHistoryPage, admin.ModelAdmin):
                 request,
                 "Not all, but only those records accessible to you will be listed here.",
             )
-        requester_permission = {
-            "infos__show_secret__" + request.user.attendee_uuid_str(): True
-        }
+        visible = Past.visible_to(request.user.attendee_uuid_str())
 
         if request.user.is_counselor():
-            counselors_permission = {"infos__show_secret__" + Past.ALL_COUNSELORS: True}
             return qs.filter(
                 Q(organization=request.user.organization),
-                (
-                    ~Q(category=counseling_category)
-                    | (
-                        Q(category=counseling_category)
-                        and (Q(**requester_permission) | Q(**counselors_permission))
-                    )
-                ),
+                ~Q(category=counseling_category) | visible | Q(counselors_may_view=True),
             )
 
-        else:
-            return qs.filter(
-                Q(organization=request.user.organization),
-                (
-                    Q(**requester_permission)
-                    | Q(infos__show_secret={})
-                    | Q(infos__show_secret__isnull=True)
-                ),
-            ).exclude(category__display_name=Past.COUNSELING)
+        return qs.filter(
+            visible, organization=request.user.organization
+        ).exclude(category__display_name=Past.COUNSELING)
 
 
-class FolkAdmin(PgHistoryPage, admin.ModelAdmin):
+class FolkAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
-    search_fields = ("id", "display_name", "infos")
+    search_fields = ("id", "display_name")
     readonly_fields = ["is_removed", "id", "created", "modified"]
     inlines = (FolkAttendeeInline,)
     list_display_links = ("id",)
@@ -136,10 +143,10 @@ class FolkAdmin(PgHistoryPage, admin.ModelAdmin):
         return qs.filter(division__organization=request.user.organization)
 
 
-class FolkAttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
+class FolkAttendeeAdmin(HistoryPage, admin.ModelAdmin):
     readonly_fields = ["display_folk_id", "is_removed", "id", "created", "modified"]
     list_display = ("id", "folk", "attendee", "role", "is_removed", "infos")
-    search_fields = ("id", "attendee__id", "attendee__infos", "folk__id", "infos")
+    search_fields = ("id", "attendee__id", "attendee__search_text", "folk__id")
 
     def display_folk_id(self, obj):
         return obj.folk.id
@@ -162,27 +169,32 @@ class FolkAttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
         return qs.filter(folk__division__organization=request.user.organization).order_by(*ordering)
 
 
-class RelationAdmin(PgHistoryPage, admin.ModelAdmin):
+class RelationAdmin(HistoryPage, admin.ModelAdmin):
     readonly_fields = ["id", "created", "modified"]
     list_display_links = ("title",)
+    filter_horizontal = ("reciprocals",)
     list_display = (
         "id",
         "title",
-        "reciprocal_ids",
+        "reciprocal_titles",
         "emergency_contact",
         "scheduler",
         "relative",
         "display_order",
     )
 
+    @admin.display(description="corresponding relations")
+    def reciprocal_titles(self, obj):
+        return ", ".join(obj.reciprocals.values_list("title", flat=True))
 
-class AttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
+
+class AttendeeAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
-    search_fields = ("id", "infos")
+    search_fields = ("id", "search_text")
     readonly_fields = ["id", "created", "modified"]
-    # inlines = (RelationshipInline,)  # AttendeeContactInline
+    inlines = (SchedulerInline, EmergencyContactInline)
     list_display_links = ("id",)
     list_display = ("id", "full_name", "infos")
 
@@ -204,7 +216,7 @@ class AttendeeAdmin(PgHistoryPage, admin.ModelAdmin):
         return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
-class RegistrationAdmin(PgHistoryPage, admin.ModelAdmin):
+class RegistrationAdmin(HistoryPage, admin.ModelAdmin):
     search_fields = (
         'registrant__first_name',
         'registrant__last_name',
@@ -238,7 +250,7 @@ class AttendanceInline(admin.StackedInline):
     extra = 0
 
 
-class AttendingAdmin(PgHistoryPage, admin.ModelAdmin):
+class AttendingAdmin(HistoryPage, admin.ModelAdmin):
     # list_per_page = 1000
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
@@ -273,13 +285,14 @@ class AttendingAdmin(PgHistoryPage, admin.ModelAdmin):
         js = ["js/admin/list_filter_collapse.js"]
 
 
-class NoteAdmin(PgHistoryPage, admin.ModelAdmin):
+class NoteAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
     search_fields = ("body",)
     readonly_fields = ["id", "created", "modified"]
     list_display = ("id", "category", "content_object", "display_order", "modified")
+    autocomplete_fields = ("viewers",)
 
     def get_queryset(self, request):  # even super user cannot see all in DjangoAdmin
         qs = super().get_queryset(request)
@@ -293,19 +306,10 @@ class NoteAdmin(PgHistoryPage, admin.ModelAdmin):
                 "Not all, but only those notes accessible to you will be listed here.",
             )
         if request.user.is_counselor():
-            requester_permission = {
-                "infos__show_secret__" + request.user.attendee_uuid_str(): True
-            }
-            counselors_permission = {"infos__show_secret__" + Note.ALL_COUNSELORS: True}
+            visible = Note.visible_to(request.user.attendee_uuid_str())
             return qs.filter(
                 Q(organization=request.user.organization),
-                (
-                    ~Q(category=counseling_category)
-                    | (
-                        Q(category=counseling_category)
-                        and (Q(**requester_permission) | Q(**counselors_permission))
-                    )
-                ),
+                ~Q(category=counseling_category) | visible | Q(counselors_may_view=True),
             )
         return qs.filter(organization=request.user.organization).exclude(
             category=counseling_category
@@ -336,13 +340,13 @@ class NoteAdmin(PgHistoryPage, admin.ModelAdmin):
 #         )
 
 
-class AttendingMeetAdmin(PgHistoryPage, admin.ModelAdmin):
+class AttendingMeetAdmin(HistoryPage, admin.ModelAdmin):
     formfield_overrides = {
         models.JSONField: {"widget": JSONEditorWidget},
     }
     list_display_links = ("attending",)
     autocomplete_fields = ('attending',)
-    search_fields = ('infos', 'attending__attendee__infos',)
+    search_fields = ('search_text', 'attending__attendee__search_text',)
     readonly_fields = ["id", "created", "modified"]
     list_display = (
         "id",
