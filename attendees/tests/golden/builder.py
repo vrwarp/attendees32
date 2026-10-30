@@ -33,6 +33,7 @@ from decimal import Decimal
 from typing import Dict, List, Optional
 
 from allauth.account.models import EmailAddress
+from allauth.mfa.totp.internal.auth import TOTP
 from django.contrib.auth.models import Group
 from django.contrib.contenttypes.models import ContentType
 from django.core.management import call_command
@@ -75,6 +76,7 @@ from .constants import (
     DIVISION_CROSSING,
     EducationCategory,
     FolkCategory,
+    GOLDEN_TOTP_SECRET,
     GOLDEN_UUID_NAMESPACE,
     Groups,
     HISTORY_WEEKS,
@@ -157,13 +159,20 @@ class Persona:
     groups: tuple
     attendee_key: Optional[str]
     is_superuser: bool = False
+    #: Admin access without superuser rights; a superuser is staff as well.
+    is_staff: bool = False
+    #: The base32 secret of an enrolled authenticator app, for the logins that must have one.
+    totp_secret: Optional[str] = None
     organization_id: Optional[int] = ORGANIZATION_ID
     description: str = ""
 
 
 PERSONAS = (
-    Persona("golden_superuser", (), None, is_superuser=True,
-            description="Django superuser, sees everything"),
+    Persona("golden_superuser", (), None, is_superuser=True, totp_secret=GOLDEN_TOTP_SECRET,
+            description="Django superuser, sees everything; signs in with a code from an authenticator app"),
+    Persona("golden_new_officer", (), None, is_staff=True,
+            description="newly appointed officer with admin access and no second factor yet, "
+                        "so every page sends them to enrol"),
     Persona("golden_data_organizer", (Groups.DATA_ORGANIZER, Groups.PARTICIPANT),
             "zhang_zhongxin",
             description="data admin: the pastor who maintains the roster"),
@@ -1122,8 +1131,10 @@ class GoldenBuilder:
                 password=PERSONA_PASSWORD,
                 name=persona.description,
                 is_superuser=persona.is_superuser,
-                is_staff=persona.is_superuser,
+                is_staff=persona.is_superuser or persona.is_staff,
             )
+            if persona.totp_secret:
+                TOTP.activate(user, persona.totp_secret)
             if persona.organization_id:
                 user.organization = self.organization
             user.infos = {"settings": {"persona": persona.username}}

@@ -110,3 +110,43 @@ class AtomicWritesMiddleware:
             with transaction.atomic():
                 return self.get_response(request)
         return self.get_response(request)
+
+
+class MFARequiredMiddleware:
+    """An account that must have a second factor and has none yet gets only the enrolment pages.
+
+    Staff and superusers see other people's records, so a stolen password
+    alone must open nothing: until they enrol, a page request is sent to
+    the enrolment page and an API request is refused. Sign-out, the account
+    pages and static files stay open; uploaded files are not, since the
+    photos are personal data too. Token-authenticated API clients are not
+    affected, since REST Framework authenticates them inside the view.
+    """
+
+    OPEN_PREFIXES = ("/accounts/", "/static/")
+
+    def __init__(self, get_response):
+        self.get_response = get_response
+
+    def __call__(self, request):
+        from django.contrib import messages
+        from django.http import JsonResponse
+        from django.shortcuts import redirect
+        from django.urls import reverse
+
+        from attendees.users.adapters import mfa_missing
+
+        if not request.path.startswith(self.OPEN_PREFIXES) and mfa_missing(getattr(request, "user", None)):
+            if "/api/" in request.path:
+                return JsonResponse(
+                    {"detail": "This account must have a second factor before it can read other people's records."},
+                    status=403,
+                )
+            messages.warning(
+                request,
+                "This account sees other people's records, so it must have a second factor (an authenticator "
+                "app or a passkey) before it can open any other page. Add one here.",
+                fail_silently=True,
+            )
+            return redirect(reverse("mfa_index"))
+        return self.get_response(request)

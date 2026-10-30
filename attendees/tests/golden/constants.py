@@ -285,6 +285,11 @@ ROCK_TEAM_SLUG_BY_GRADE = {
 
 
 # --------------------------------------------------------------- auth groups
+#: The base32 secret of the golden superuser's authenticator app. Staff and superusers cannot open
+#: a page without a second factor, so the browser suite signs the superuser in with a code from it.
+GOLDEN_TOTP_SECRET = "GOLDENSUPERUSERSECONDFACTOR23456"
+
+
 class Groups:
     UNSPECIFIED = "unspecified_group"
     PARTICIPANT = "organization_participant"

@@ -12,16 +12,14 @@
 {% block extra_head %}
   <script defer
           type="text/javascript"
-          src="https://cdn3.devexpress.com/jslib/21.2.11/js/dx.web.js"
-          integrity="sha384-209QJH8lCoDrB70trdPkGFr84168dIgFO2IYDKFYUv73DqCa161cBayeTRYdzjSp"
-          crossorigin="anonymous">
+          src="{% static 'vendor/devextreme/21.2.11/js/dx.web.js' %}"
+          integrity="sha384-209QJH8lCoDrB70trdPkGFr84168dIgFO2IYDKFYUv73DqCa161cBayeTRYdzjSp">
   </script>
 
 
   <script defer
-          src="https://cdn.jsdelivr.net/npm/signature_pad@4.0.9/dist/signature_pad.umd.min.js"
-          integrity="sha256-V9L8ML4alT7DUFydZZy5L4hgeRqhv+oj16TmyeMu4m8="
-          crossorigin="anonymous">
+          src="{% static 'vendor/signature_pad-4.0.9/signature_pad.umd.min.js' %}"
+          integrity="sha256-V9L8ML4alT7DUFydZZy5L4hgeRqhv+oj16TmyeMu4m8=">
   </script>
 
 
@@ -29,7 +27,7 @@
 <!--          type="text/javascript"-->
 <!--          src="{% static 'signature_pad/signature_pad.umd.min.js' %}"-->
 <!--          integrity="sha256-CMptYYXRcNVLvNSGRK6ZLrOBRO729Cg5aAC8l34V+nI="-->
-<!--          crossorigin="anonymous">-->
+<!-->-->
 <!--  </script>-->
 
   <script defer

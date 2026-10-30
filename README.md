@@ -351,6 +351,41 @@ types, Celery schedules, uploaded files (the path is recorded, the file is in th
 events themselves. Erasing a person follows the written procedure through the normal screens, so the
 changes are ordinary events; earlier events keep the earlier values under the board's retention rule.
 
+## Security: what leaves the building, and what a stolen machine opens
+
+The design is sized to two threats: a stolen machine or backup, and a break-in through the
+application. Each paragraph below says what the code does and what the operator sets up.
+
+### Nothing readable leaves the building (S1)
+
+- **Error reports** go to Sentry without personal data: `send_default_pii` is off, local variables
+  are not collected, and a `before_send` hook strips the user, cookies, headers, query strings and
+  request bodies, so a report carries the stack trace and nothing that names a member. Self-hosting
+  GlitchTip on the church server is the alternative if even that is too much. The browser-side SDK
+  loads only when `SENTRY_FRONTEND_LIB` is set; leave it unset, since it would have members' browsers
+  fetch a script from Sentry's CDN and report to Sentry directly.
+- **Browser libraries** (DevExtreme, jQuery, Bootstrap, ExcelJS, JSZip, FileSaver, signature_pad)
+  are served from `static/vendor/` with their original integrity hashes, so a member's browser talks
+  to the church server alone; a packet capture of a session should show no other host.
+- **Geocoding** stays with Google's geocoder: about fifty new addresses a year, sent one street
+  address at a time with no name attached.
+- **Email**: the account emails are allauth's and carry a link and a username, nothing else; the
+  gathering and attendance reports carry counts. A local SMTP relay (Postfix on the server, forwarding
+  to the provider over TLS) lets the provider see envelopes rather than content; set `EMAIL_HOST` to
+  it.
+- **Logs** stay on the encrypted volume: container logs are bounded and rotated by Docker (five files
+  of 20 MB per service), and the application's own request and access lines have the query string
+  removed, so a search term or a person's key is never written to a log.
+- **Second factor**: staff and superuser accounts, the roles that see other people's records, must
+  enrol a second factor (an authenticator app or a passkey) on their next sign-in and cannot open any
+  page until they have; `DJANGO_MFA_ENFORCED=True` extends that to every account.
+- **Listening ports**: `production.yml` publishes gunicorn (8008) and Flower (5555) on the host's
+  loopback only, as Redis already was, so from outside only Traefik on 443 (and SSH from the local
+  network) listen. Confirm after a deploy with `ss -tlnp` on the host and a port scan from another
+  machine.
+- **HSTS** is a year (`DJANGO_SECURE_HSTS_SECONDS`, default 31536000); lower it only while changing
+  the TLS setup.
+
 ## DB SQL Backup & Restore process (with production.yml)
 <details>
   <summary>Click to expand all</summary>
@@ -583,6 +618,17 @@ timeout 300 docker compose -f local.yml run django pytest
 C_PASSWORD=your_password_for_superuser_in_seed timeout 300 npx playwright test --workers=1
 ```
 Please also define the repository secret `C_PASSWORD` in Github for running e2e in CI/CD
+
+The `ci-seed` specs sign in as `jack`, the seed's superuser, and a superuser must have a second
+factor. Enrol him with an authenticator app once and pass its secret to the specs:
+```
+export C_TOTP_SECRET=$(python -c 'import base64, secrets; print(base64.b32encode(secrets.token_bytes(20)).decode())')
+python manage.py shell -c "import os; from allauth.mfa.totp.internal.auth import TOTP; from attendees.users.models import User; TOTP.activate(User.objects.get(username='jack'), os.environ['C_TOTP_SECRET'])"
+C_PASSWORD=... C_TOTP_SECRET=$C_TOTP_SECRET npx playwright test --project=ci-seed --workers=1
+```
+The CI jobs do the same with a secret made for the run. The golden suite (`--project=chromium`)
+needs nothing extra: `load_golden_data` enrols the golden superuser and writes the secret into the
+manifest.
 
 ## Todo & progress:
 

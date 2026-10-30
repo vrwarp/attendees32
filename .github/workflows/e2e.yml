@@ -42,16 +42,21 @@ jobs:
     # secrets to pull requests from forks, so without this every spec that
     # signs in fails on any outside contribution. The secret is still used
     # when it is there; otherwise a throwaway password is made for this run.
-    - name: Give jack a password for this run
+    # A superuser must have a second factor, so jack is enrolled with an authenticator app whose
+    # secret the specs type codes from.
+    - name: Give jack a password and a second factor for this run
       env:
         C_PASSWORD_SECRET: ${{ secrets.C_PASSWORD }}
       run: |
         C_PASSWORD="${C_PASSWORD_SECRET:-$(openssl rand -hex 24)}"
+        C_TOTP_SECRET="$(python3 -c 'import base64, secrets; print(base64.b32encode(secrets.token_bytes(20)).decode())')"
         echo "::add-mask::$C_PASSWORD"
+        echo "::add-mask::$C_TOTP_SECRET"
         echo "C_PASSWORD=$C_PASSWORD" >> "$GITHUB_ENV"
-        export C_PASSWORD
-        docker compose -f local.yml run --rm -e C_PASSWORD django python manage.py shell -c \
-          "import os; from attendees.users.models import User; u = User.objects.get(username='jack'); u.set_password(os.environ['C_PASSWORD']); u.save()"
+        echo "C_TOTP_SECRET=$C_TOTP_SECRET" >> "$GITHUB_ENV"
+        export C_PASSWORD C_TOTP_SECRET
+        docker compose -f local.yml run --rm -e C_PASSWORD -e C_TOTP_SECRET django python manage.py shell -c \
+          "import os; from allauth.mfa.totp.internal.auth import TOTP; from attendees.users.models import User; u = User.objects.get(username='jack'); u.set_password(os.environ['C_PASSWORD']); u.save(); TOTP.activate(u, os.environ['C_TOTP_SECRET'])"
 
     - name: Run Playwright tests
       # Only the specs written against fixtures/ci_seed.json; the golden
@@ -114,16 +119,19 @@ jobs:
         python manage.py update_content_types
         python manage.py loaddata fixtures/ci_seed.json
 
-    - name: Give jack a password for this run
+    - name: Give jack a password and a second factor for this run
       env:
         C_PASSWORD_SECRET: ${{ secrets.C_PASSWORD }}
       run: |
         C_PASSWORD="${C_PASSWORD_SECRET:-$(openssl rand -hex 24)}"
+        C_TOTP_SECRET="$(python -c 'import base64, secrets; print(base64.b32encode(secrets.token_bytes(20)).decode())')"
         echo "::add-mask::$C_PASSWORD"
+        echo "::add-mask::$C_TOTP_SECRET"
         echo "C_PASSWORD=$C_PASSWORD" >> "$GITHUB_ENV"
-        export C_PASSWORD
+        echo "C_TOTP_SECRET=$C_TOTP_SECRET" >> "$GITHUB_ENV"
+        export C_PASSWORD C_TOTP_SECRET
         python manage.py shell -c \
-          "import os; from attendees.users.models import User; u = User.objects.get(username='jack'); u.set_password(os.environ['C_PASSWORD']); u.save()"
+          "import os; from allauth.mfa.totp.internal.auth import TOTP; from attendees.users.models import User; u = User.objects.get(username='jack'); u.set_password(os.environ['C_PASSWORD']); u.save(); TOTP.activate(u, os.environ['C_TOTP_SECRET'])"
 
     - name: Start Django on SQLite
       run: |

@@ -18,16 +18,14 @@
 {% block extra_head %}
   <script defer
           type="text/javascript"
-          src="https://cdn3.devexpress.com/jslib/21.2.11/js/dx.web.js"
-          integrity="sha384-209QJH8lCoDrB70trdPkGFr84168dIgFO2IYDKFYUv73DqCa161cBayeTRYdzjSp"
-          crossorigin="anonymous">
+          src="{% static 'vendor/devextreme/21.2.11/js/dx.web.js' %}"
+          integrity="sha384-209QJH8lCoDrB70trdPkGFr84168dIgFO2IYDKFYUv73DqCa161cBayeTRYdzjSp">
   </script>
 
   <script defer
           type="text/javascript"
           src="{% static 'select2-bootstrap4-theme/select2.full.min.js' %}"
-          integrity="sha256-XG/auAy4aieWldzMImofrFDiySK+pwJC7aoo9St7rS0="
-          crossorigin="anonymous">
+          integrity="sha256-XG/auAy4aieWldzMImofrFDiySK+pwJC7aoo9St7rS0=">
   </script>
 
   <script defer

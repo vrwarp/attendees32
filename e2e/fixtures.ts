@@ -1,22 +1,7 @@
 import { test as base, expect, Page } from '@playwright/test';
 
-import { PASSWORD, Persona } from './golden';
-
-/**
- * Third-party assets, fetched once per worker and replayed from memory.
- *
- * The pages pull DevExtreme (4 MB), jQuery plugins and Bootstrap from public
- * CDNs on every load. Caching them takes the suite from minutes to seconds, and
- * the bytes are passed through unchanged so the subresource-integrity hashes in
- * the templates still have to check out — which is itself worth knowing.
- */
-interface CachedAsset {
-  status: number;
-  contentType: string;
-  body: Buffer;
-}
-
-const assetCache = new Map<string, CachedAsset>();
+import { PASSWORD, Persona, secondFactor } from './golden';
+import { totp } from './totp';
 
 /** Errors the page throws that say nothing about the application. */
 const IGNORABLE_PAGE_ERRORS = [/ResizeObserver/];
@@ -28,8 +13,7 @@ const IGNORABLE_PAGE_ERRORS = [/ResizeObserver/];
  * thing — so for the application's own host this is the browser narrating our
  * click, not a fault.
  *
- * A genuine cross-origin refusal carries the identical wording, and catching
- * those is the point of serving the CDN bytes through unchanged, so the host
+ * A genuine cross-origin refusal carries the identical wording, so the host
  * has to match the application under test before this is forgiven.
  */
 function isRequestCancelledByNavigation(message: string, baseURL?: string): boolean {
@@ -43,36 +27,17 @@ export const test = base.extend<{
   pageErrors: string[];
 }>({
   page: async ({ page, baseURL }, use) => {
+    // Nothing leaves the building. Every library the pages use is served by
+    // the application itself (static/vendor/), and a member's browser is meant
+    // to talk to the church server alone; so a request to any other host is
+    // refused here and fails the test that made it. The suite is the packet
+    // capture the design asks for.
+    const foreign: string[] = [];
     await page.context().route(
       (url) => !url.href.startsWith(baseURL ?? ''),
       async (route) => {
-        const url = route.request().url();
-        let cached = assetCache.get(url);
-        if (!cached) {
-          try {
-            const response = await route.fetch();
-            cached = {
-              status: response.status(),
-              contentType: response.headers()['content-type'] ?? 'application/octet-stream',
-              body: await response.body(),
-            };
-            assetCache.set(url, cached);
-          } catch {
-            await route.abort();
-            return;
-          }
-        }
-        await route.fulfill({
-          status: cached.status,
-          body: cached.body,
-          headers: {
-            'content-type': cached.contentType,
-            // The script tags are crossorigin="anonymous", so a fulfilled
-            // response still has to satisfy the CORS rules.
-            'access-control-allow-origin': '*',
-            'cache-control': 'public, max-age=86400',
-          },
-        });
+        foreign.push(route.request().url());
+        await route.abort();
       },
     );
     // DevExtreme grows a popup in over 300 ms. A click during that time
@@ -86,6 +51,7 @@ export const test = base.extend<{
       });
     });
     await use(page);
+    expect(foreign, 'the page reached a host other than the application').toEqual([]);
   },
 
   pageErrors: async ({ page, baseURL }, use) => {
@@ -114,6 +80,19 @@ export const test = base.extend<{
         page.waitForURL((url) => !url.pathname.startsWith('/accounts/login')),
         page.click("button[type='submit'], input[type='submit']"),
       ]);
+      // A persona enrolled with an authenticator app is asked for its code
+      // next; the manifest carries the secret the builder enrolled it with.
+      if (/\/accounts\/(2fa|mfa)\/authenticate/.test(new URL(page.url()).pathname)) {
+        const secret = secondFactor(persona);
+        if (!secret) {
+          throw new Error(`${persona} was asked for a second factor, and the manifest holds no secret for them`);
+        }
+        await page.fill("input[name='code']", totp(secret));
+        await Promise.all([
+          page.waitForURL((url) => !/authenticate/.test(url.pathname)),
+          page.click("button[type='submit'], input[type='submit']"),
+        ]);
+      }
     });
   },
 });

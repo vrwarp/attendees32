@@ -1,7 +1,7 @@
 import pytest
 
 from attendees.users.models import User
-from attendees.users.tests.factories import UserFactory
+from attendees.users.tests.factories import UserFactory, enrol_second_factor
 
 #: Where the end-to-end suite lives, relative to this file.
 E2E_DIRECTORY = "tests/e2e"
@@ -33,6 +33,12 @@ def clear_cache():
 @pytest.fixture
 def user() -> User:
     return UserFactory()
+
+
+@pytest.fixture
+def admin_user(admin_user):
+    """pytest-django's superuser, with the second factor every staff account must have."""
+    return enrol_second_factor(admin_user)
 
 
 def pytest_collection_modifyitems(items):

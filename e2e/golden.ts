@@ -10,7 +10,10 @@ import { resolve } from 'node:path';
 export interface GoldenManifest {
   counts: Record<string, number>;
   password: string;
-  personas: Record<string, { groups: string[]; attendee: string | null }>;
+  personas: Record<
+    string,
+    { groups: string[]; attendee: string | null; totp_secret?: string | null }
+  >;
   attendees: Record<string, string>;
   folks: Record<string, string>;
 }
@@ -53,6 +56,7 @@ export const PASSWORD = golden.password;
 
 export type Persona =
   | 'golden_superuser'
+  | 'golden_new_officer'
   | 'golden_data_organizer'
   | 'golden_counselor'
   | 'golden_children_organizer'
@@ -63,3 +67,8 @@ export type Persona =
   | 'golden_youth'
   | 'golden_unaffiliated'
   | 'golden_outsider';
+
+/** The base32 secret of a persona's authenticator app, when the builder enrolled one. */
+export function secondFactor(persona: Persona): string | null {
+  return golden.personas[persona]?.totp_secret ?? null;
+}

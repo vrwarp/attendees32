@@ -57,8 +57,9 @@ SESSION_COOKIE_SECURE = True
 CSRF_COOKIE_SECURE = True
 # https://docs.djangoproject.com/en/dev/topics/security/#ssl-https
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-hsts-seconds
-# TODO: set this to 60 seconds first and then to 518400 once you prove the former works
-SECURE_HSTS_SECONDS = 60
+# A year. Lower it (DJANGO_SECURE_HSTS_SECONDS=60) only while the TLS setup is being changed, and
+# raise it again once that has been stable for a month.
+SECURE_HSTS_SECONDS = env.int("DJANGO_SECURE_HSTS_SECONDS", default=31536000)
 # https://docs.djangoproject.com/en/dev/ref/settings/#secure-hsts-include-subdomains
 SECURE_HSTS_INCLUDE_SUBDOMAINS = env.bool(
     "DJANGO_SECURE_HSTS_INCLUDE_SUBDOMAINS", default=True
@@ -150,7 +151,11 @@ COMPRESS_FILTERS = {
 LOGGING = {
     "version": 1,
     "disable_existing_loggers": False,
-    "filters": {"require_debug_false": {"()": "django.utils.log.RequireDebugFalse"}},
+    "filters": {
+        "require_debug_false": {"()": "django.utils.log.RequireDebugFalse"},
+        # The query string (a search term, a person's key) is cut from every URL a log line carries.
+        "strip_query_string": {"()": "attendees.utils.logging.StripQueryString"},
+    },
     "formatters": {
         "verbose": {
             "format": "%(levelname)s %(asctime)s %(module)s "
@@ -160,13 +165,15 @@ LOGGING = {
     "handlers": {
         "mail_admins": {
             "level": "ERROR",
-            "filters": ["require_debug_false"],
+            "filters": ["require_debug_false", "strip_query_string"],
             "class": "django.utils.log.AdminEmailHandler",
+            "include_html": False,
         },
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
+            "filters": ["strip_query_string"],
         },
     },
     "root": {"level": "INFO", "handlers": ["console"]},

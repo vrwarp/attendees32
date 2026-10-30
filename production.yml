@@ -5,6 +5,15 @@ volumes:
   production_postgres_data_backups: {}
 #  production_traefik: {}
 
+
+# Container logs stay on the host's (encrypted) disk, bounded and rotated: five files of 20 MB each
+# per service, roughly a month of a quiet server. Older lines are gone with the oldest file.
+x-logging: &logging
+  driver: json-file
+  options:
+    max-size: "20m"
+    max-file: "5"
+
 services:
   django: &django
     build:
@@ -23,7 +32,10 @@ services:
       - ./.envs/.production/.postgres
       - ./.envs/.production/.mailgun.env
     ports:
-      - "8008:5000"
+      # Only Traefik on 443 faces the network; gunicorn is reached through it and is published to
+      # the host loopback alone (Docker publishes past ufw unless told otherwise).
+      - "127.0.0.1:8008:5000"
+    logging: *logging
     command: /start
 
   postgres:
@@ -83,7 +95,8 @@ services:
     image: attendees_production_flower
     container_name: flower
     ports:
-      - "5555:5555"
+      - "127.0.0.1:5555:5555"
+    logging: *logging
     command: /start-flower
 
 #  awscli:

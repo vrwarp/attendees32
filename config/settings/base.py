@@ -168,6 +168,9 @@ MIDDLEWARE = [
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "allauth.account.middleware.AccountMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
+    # Staff and superusers without a second factor get only the enrolment pages (see the README's
+    # security section); it runs once the user is known and before any page of ours.
+    "attendees.middleware.MFARequiredMiddleware",
     "django.middleware.common.BrokenLinkEmailsMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "attendees.history.middleware.HistoryContextMiddleware",
@@ -321,11 +324,15 @@ LOGGING = {
             "%(process)d %(thread)d %(message)s"
         }
     },
+    # No personal data in the logs: the query string (a search term, a person's key) is cut from
+    # every URL a log line carries, so a line says which page was opened and not for whom.
+    "filters": {"strip_query_string": {"()": "attendees.utils.logging.StripQueryString"}},
     "handlers": {
         "console": {
             "level": "DEBUG",
             "class": "logging.StreamHandler",
             "formatter": "verbose",
+            "filters": ["strip_query_string"],
         }
     },
     "root": {"level": "INFO", "handlers": ["console"]},
@@ -487,10 +494,17 @@ if SENTRY_DSN:
         level=logging.INFO,  # Capture info and above as breadcrumbs
         event_level=logging.ERROR  # Send errors as events
     )
+    from attendees.utils.sentry import strip_personal_data
+
+    # Error reports leave the building, so they carry the stack trace and nothing that names a
+    # member: no user, no cookies, no headers, no query string, no request body (see
+    # attendees.utils.sentry). Self-hosting GlitchTip is the alternative if even that is too much.
     sentry_sdk.init(
         dsn=SENTRY_DSN,
         integrations=[DjangoIntegration(), sentry_logging],
-        send_default_pii=True,
+        send_default_pii=False,
+        include_local_variables=False,
+        before_send=strip_personal_data,
         traces_sample_rate=env.float("SENTRY_TRACES_SAMPLE_RATE", default=1.0),
         environment=env("DJANGO_SETTINGS_MODULE", default="development").split('.')[-1],
     )

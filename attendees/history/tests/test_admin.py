@@ -5,6 +5,7 @@ from django.urls import reverse
 from attendees.history import context, events_for
 from attendees.history.models import HistoryEvent
 from attendees.persons.models import Attendee
+from attendees.users.tests.factories import enrol_second_factor
 
 pytestmark = pytest.mark.django_db
 
@@ -15,6 +16,7 @@ def admin(django_user_model, client, division):
     user = django_user_model.objects.create_superuser(
         username="admin", email="admin@example.com", password="pw", organization=division.organization
     )
+    enrol_second_factor(user)
     client.force_login(user)
     return user
 

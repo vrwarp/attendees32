@@ -1,28 +1,11 @@
 import { test, expect } from '@playwright/test';
 
+import { signInAsJack } from './seed';
+
 test.describe('Directory Report List View', () => {
 
   test.beforeEach(async ({ page }) => {
-    page.on('console', msg => {
-      console.log(`BROWSER LOG [${msg.type()}]: ${msg.text()}`);
-    });
-    page.on('pageerror', err => {
-      console.error(`BROWSER ERROR: ${err.message}`);
-    });
-
-    await page.goto('/accounts/login/');
-    await page.fill('input[name="login"]', 'jack');
-
-    const password = process.env.C_PASSWORD || 'your_password_for_superuser_in_seed';
-    await page.locator('input[name="password"]').evaluate((el, val) => {
-      (el as HTMLInputElement).value = val;
-    }, password);
-    
-    // We dispatch input event to ensure Vue/React or native validation catches the value change
-    await page.locator('input[name="password"]').dispatchEvent('input');
-    await page.click('button[type="submit"]');
-
-    await expect(page.locator('a[href="/accounts/logout/"]')).toBeVisible({ timeout: 15000 });
+    await signInAsJack(page);
   });
 
   test('Should print Isaac twice because he is in both his own family and parents family', async ({ page }) => {

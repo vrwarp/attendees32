@@ -75,6 +75,7 @@ class Command(BaseCommand):
                 "personas": {
                     persona.username: {
                         "groups": list(persona.groups),
+                        "totp_secret": persona.totp_secret,
                         "attendee": (
                             str(dataset.attendee(persona.attendee_key).id)
                             if persona.attendee_key

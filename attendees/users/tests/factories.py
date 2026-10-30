@@ -30,3 +30,15 @@ class UserFactory(DjangoModelFactory):
     class Meta:
         model = get_user_model()
         django_get_or_create = ["username"]
+
+
+#: A base32 secret for the authenticator app a test superuser is enrolled with.
+TEST_TOTP_SECRET = "TESTSUPERUSERSECONDFACTOR2345677"
+
+
+def enrol_second_factor(user, secret=TEST_TOTP_SECRET):
+    """Give ``user`` an authenticator app: staff and superusers cannot open a page without one."""
+    from allauth.mfa.totp.internal.auth import TOTP
+
+    TOTP.activate(user, secret)
+    return user

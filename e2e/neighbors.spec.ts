@@ -1,5 +1,7 @@
 import { test, expect } from '@playwright/test';
 
+import { signInAsJack } from './seed';
+
 // Define the URLs we want to test to ensure functional parity during migration.
 // Once you build the Vue version, just add its URL to this array!
 const testPages = [
@@ -11,47 +13,7 @@ test.describe('Find Neighbors Feature', () => {
 
   // Global login before each test
   test.beforeEach(async ({ page }) => {
-    // Listen for browser logs and page errors
-    page.on('console', msg => {
-      console.log(`BROWSER LOG [${msg.type()}]: ${msg.text()}`);
-    });
-    page.on('pageerror', err => {
-      console.error(`BROWSER ERROR: ${err.message}`);
-    });
-
-    console.log('--- STARTING LOGIN FLOW ---');
-    console.log('Navigating to login page: /accounts/login/...');
-    // 1. Go to login page
-    await page.goto('/accounts/login/');
-    console.log('Successfully loaded login page. Filling credentials...');
-
-    // 2. Fill in credentials (UPDATE THESE with your actual db_seed2.json test user)
-    // We use standard selectors here since we might not control the 3rd party allauth HTML
-    await page.fill('input[name="login"]', 'jack'); // Try user 'jack'
-    const password = process.env.C_PASSWORD || 'your_password_for_superuser_in_seed';
-    console.log(`Using password: ${password === 'your_password_for_superuser_in_seed' ? 'please use password in seed' : 'provided secret in env'}`);
-    
-    // Set the password directly via DOM evaluation to avoid logging it in Playwright reports
-    await page.locator('input[name="password"]').evaluate((el, val) => {
-      (el as HTMLInputElement).value = val;
-      el.dispatchEvent(new Event('input', { bubbles: true }));
-      el.dispatchEvent(new Event('change', { bubbles: true }));
-    }, password);
-    
-    console.log('Clicking Submit button...');
-    await page.click('button[type="submit"]');
-
-    // 3. Verify login success (wait for a known element on the dashboard)
-    console.log('Submitted login form. Waiting for redirect to /users/jack/...');
-    try {
-      await page.waitForURL('**/users/jack/**', { timeout: 10000 });
-      console.log(`--- LOGIN SUCCESSFUL ---`);
-      console.log(`Successfully logged in and redirected to dashboard. Current URL: ${page.url()}`);
-    } catch (error) {
-      console.error(`--- LOGIN FAILED ---`);
-      console.error(`Login verification failed! Expected redirect to /users/jack/ but current URL is: ${page.url()}`);
-      throw error;
-    } 
+    await signInAsJack(page);
   });
 
   for (const pageInfo of testPages) {
