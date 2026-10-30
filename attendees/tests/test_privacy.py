@@ -1,4 +1,6 @@
 """Nothing readable leaves the building: error reports, log lines and the pages' libraries."""
+import base64
+import hashlib
 import logging
 import re
 from pathlib import Path
@@ -7,8 +9,11 @@ from attendees.utils.logging import StripQueryString
 from attendees.utils.sentry import strip_personal_data
 
 TEMPLATES = Path(__file__).resolve().parents[1] / "templates"
+STATIC = Path(__file__).resolve().parents[1] / "static"
 ASSET_TAG = re.compile(r"<(?:script|link|img|iframe)\b[^>]*>", re.S)
 OTHER_HOST = re.compile(r"""(?:src|href)=["']https?://""")
+VENDORED = re.compile(r"\{% static '(vendor/[^']+)' %\}")
+INTEGRITY = re.compile(r'integrity="(sha256|sha384|sha512)-([^"]+)"')
 
 
 def test_an_error_report_keeps_the_trace_and_drops_the_person():
@@ -72,3 +77,22 @@ def test_no_page_loads_a_script_image_or_stylesheet_from_another_host():
         if OTHER_HOST.search(tag.group(0))
     ]
     assert offenders == []
+
+
+
+def test_every_vendored_library_still_matches_the_integrity_hash_the_page_declares():
+    """The browser refuses a vendored file whose bytes drifted (a line-ending normalisation, a re-download)."""
+    declared = {}
+    for path in sorted(TEMPLATES.rglob("*.html")):
+        for tag in ASSET_TAG.finditer(path.read_text()):
+            vendored, integrity = VENDORED.search(tag.group(0)), INTEGRITY.search(tag.group(0))
+            if vendored:
+                assert integrity, f"{path.relative_to(TEMPLATES)}: {vendored.group(1)} is served without an integrity hash"
+                declared[vendored.group(1)] = integrity.groups()
+    assert declared, "no vendored library is referenced by any page"
+    drifted = []
+    for relative, (algorithm, expected) in declared.items():
+        digest = base64.b64encode(hashlib.new(algorithm, (STATIC / relative).read_bytes()).digest()).decode()
+        if digest != expected:
+            drifted.append(relative)
+    assert drifted == []

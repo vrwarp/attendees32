@@ -1,1 +1,4 @@
 * text=auto
+# The vendored browser libraries are served with integrity hashes, so their bytes must survive
+# every checkout as they are, line endings included.
+attendees/static/vendor/** -text
