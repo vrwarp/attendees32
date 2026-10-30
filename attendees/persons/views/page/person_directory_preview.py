@@ -8,6 +8,8 @@ from django.views.generic import ListView
 
 from attendees.persons.services import FolkService
 from attendees.users.authorization import RouteGuard
+from attendees.access import PRINT, record
+from attendees.persons.models import Attendee
 
 
 @method_decorator([login_required], name='dispatch')
@@ -19,6 +21,8 @@ class PersonDirectoryPreview(RouteGuard, ListView):
         context = super().get_context_data(**kwargs)
         user_org_settings = self.request.user.organization.infos.get("settings", {})
         targeting_attendee_id = self.kwargs.get("attendee_id", "no attendee in current user")  # this API is only for single family preview so default can be set.
+        if "attendee_id" in self.kwargs:
+            record(self.request, Attendee(pk=targeting_attendee_id), how=PRINT, details=dict(self.request.GET.lists()))
         indexes, families = FolkService.families_in_directory(
             directory_meet_id=user_org_settings.get('default_directory_meet'),
             member_meet_id=user_org_settings.get('default_member_meet'),

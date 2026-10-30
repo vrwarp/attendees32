@@ -103,6 +103,7 @@ THIRD_PARTY_APPS = [
 
 LOCAL_APPS = [
     "attendees.history.apps.HistoryConfig",
+    "attendees.access.apps.AccessConfig",
     "attendees.users",
     # Your stuff: custom apps go here
     "attendees.whereabouts.apps.WhereaboutsConfig",
@@ -175,6 +176,9 @@ MIDDLEWARE = [
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
     "attendees.history.middleware.HistoryContextMiddleware",
     "attendees.middleware.TimezoneMiddleware",
+    # Writes the request's access entries after the response, outside the request's own
+    # transaction, so it sits just outside AtomicWritesMiddleware.
+    "attendees.access.middleware.AccessLogMiddleware",
     "attendees.middleware.AtomicWritesMiddleware",
 ]
 

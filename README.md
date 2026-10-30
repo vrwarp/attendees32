@@ -386,6 +386,25 @@ application. Each paragraph below says what the code does and what the operator 
 - **HSTS** is a year (`DJANGO_SECURE_HSTS_SECONDS`, default 31536000); lower it only while changing
   the TLS setup.
 
+### Who saw what: the access log (S3)
+
+Every detail page, export and print of personal data writes an `AccessLog` row: when, who, which
+record, through which endpoint, from which address, and how (a detail page, an export, a print). The
+person page and the single-person API log the person viewed; the directory report, the directory
+preview, the participation report and the envelopes log the job and its filters. Lists and datagrids
+are not logged. The rows are written after the response, in a transaction of their own, so a failed
+log line never turns a page into an error.
+
+The log is itself sensitive, since it shows who looked at whom. The model has only a view permission,
+`access.view_accesslog`: give it, in Admin > Groups, to the data owner's group alone (its members need
+`is_staff` to open the admin at all; superusers see it anyway), and agree with the board who reviews
+the log and why before switching the review on. Nobody adds, changes or deletes rows by hand: the admin
+page is read-only. Admin > Access log answers both questions: filter by model and key for who viewed a
+person, by user and date for what one person did, by "print" or "export" for who took the directory. A
+member viewing their own household is logged like anyone else and filtered out in the review when it
+does not matter. `python manage.py prune_access_log` deletes rows older than twelve months; schedule the
+Celery task of the same name nightly in Admin > Periodic tasks.
+
 ## DB SQL Backup & Restore process (with production.yml)
 <details>
   <summary>Click to expand all</summary>

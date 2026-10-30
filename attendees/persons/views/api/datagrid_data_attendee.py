@@ -26,6 +26,7 @@ from attendees.persons.services import (
     MergeRefused,
 )
 from attendees.persons.services.search_service import SearchService
+from attendees.access import record
 
 
 class AttendeeMergedAway(APIException):
@@ -77,7 +78,9 @@ class ApiDatagridDataAttendeeViewSet(ModelViewSet):  # from GenericAPIView
                 raise AttendeeGone()
             raise AttendeeMergedAway(primary.pk)
 
-        return super().retrieve(request, *args, **kwargs)
+        response = super().retrieve(request, *args, **kwargs)
+        record(request, Attendee(pk=self.kwargs.get("pk")))
+        return response
 
     @action(detail=True, methods=["post"], url_path="merge")
     def merge(self, request, pk=None):
