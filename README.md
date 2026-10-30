@@ -471,6 +471,84 @@ member viewing their own household is logged like anyone else and filtered out i
 does not matter. `python manage.py prune_access_log` deletes rows older than twelve months; schedule the
 Celery task of the same name nightly in Admin > Periodic tasks.
 
+### Erasure on request and data export (S4)
+
+No member has asked for either in the life of the system and no law requires it here, so this is a
+procedure, ready if the first request comes. It was walked through once on a copy of the golden
+database, and that walk-through is kept as a test (`attendees/tests/e2e/test_erasure_procedure.py`),
+so the steps below are known to leave what they promise to leave.
+
+**Export: what is held about a person.** Open, and print or save, in this order:
+
+1. Admin > Persons > Attendees: the record (names, birthday, gender, division, photo, the `infos`
+   contacts and preferences), and its History button for every past version.
+2. The person page (`/persons/attendee/<id>`): household memberships and roles, addresses (Places),
+   statuses and notes (Pasts), scheduling and emergency-contact links, participations (Attendings and
+   AttendingMeets), registrations and attendances.
+3. Admin > Users: the login, its groups, email addresses and second factors.
+4. Admin > Access log filtered by the person: who looked at their record.
+5. Admin > History > History events filtered by `persons.attendee` and the key: every change ever
+   recorded, with who made it.
+
+**Erasure.** Through the normal screens, so every step is an ordinary history event and the chain is
+untouched; earlier events keep the earlier values under the board's retention rule, which the
+requester is told. "Delete" on a screen marks a row removed and keeps it, which is what lets a slip
+be undone, so the procedure ends with one shell step that removes those rows for good.
+
+1. Confirm the request in writing and check the exceptions below.
+2. On the person page: delete the notes and statuses the page shows (a note addressed to one reader
+   shows only to them; the shell step below removes whatever the screens could not), the person's own
+   addresses, and the household memberships. A household of their own (a one-member folk) goes with
+   the membership; a shared household stays, so if its name carries the person's (a guardianship named
+   after its ward, say), rename it on the household page before removing them.
+3. On the same page, edit the record: first and last names to "Erased" and "member", the other names
+   blank, birthday, gender and date of death cleared, the `infos` contacts emptied (the names kept
+   there follow the record's name on save), and the scheduler and emergency-contact pickers emptied;
+   save.
+4. Keep the attendance, participation and registration rows: they now point at "Erased member" and
+   keep the counts and statistics right.
+5. Admin > Users: delete the login (or deactivate it if it must stay for the history's sake).
+6. The shell step, for the portrait file, the links in both directions (the person as somebody
+   else's scheduler or contact), and the rows the screens only marked as removed:
+   ```bash
+   docker compose -f production.yml run --rm django python manage.py shell
+   ```
+   ```python
+   from django.db.models import Q
+   from attendees.persons.models import Attendee, FolkAttendee, Note, Past
+   from attendees.persons.models.attendee_links import AttendeeEmergencyContact, AttendeeScheduler
+   from attendees.whereabouts.models import Place
+
+   def delete_place(place):
+       address = place.address
+       place.delete(soft=False)
+       if address and not Place.all_objects.filter(address=address).exists():
+           address.delete()
+
+   attendee = Attendee.objects.get(pk="<the record's key>")
+   attendee.photo.delete(save=True)
+   AttendeeScheduler.objects.filter(Q(attendee=attendee) | Q(scheduler=attendee)).delete()
+   AttendeeEmergencyContact.objects.filter(Q(attendee=attendee) | Q(contact=attendee)).delete()
+   for place in Place.all_objects.filter(attendee=attendee):
+       delete_place(place)
+   for membership in FolkAttendee.all_objects.filter(attendee=attendee).select_related("folk"):
+       folk = membership.folk  # a household of their own, removed on the page: its name and address go too
+       if folk.is_removed and not FolkAttendee.all_objects.filter(folk=folk).exclude(attendee=attendee).exists():
+           for place in Place.all_objects.filter(folk=folk):
+               delete_place(place)
+           folk.delete(soft=False)
+   FolkAttendee.all_objects.filter(attendee=attendee).delete()    # all_objects deletes for good;
+   Note.all_objects.filter(object_id=str(attendee.pk)).delete()    # objects would only mark removed
+   Past.all_objects.filter(object_id=str(attendee.pk)).delete()
+   ```
+   Every delete here is recorded as a `before_delete` event, like a delete on a screen.
+7. Record the date in the board's register. Backups within the 90-day retention still hold the person
+   and age out on their own; the history keeps the earlier values until the board's retention period
+   ends.
+
+**Exceptions** the church keeps regardless of a request: membership vote records and the counts they
+rest on, financial records, and anything under a legal hold. List them on the board's register.
+
 ## DB SQL Backup & Restore process (with production.yml)
 <details>
   <summary>Click to expand all</summary>
